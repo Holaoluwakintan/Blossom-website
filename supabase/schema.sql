@@ -1,0 +1,99 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE categories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(120) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE books (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    subtitle VARCHAR(255),
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    author VARCHAR(150) NOT NULL DEFAULT 'Olaoluwa Michael',
+    cover_image_url TEXT NOT NULL,
+    synopsis TEXT NOT NULL,
+    description TEXT NOT NULL,
+    genre VARCHAR(100) NOT NULL,
+    publication_year INT NOT NULL,
+    price_ngn NUMERIC(10, 2),
+    format VARCHAR(100) DEFAULT 'Paperback & Digital E-Book',
+    featured BOOLEAN DEFAULT false,
+    availability_status VARCHAR(50) DEFAULT 'Available',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE journal_posts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    featured_image_url TEXT NOT NULL,
+    excerpt TEXT NOT NULL,
+    content_markdown TEXT NOT NULL,
+    author VARCHAR(150) DEFAULT 'Olaoluwa Michael',
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+    published BOOLEAN DEFAULT true,
+    published_at TIMESTAMPTZ DEFAULT NOW(),
+    reading_time_minutes INT DEFAULT 5,
+    view_count BIGINT DEFAULT 0,
+    comments_enabled BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE artworks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    image_url TEXT NOT NULL,
+    caption VARCHAR(255),
+    story TEXT NOT NULL,
+    moral_quote TEXT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    alt_text TEXT NOT NULL,
+    featured BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE comments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    article_id UUID NOT NULL REFERENCES journal_posts(id) ON DELETE CASCADE,
+    parent_comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
+    author_name VARCHAR(120) NOT NULL,
+    author_email VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE article_views (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    article_id UUID NOT NULL REFERENCES journal_posts(id) ON DELETE CASCADE,
+    viewer_hash VARCHAR(64) NOT NULL,
+    viewed_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT unique_daily_view_per_user UNIQUE(article_id, viewer_hash)
+);
+
+CREATE OR REPLACE FUNCTION track_article_view(p_article_id UUID, p_viewer_hash VARCHAR)
+RETURNS BIGINT AS $$
+DECLARE
+    v_new_views BIGINT;
+BEGIN
+    INSERT INTO article_views (article_id, viewer_hash, viewed_at)
+    VALUES (p_article_id, p_viewer_hash, NOW())
+    ON CONFLICT (article_id, viewer_hash) DO NOTHING;
+
+    IF FOUND THEN
+        UPDATE journal_posts
+        SET view_count = view_count + 1
+        WHERE id = p_article_id
+        RETURNING view_count INTO v_new_views;
+        RETURN v_new_views;
+    ELSE
+        SELECT view_count INTO v_new_views FROM journal_posts WHERE id = p_article_id;
+        RETURN v_new_views;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
