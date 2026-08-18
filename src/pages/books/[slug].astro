@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { supabase } from '../../lib/supabase';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+const { data: book, error } = await supabase
+  .from('books')
+  .select('*')
+  .eq('slug', slug)
+  .maybeSingle();
+
+if (error || !book) {
+  throw new Error(
+    `Book not found. Slug: ${slug}. Supabase error: ${error?.message ?? 'No book returned'}`
+  );
+}
+
+const isFree = !book.price_ngn || Number(book.price_ngn) === 0;
+
+// Balm of Gilead PDF
+const downloadUrl =
+  book.slug === 'balm-of-gilead'
+    ? 'https://rlbrhpjljjgpqpqjrpkc.supabase.co/storage/v1/object/public/Books/BALM-OF-GILEAD.pdf'
+    : null;
+---
+
+<BaseLayout>
+  <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
+
+    <!-- Book Hero -->
+    <section class="max-w-7xl mx-auto px-6 py-16 lg:py-24">
+
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+        <!-- Cover -->
+        <div class="flex justify-center">
+          <div class="w-full max-w-md">
+            <img
+              src={book.cover_image_url}
+              alt={`${book.title} book cover`}
+              class="w-full rounded-sm shadow-2xl"
+            />
+          </div>
+        </div>
+
+        <!-- Information -->
+        <div>
+
+          <p class="text-xs font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-5">
+            {book.genre}
+          </p>
+
+          <h1 class="font-cinzel text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4">
+            {book.title}
+          </h1>
+
+          {book.subtitle && (
+            <p class="font-editorial italic text-xl sm:text-2xl text-[#E8C868] mb-6">
+              {book.subtitle}
+            </p>
+          )}
+
+          <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400 font-mono mb-8">
+            <span>By {book.author}</span>
+            <span>{book.publication_year}</span>
+            {book.format && <span>{book.format}</span>}
+          </div>
+
+          <!-- Synopsis -->
+          <div class="mb-8">
+            <h2 class="text-xs font-mono uppercase tracking-[0.25em] text-[#E8C868] mb-3">
+              About the Book
+            </h2>
+
+            <p class="text-slate-300 text-lg leading-relaxed">
+              {book.synopsis}
+            </p>
+          </div>
+
+          <!-- Download -->
+          {downloadUrl && isFree && (
+            <div class="mb-8">
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors"
+              >
+                Download Free E-Book
+              </a>
+
+              <p class="text-xs text-slate-500 mt-3 font-mono">
+                Free digital edition • PDF
+              </p>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      <!-- Full Description -->
+      <section class="max-w-4xl mx-auto mt-20 pt-12 border-t border-white/10">
+
+        <h2 class="font-cinzel text-2xl sm:text-3xl font-bold mb-6">
+          About This Book
+        </h2>
+
+        <div class="text-slate-300 leading-8 text-base sm:text-lg whitespace-pre-line">
+          {book.description}
+        </div>
+
+      </section>
+
+    </section>
+
+  </main>
+</BaseLayout>
