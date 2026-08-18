@@ -21,10 +21,7 @@ if (error || !book) {
 const isFree = !book.price_ngn || Number(book.price_ngn) === 0;
 
 // Balm of Gilead PDF
-const downloadUrl =
-  book.slug === 'balm-of-gilead'
-    ? 'https://rlbrhpjljjgpqpqjrpkc.supabase.co/storage/v1/object/public/Books/BALM-OF-GILEAD.pdf'
-    : null;
+const downloadUrl = book.download_url;
 ---
 
 <BaseLayout>
