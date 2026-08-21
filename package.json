@@ -4,13 +4,16 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
+    "dev:netlify": "astro dev --config astro.netlify.config.mjs",
+    "dev:vercel": "astro dev --config astro.vercel.config.mjs",
+    "build:netlify": "astro build --config astro.netlify.config.mjs",
+    "build:vercel": "astro build --config astro.vercel.config.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/netlify": "^5.1.0",
+    "@astrojs/vercel": "^7.7.0",
     "@astrojs/tailwind": "^5.1.0",
     "@supabase/supabase-js": "^2.39.0",
     "astro": "^4.4.0",
