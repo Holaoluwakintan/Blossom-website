@@ -2,6 +2,10 @@
   "name": "blossom-platform",
   "type": "module",
   "version": "1.0.0",
+  "engines": {
+  "node": "22.x"
+},
+
   "scripts": {
     "dev": "astro dev",
     "dev:netlify": "astro dev --config astro.netlify.config.mjs",
