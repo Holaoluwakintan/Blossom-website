@@ -11,6 +11,17 @@ const { data: books } = await supabase
 
 const featuredBook = books?.find((book) => book.featured === true);
 const collectionBooks = books?.filter((book) => book.featured !== true).slice(0, 3) ?? [];
+
+/* ============ NEW: fetch artworks for homepage preview ============ */
+const { data: artworks, error: artworksError } = await supabase
+  .from('artworks')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(4);
+
+const previewArtworks =
+  artworks?.filter((artwork) => artwork.image_url && artwork.slug) ?? [];
+/* ==================================================================== */
 ---
 
 <BaseLayout
@@ -130,6 +141,61 @@ const collectionBooks = books?.filter((book) => book.featured !== true).slice(0,
         </div>
       )}
     </section>
+
+    <!-- ============ NEW SECTION: Imagination World preview ============ -->
+    <section class="border-t border-white/10 bg-[#050A12]">
+      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div class="flex flex-wrap items-end justify-between gap-6 mb-11">
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-3">Imagination World</p>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold">When invisible truths become visible.</h2>
+          </div>
+          <a href="/imagination" class="font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:text-[#F6F3EC] transition-colors">
+            View all artwork →
+          </a>
+        </div>
+
+        {artworksError && (
+          <div class="border border-red-500/20 bg-[#080D16] p-10 text-center">
+            <p class="text-red-400 font-mono text-xs uppercase tracking-widest">Artwork could not be loaded</p>
+            <p class="text-slate-500 text-sm mt-3">{artworksError.message}</p>
+          </div>
+        )}
+
+        {!artworksError && previewArtworks.length > 0 && (
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {previewArtworks.map((artwork) => (
+              <a href={'/imagination/' + artwork.slug} class="group block">
+                <div class="overflow-hidden bg-[#080D16] border border-white/10">
+                  <img
+                    src={artwork.image_url}
+                    alt={artwork.alt_text || artwork.title || 'Blossom artwork'}
+                    class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+                <div class="pt-5">
+                  {artwork.category && (
+                    <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{artwork.category}</p>
+                  )}
+                  <h3 class="font-cinzel text-xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{artwork.title}</h3>
+                  {artwork.caption && (
+                    <p class="font-editorial italic text-[#E8C868] mt-1">{artwork.caption}</p>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {!artworksError && previewArtworks.length === 0 && (
+          <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">
+            Artwork is coming soon.
+          </div>
+        )}
+      </div>
+    </section>
+    <!-- ============ END NEW SECTION ============ -->
 
     <section class="border-t border-white/10">
       <div class="max-w-4xl mx-auto px-6 py-20 lg:py-28 text-center">
