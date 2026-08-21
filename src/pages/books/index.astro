@@ -1,7 +1,9 @@
 ---
 console.log("HOMEPAGE IS RUNNING");
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { supabase } from '../lib/supabase';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+import { supabase } from '../../lib/supabase';
+
 
 export const prerender = false;
 
@@ -90,7 +92,6 @@ console.log(
         </p>
 
         <h1 class="font-cinzel text-5xl sm:text-7xl lg:text-8xl font-bold leading-tight mt-6">
-
           Stories.
 
           <br />
