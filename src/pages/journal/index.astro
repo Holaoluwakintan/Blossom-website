@@ -1,0 +1,106 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+}
+
+const {
+  title = "BLOSSOM — The Creative World of Olaoluwa Michael",
+  description = "Official publishing ecosystem of Olaoluwa Michael: Author, AI Creative Specialist, and Stickman Storyteller.",
+  image = "/assets/images/input_file_11.png"
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth bg-navy-980">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style is:global>
+      ::selection { background-color: #D4AF37; color: #02050B; }
+      .editorial-grid-lines {
+        background-size: 64px 64px;
+        background-image:
+          linear-gradient(to right, rgba(212, 175, 55, 0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
+      }
+    </style>
+  </head>
+  <body class="bg-[#02050B] text-slate-300 font-sans antialiased overflow-x-hidden editorial-grid-lines min-h-screen flex flex-col justify-between">
+    <nav class="sticky top-0 z-40 bg-[#02050B]/90 backdrop-blur-xl border-b border-[#D4AF37]/10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <a href="/" class="flex items-center space-x-3.5 group" aria-label="BLOSSOM home">
+          <div class="w-11 h-11 border border-[#D4AF37]/40 bg-[#081021] flex items-center justify-center font-cinzel text-xl font-black text-[#E8C868]">B</div>
+          <div class="flex flex-col">
+            <span class="font-cinzel tracking-[0.3em] text-lg font-bold text-[#F6F3EC]">BLOSSOM</span>
+            <span class="text-[9px] font-mono tracking-[0.25em] text-[#D4AF37]/80 uppercase">Olaoluwa Michael</span>
+          </div>
+        </a>
+
+        <div class="hidden xl:flex items-center space-x-7 text-[11px] uppercase tracking-[0.22em] font-mono text-slate-300">
+          <a href="/" class="hover:text-[#E8C868]">Home</a>
+          <a href="/books" class="hover:text-[#E8C868]">Books</a>
+          <a href="/imagination" class="hover:text-[#E8C868]">Imagination</a>
+          <a href="/about" class="hover:text-[#E8C868]">About</a>
+        </div>
+
+        <button
+          id="mobile-menu-button"
+          type="button"
+          class="xl:hidden inline-flex h-11 w-11 items-center justify-center border border-[#D4AF37]/40 text-[#E8C868]"
+          aria-label="Open navigation menu"
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+        >
+          <span class="text-xl leading-none">☰</span>
+        </button>
+      </div>
+
+      <div id="mobile-menu" class="hidden border-t border-[#D4AF37]/15 bg-[#02050B] px-6 py-5 xl:hidden">
+        <div class="flex flex-col gap-5 text-xs uppercase tracking-[0.22em] font-mono text-slate-300">
+          <a href="/" class="hover:text-[#E8C868]">Home</a>
+          <a href="/books" class="hover:text-[#E8C868]">Books</a>
+          <a href="/imagination" class="hover:text-[#E8C868]">Imagination</a>
+          <a href="/about" class="hover:text-[#E8C868]">About</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="flex-grow">
+      <slot />
+    </main>
+
+    <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] py-12 px-4 text-center text-xs font-mono text-slate-500">
+      <p>© {new Date().getFullYear()} Olaoluwa Michael • BLOSSOM Ecosystem • Ondo State, Nigeria</p>
+    </footer>
+
+    <script is:inline>
+      const menuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      menuButton?.addEventListener('click', () => {
+        const isOpen = !mobileMenu?.classList.contains('hidden');
+        mobileMenu?.classList.toggle('hidden');
+        menuButton.setAttribute('aria-expanded', String(!isOpen));
+        menuButton.setAttribute('aria-label', isOpen ? 'Open navigation menu' : 'Close navigation menu');
+      });
+
+      mobileMenu?.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+          menuButton?.setAttribute('aria-expanded', 'false');
+          menuButton?.setAttribute('aria-label', 'Open navigation menu');
+        });
+      });
+
+      if (window.lucide) window.lucide.createIcons();
+    </script>
+  </body>
+</html>
