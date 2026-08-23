@@ -1,0 +1,144 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { supabase } from '../../lib/supabase';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+const { data: post, error: postError } = await supabase
+  .from('journal_posts')
+  .select('*')
+  .eq('slug', slug)
+  .eq('status', 'PUBLISHED')
+  .maybeSingle();
+
+const { data: comments, error: commentsError } = post
+  ? await supabase
+      .from('comments')
+      .select('id, name, body, created_at')
+      .eq('post_id', post.id)
+      .eq('status', 'APPROVED')
+      .order('created_at', { ascending: false })
+  : { data: [], error: null };
+
+const formatDate = (value) => {
+  if (!value) return '';
+  return new Intl.DateTimeFormat('en-NG', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(value));
+};
+
+const paragraphs = (post?.content_markdown || '')
+  .split(/\n\s*\n/)
+  .map((paragraph) => paragraph.trim())
+  .filter(Boolean);
+---
+
+<BaseLayout
+  title={post ? `${post.title} | Faith Journal` : 'Journal Article | BLOSSOM'}
+  description={post?.excerpt || 'A Bible-based reflection from the BLOSSOM Faith Journal.'}
+>
+  <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
+    {!post && (
+      <section class="mx-auto max-w-3xl px-6 py-32 text-center">
+        <p class="font-mono text-xs uppercase tracking-[0.3em] text-red-400">Article not found</p>
+        <h1 class="mt-5 font-cinzel text-4xl font-bold">This reflection is unavailable.</h1>
+        <a href="/journal" class="mt-8 inline-flex bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B]">Back to Journal →</a>
+      </section>
+    )}
+
+    {post && (
+      <>
+        <article class="mx-auto max-w-4xl px-6 pb-20 pt-20 lg:pb-28 lg:pt-28">
+          <a href="/journal" class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">← Back to Journal</a>
+          <p class="mt-12 font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">{post.category}</p>
+          <h1 class="mt-5 font-cinzel text-4xl font-bold leading-tight sm:text-6xl">{post.title}</h1>
+          <p class="mt-6 font-mono text-xs uppercase tracking-widest text-slate-500">
+            {formatDate(post.published_at || post.created_at)}{post.reading_time ? ` · ${post.reading_time} min read` : ''}
+          </p>
+
+          {post.cover_image_url && <img src={post.cover_image_url} alt={post.title} class="mt-12 max-h-[520px] w-full object-cover" />}
+
+          {(post.bible_reference || post.bible_verse) && (
+            <aside class="my-12 border-l-2 border-[#E8C868] bg-[#080D16] px-6 py-5">
+              {post.bible_reference && <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{post.bible_reference}</p>}
+              {post.bible_verse && <p class="mt-3 font-editorial text-xl italic leading-8 text-slate-300">“{post.bible_verse}”</p>}
+            </aside>
+          )}
+
+          <div class="prose prose-invert mt-12 max-w-none prose-headings:font-cinzel prose-headings:text-[#F6F3EC] prose-p:leading-8 prose-p:text-slate-300 prose-strong:text-[#F6F3EC] prose-blockquote:border-[#E8C868] prose-blockquote:text-[#E8C868]">
+            {paragraphs.map((paragraph) => {
+              const heading = paragraph.startsWith('# ');
+              const text = heading ? paragraph.slice(2) : paragraph;
+              return heading ? <h2>{text}</h2> : <p>{text}</p>;
+            })}
+          </div>
+        </article>
+
+        <section class="border-t border-white/10 bg-[#050912]">
+          <div class="mx-auto grid max-w-7xl gap-16 px-6 py-20 lg:grid-cols-[1fr_0.8fr] lg:py-28">
+            <div>
+              <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Community response</p>
+              <h2 class="mt-4 font-cinzel text-3xl font-bold">Thoughts from readers.</h2>
+              {commentsError && <p class="mt-6 text-sm text-red-400">Approved comments could not be loaded.</p>}
+              {!commentsError && (!comments || comments.length === 0) && <p class="mt-6 leading-8 text-slate-400">Be the first person to share a thoughtful response.</p>}
+              <div class="mt-8 space-y-5">
+                {comments?.map((comment) => (
+                  <article class="border border-white/10 bg-[#080D16] p-6">
+                    <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{comment.name}</p>
+                    <p class="mt-4 leading-8 text-slate-300">{comment.body}</p>
+                    <p class="mt-4 font-mono text-[10px] uppercase tracking-widest text-slate-600">{formatDate(comment.created_at)}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Join the conversation</p>
+              <h2 class="mt-4 font-cinzel text-3xl font-bold">Leave a response.</h2>
+              <p class="mt-5 leading-8 text-slate-400">Your comment will be reviewed before it appears publicly.</p>
+              <form id="comment-form" class="mt-8 space-y-5">
+                <input type="hidden" name="post_id" value={post.id} />
+                <input name="name" required maxlength="80" placeholder="Your name" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+                <input name="email" type="email" maxlength="160" placeholder="Email (optional)" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+                <textarea name="body" required maxlength="2000" rows="6" placeholder="Write your response..." class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]"></textarea>
+                <button type="submit" class="bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B]">Submit for review →</button>
+                <p id="comment-status" class="text-sm text-slate-400" aria-live="polite"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+      </>
+    )}
+  </main>
+</BaseLayout>
+
+<script>
+  const form = document.querySelector('#comment-form');
+  const status = document.querySelector('#comment-status');
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form || !status) return;
+    status.textContent = 'Submitting...';
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Comment could not be submitted.');
+      form.reset();
+      status.textContent = 'Thank you. Your comment has been submitted for review.';
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : 'Comment could not be submitted.';
+    }
+  });
+</script>
