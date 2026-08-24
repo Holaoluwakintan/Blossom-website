@@ -18,6 +18,15 @@ const { data: artworks, error: artworksError } = await supabase
 
 const previewArtworks = artworks?.filter((artwork) => artwork.image_url && artwork.slug) ?? [];
 
+const { data: journalPosts, error: journalError } = await supabase
+  .from('journal_posts')
+  .select('*')
+  .eq('status', 'PUBLISHED')
+  .order('featured', { ascending: false })
+  .order('published_at', { ascending: false, nullsFirst: false })
+  .limit(3);
+
+const featuredJournal = journalPosts?.[0];
 ---
 
 <BaseLayout
@@ -98,9 +107,9 @@ const previewArtworks = artworks?.filter((artwork) => artwork.image_url && artwo
       </div>
 
       {collectionBooks.length > 0 ? (
-<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible">
             {collectionBooks.map((book) => (
-            <a href={'/books/' + book.slug} class="group block">
+            <a href={'/books/' + book.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
               <div class="overflow-hidden bg-[#080D16] border border-white/10">
                 <img src={book.cover_image_url} alt={`${book.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
               </div>
@@ -147,6 +156,32 @@ const previewArtworks = artworks?.filter((artwork) => artwork.image_url && artwo
         ) : (
           <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is coming soon.</div>
         )}
+      </div>
+    </section>
+
+    <section class="border-t border-white/10 bg-[#050A12]">
+      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div class="grid gap-8 lg:grid-cols-2">
+          <a href="/about" class="group border border-white/10 bg-[#080D16] p-8 sm:p-10 transition-colors hover:border-[#E8C868]/60">
+            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">About BLOSSOM</p>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5">Meet the mind behind the stories.</h2>
+            <p class="mt-5 max-w-xl leading-8 text-slate-400">Learn about Olaoluwa Michael, the creative work behind BLOSSOM, and ways to work together.</p>
+            <span class="inline-flex mt-8 px-6 py-3 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#E8C868] group-hover:text-[#02050B] transition-colors">Explore About →</span>
+          </a>
+
+          <a href="/journal" class="group border border-[#E8C868]/30 bg-[#0A111D] p-8 sm:p-10 transition-colors hover:border-[#E8C868]">
+            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Faith Journal</p>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5">Reflections for the journey.</h2>
+            {journalError ? (
+              <p class="mt-5 leading-8 text-slate-400">Bible-based thoughts and encouragement from BLOSSOM.</p>
+            ) : featuredJournal ? (
+              <p class="mt-5 leading-8 text-slate-400">{featuredJournal.excerpt || 'Bible-based thoughts and encouragement for everyday faith.'}</p>
+            ) : (
+              <p class="mt-5 leading-8 text-slate-400">Bible-based thoughts and encouragement for everyday faith.</p>
+            )}
+            <span class="inline-flex mt-8 px-6 py-3 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#F6F3EC] transition-colors">Enter the Journal →</span>
+          </a>
+        </div>
       </div>
     </section>
 
