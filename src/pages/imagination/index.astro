@@ -1,14 +1,20 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-
 import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
 
-const { data: artworks, error } = await supabase
+let { data: artworks, error } = await supabase
   .from('artworks')
   .select('*')
   .order('created_at', { ascending: false });
+
+// Keep the gallery working with older artworks schemas that do not have created_at.
+if (error) {
+  const fallback = await supabase.from('artworks').select('*');
+  artworks = fallback.data;
+  error = fallback.error;
+}
 
 const featuredArtwork = artworks?.find((artwork) => artwork.featured === true);
 const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true) ?? [];
@@ -22,7 +28,7 @@ const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true)
         <p class="text-[10px] font-mono uppercase tracking-[0.35em] text-[#E8C868]">BLOSSOM presents</p>
         <h1 class="font-cinzel text-5xl sm:text-6xl lg:text-8xl font-extrabold leading-tight mt-5">Imagination<span class="block font-editorial italic font-normal text-[#E8C868]">World.</span></h1>
         <p class="max-w-2xl mx-auto mt-7 text-base sm:text-lg leading-8 text-slate-400">Stickman stories about faith, life, hope, and the quiet truths that stay with us.</p>
-        <p class="max-w-xl mx-auto mt-4 text-xs font-mono leading-6 text-slate-500">Public artworks may be saved in their watermarked form. For an unwatermarked copy, request it directly from the artist.</p>
+        <p class="max-w-xl mx-auto mt-4 text-xs font-mono leading-6 text-slate-500">Public artworks may be opened and saved in their watermarked form. They are displayed for reflection within the BLOSSOM faith-based creative world.</p>
       </div>
     </section>
 

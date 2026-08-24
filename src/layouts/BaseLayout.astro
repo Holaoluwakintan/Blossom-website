@@ -19,6 +19,9 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -33,7 +36,7 @@ const {
       }
     </style>
   </head>
-  <body class="bg-[#02050B] text-slate-300 font-sans antialiased overflow-x-hidden editorial-grid-lines min-h-screen flex flex-col justify-between">
+  <body class="bg-[#02050B] text-slate-300 font-sans antialiased overflow-x-hidden editorial-grid-lines min-h-screen flex flex-col">
     <nav class="sticky top-0 z-40 bg-[#02050B]/90 backdrop-blur-xl border-b border-[#D4AF37]/10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <a href="/" class="flex items-center space-x-3.5 group" aria-label="BLOSSOM home">
@@ -44,34 +47,33 @@ const {
           </div>
         </a>
 
-        <div class="hidden xl:flex items-center space-x-7 text-[11px] uppercase tracking-[0.22em] font-mono text-slate-300">
-          <a href="/" class="hover:text-[#E8C868]">Home</a>
-          <a href="/books" class="hover:text-[#E8C868]">Books</a>
-          <a href="/imagination" class="hover:text-[#E8C868]">Imagination</a>
-          <a href="/about" class="hover:text-[#E8C868]">About</a>
-          <a href="/journal" class="hover:text-[#E8C868]">JOURNAL</a>
-
-
+        <div class="hidden xl:flex items-center space-x-7 text-[11px] uppercase tracking-[0.22em] font-mono text-slate-300" aria-label="Primary navigation">
+          <a href="/" class="hover:text-[#E8C868] transition-colors">Home</a>
+          <a href="/books" class="hover:text-[#E8C868] transition-colors">Books</a>
+          <a href="/imagination" class="hover:text-[#E8C868] transition-colors">Imagination</a>
+          <a href="/about" class="hover:text-[#E8C868] transition-colors">About</a>
+          <a href="/journal" class="hover:text-[#E8C868] transition-colors">Journal</a>
         </div>
 
         <button
           id="mobile-menu-button"
           type="button"
-          class="xl:hidden inline-flex h-11 w-11 items-center justify-center border border-[#D4AF37]/40 text-[#E8C868]"
+          class="xl:hidden inline-flex h-11 w-11 items-center justify-center border border-[#D4AF37]/40 text-[#E8C868] transition-colors hover:bg-[#D4AF37]/10 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60"
           aria-label="Open navigation menu"
           aria-expanded="false"
           aria-controls="mobile-menu"
         >
-          <span class="text-xl leading-none">☰</span>
+          <span class="text-xl leading-none" aria-hidden="true">☰</span>
         </button>
       </div>
 
       <div id="mobile-menu" class="hidden border-t border-[#D4AF37]/15 bg-[#02050B] px-6 py-5 xl:hidden">
-        <div class="flex flex-col gap-5 text-xs uppercase tracking-[0.22em] font-mono text-slate-300">
-          <a href="/" class="hover:text-[#E8C868]">Home</a>
-          <a href="/books" class="hover:text-[#E8C868]">Books</a>
-          <a href="/imagination" class="hover:text-[#E8C868]">Imagination</a>
-          <a href="/about" class="hover:text-[#E8C868]">About</a>
+        <div class="flex flex-col gap-5 text-xs uppercase tracking-[0.22em] font-mono text-slate-300" aria-label="Mobile navigation">
+          <a href="/" class="hover:text-[#E8C868] transition-colors">Home</a>
+          <a href="/books" class="hover:text-[#E8C868] transition-colors">Books</a>
+          <a href="/imagination" class="hover:text-[#E8C868] transition-colors">Imagination</a>
+          <a href="/about" class="hover:text-[#E8C868] transition-colors">About</a>
+          <a href="/journal" class="hover:text-[#E8C868] transition-colors">Journal</a>
         </div>
       </div>
     </nav>
@@ -80,8 +82,38 @@ const {
       <slot />
     </main>
 
-    <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] py-12 px-4 text-center text-xs font-mono text-slate-500">
-      <p>© {new Date().getFullYear()} Olaoluwa Michael • BLOSSOM Ecosystem • Ondo State, Nigeria</p>
+    <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] px-6 py-14">
+      <div class="mx-auto max-w-7xl">
+        <div class="grid gap-10 md:grid-cols-[1.2fr_1fr_1fr] md:items-start">
+          <div>
+            <a href="/" class="font-cinzel text-xl font-bold tracking-[0.22em] text-[#F6F3EC] hover:text-[#E8C868] transition-colors">BLOSSOM</a>
+            <p class="mt-4 max-w-sm text-sm leading-7 text-slate-500">Stories, imagination, and faith from Olaoluwa Michael.</p>
+          </div>
+
+          <div>
+            <p class="font-mono text-[10px] uppercase tracking-[0.28em] text-[#E8C868]">Explore</p>
+            <nav class="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 text-xs font-mono uppercase tracking-widest text-slate-400" aria-label="Footer navigation">
+              <a href="/" class="hover:text-[#E8C868] transition-colors">Home</a>
+              <a href="/books" class="hover:text-[#E8C868] transition-colors">Books</a>
+              <a href="/imagination" class="hover:text-[#E8C868] transition-colors">Imagination</a>
+              <a href="/about" class="hover:text-[#E8C868] transition-colors">About</a>
+              <a href="/journal" class="hover:text-[#E8C868] transition-colors">Journal</a>
+            </nav>
+          </div>
+
+          <div>
+            <p class="font-mono text-[10px] uppercase tracking-[0.28em] text-[#E8C868]">Keep exploring</p>
+            <div class="mt-5 flex flex-wrap gap-3">
+              <a href="/books" class="inline-flex border border-white/15 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-slate-300 hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Find a book</a>
+              <a href="/imagination" class="inline-flex border border-white/15 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-slate-300 hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">See artwork</a>
+              <a href="/journal" class="inline-flex border border-white/15 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-slate-300 hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Read Journal</a>
+            </div>
+          </div>
+        </div>
+        <div class="mt-12 border-t border-white/10 pt-6 text-center text-xs font-mono text-slate-600">
+          <p>© {new Date().getFullYear()} Olaoluwa Michael • BLOSSOM Ecosystem • Ondo State, Nigeria</p>
+        </div>
+      </div>
     </footer>
 
     <script is:inline>

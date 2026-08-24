@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-
 import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
@@ -17,11 +16,7 @@ if (error || !artwork) {
   throw new Error(`Artwork not found. Slug: ${slug}. Supabase error: ${error?.message ?? 'No artwork returned'}`);
 }
 
-const requestMessage = `Hi, my name is [your name]. I would like to request an unwatermarked copy of "${artwork.title}".`;
-const whatsappRequestUrl = `https://wa.me/2348148034092?text=${encodeURIComponent(requestMessage)}`;
-const gmailRequestUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-  'michaelolaoluwag@gmail.com'
-)}&su=${encodeURIComponent(`Unwatermarked artwork request: ${artwork.title}`)}&body=${encodeURIComponent(requestMessage)}`;
+
 ---
 
 <BaseLayout title={`${artwork.title} | Imagination World | BLOSSOM`} description={artwork.caption || artwork.story || `Explore ${artwork.title} in Imagination World.`}>
@@ -57,12 +52,8 @@ const gmailRequestUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeU
 
           <div class="border-t border-white/10 mt-10 pt-7">
             <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500 mb-4">Artwork access</p>
-            <div class="flex flex-wrap gap-4">
-              <a href={artwork.image_url} target="_blank" rel="noopener noreferrer" download class="inline-flex items-center justify-center px-7 py-4 border border-white/20 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Open / Save Artwork</a>
-              <a href={whatsappRequestUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-7 py-4 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors">Request Unwatermarked Copy</a>
-              <a href={gmailRequestUrl} class="inline-flex items-center justify-center px-7 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Request by Email</a>
-            </div>
-            <p class="text-xs leading-6 text-slate-500 mt-5">The public version is watermarked. Unwatermarked copies are available only with the artist’s permission.</p>
+            <a href={artwork.image_url} target="_blank" rel="noopener noreferrer" download class="inline-flex items-center justify-center px-7 py-4 border border-white/20 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Open / Save Watermarked Artwork</a>
+            <p class="text-xs leading-6 text-slate-500 mt-5">This artwork is part of the BLOSSOM faith-based creative world. The public gallery version is watermarked and is displayed for reflection, not sale.</p>
           </div>
         </div>
       </div>

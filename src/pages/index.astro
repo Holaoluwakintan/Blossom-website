@@ -1,832 +1,197 @@
 ---
-console.log("HOMEPAGE IS RUNNING");
 import BaseLayout from '../layouts/BaseLayout.astro';
-
 import { supabase } from '../lib/supabase';
-
 
 export const prerender = false;
 
-/* =========================================================
-   BOOKS
-========================================================= */
-
-const { data: books, error: booksError } = await supabase
+const { data: books } = await supabase
   .from('books')
-  .select('*')
-  .order('created_at', { ascending: false });
+  .select('*');
 
-const featuredBook =
-  books?.find((book) => book.featured === true) ?? books?.[0];
+const featuredBook = books?.find((book) => book.featured === true);
+const collectionBooks = books?.slice(0, 4) ?? [];
 
-const collectionBooks =
-  books
-    ?.filter((book) => book.id !== featuredBook?.id)
-    .slice(0, 3) ?? [];
-
-
-/* =========================================================
-   ARTWORKS
-========================================================= */
-
-const {
-  data: artworks,
-  error: artworksError
-} = await supabase
+const { data: artworks, error: artworksError } = await supabase
   .from('artworks')
   .select('*')
-  .order('created_at', { ascending: false })
-  .limit(4);
+  .limit(6);
 
+const previewArtworks = artworks?.filter((artwork) => artwork.image_url && artwork.slug) ?? [];
 
-/* Only show artworks that actually have an image and slug */
+const { data: journalPosts, error: journalError } = await supabase
+  .from('journal_posts')
+  .select('*')
+  .eq('status', 'PUBLISHED')
+  .order('featured', { ascending: false })
+  .order('published_at', { ascending: false, nullsFirst: false })
+  .limit(3);
 
-const previewArtworks =
-  artworks?.filter(
-    (artwork) =>
-      artwork.image_url &&
-      artwork.slug
-  ) ?? [];
-
-
-/* =========================================================
-   DEBUG
-   We can remove these later.
-========================================================= */
-
-console.log('BLOSSOM BOOKS:', books);
-console.log('BLOSSOM BOOK ERROR:', booksError);
-
-console.log('BLOSSOM ARTWORKS:', artworks);
-console.log('BLOSSOM ARTWORK ERROR:', artworksError);
-
-console.log(
-  'BLOSSOM ARTWORK PREVIEW:',
-  previewArtworks
-);
+const featuredJournal = journalPosts?.[0];
 ---
 
 <BaseLayout
   title="BLOSSOM | The Creative World of Olaoluwa Michael"
-  description="Stories, books, imagination and faith by Olaoluwa Michael."
+  description="Stories and books by Olaoluwa Michael—created to inspire, challenge, and leave readers closer to Jesus."
 >
+  <main class="bg-[#02050B] text-[#F6F3EC] overflow-hidden">
+    <section class="relative min-h-[calc(100vh-5rem)] flex items-center overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(232,200,104,0.15),transparent_24%),radial-gradient(circle_at_20%_5%,rgba(232,200,104,0.08),transparent_31%)]"></div>
+      <div class="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(232,200,104,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(232,200,104,0.04)_1px,transparent_1px)] [background-size:64px_64px]"></div>
 
-  <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
+      <div class="relative max-w-7xl mx-auto w-full px-6 py-20 lg:py-28">
+        <div class="grid lg:grid-cols-[1.15fr_0.85fr] gap-14 lg:gap-20 items-center">
+          <div class="max-w-3xl">
+            <p class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868] mb-7">
+              The creative world of Olaoluwa Michael
+            </p>
 
+            <h1 class="font-cinzel text-5xl sm:text-6xl lg:text-8xl font-extrabold leading-[0.98] tracking-tight">
+              Stories that
+              <span class="block font-editorial italic font-normal text-[#E8C868] mt-2">stay with you.</span>
+            </h1>
 
-    <!-- =====================================================
-         HERO
-    ====================================================== -->
+            <p class="max-w-xl mt-8 text-base sm:text-lg leading-8 text-slate-400">
+              BLOSSOM is a home for stories, ideas, and imagination—written to inspire,
+              awaken faith, and leave something meaningful in the heart.
+            </p>
 
-    <section class="relative overflow-hidden">
+            <div class="flex flex-wrap gap-4 mt-9">
+              <a href="/books" class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors">
+                Explore the Books →
+              </a>
 
-      <div
-        class="absolute inset-0
-        bg-[radial-gradient(circle_at_50%_0%,rgba(232,200,104,0.12),transparent_45%)]"
-      ></div>
-
-      <div class="relative max-w-7xl mx-auto px-6 pt-24 pb-24 text-center">
-
-        <p class="text-xs font-mono uppercase tracking-[0.4em] text-[#E8C868]">
-          BLOSSOM
-        </p>
-
-        <h1 class="font-cinzel text-5xl sm:text-7xl lg:text-8xl font-bold leading-tight mt-6">
-          Stories.
-
-          <br />
-
-          <span class="italic font-editorial font-normal text-[#E8C868]">
-            Imagination.
-          </span>
-
-          <br />
-
-          Faith.
-
-        </h1>
-
-        <p class="max-w-2xl mx-auto mt-8 text-slate-400 text-base sm:text-lg leading-8">
-
-          A creative world by Olaoluwa Michael —
-          where stories, faith, imagination and technology
-          come together to create something worth remembering.
-
-        </p>
-
-        <div class="flex flex-wrap justify-center gap-4 mt-10">
-
-          <a
-            href="/books"
-            class="inline-flex items-center justify-center
-            px-8 py-4
-            bg-[#E8C868]
-            text-[#02050B]
-            font-mono text-xs font-bold
-            uppercase tracking-widest
-            hover:bg-[#F6F3EC]
-            transition-colors"
-          >
-            Explore Books →
-          </a>
-
-
-          <a
-            href="/imagination"
-            class="inline-flex items-center justify-center
-            px-8 py-4
-            border border-white/20
-            text-[#F6F3EC]
-            font-mono text-xs
-            uppercase tracking-widest
-            hover:border-[#E8C868]
-            hover:text-[#E8C868]
-            transition-colors"
-          >
-            Enter Imagination →
-          </a>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         FEATURED BOOK
-    ====================================================== -->
-
-    {featuredBook && (
-
-      <section class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
-
-        <div class="flex items-center gap-4 mb-12">
-
-          <span class="h-px flex-1 bg-white/10"></span>
-
-          <span class="text-[10px] font-mono uppercase tracking-[0.35em] text-[#E8C868]">
-            Featured Book
-          </span>
-
-          <span class="h-px flex-1 bg-white/10"></span>
-
-        </div>
-
-
-        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-
-
-          <!-- BOOK COVER -->
-
-          <a
-            href={'/books/' + featuredBook.slug}
-            class="block max-w-md mx-auto w-full group"
-          >
-
-            <div class="overflow-hidden bg-[#080D16]">
-
-              <img
-                src={featuredBook.cover_image_url}
-                alt={`${featuredBook.title} book cover`}
-                class="w-full aspect-[3/4] object-cover
-                transition-transform duration-700
-                group-hover:scale-105"
-              />
-
-            </div>
-
-          </a>
-
-
-          <!-- BOOK INFORMATION -->
-
-          <div>
-
-            {featuredBook.genre && (
-
-              <p class="text-xs font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-5">
-                {featuredBook.genre}
-              </p>
-
-            )}
-
-            <h2 class="font-cinzel text-4xl sm:text-5xl font-bold leading-tight">
-              {featuredBook.title}
-            </h2>
-
-
-            {featuredBook.subtitle && (
-
-              <p class="font-editorial italic text-xl text-[#E8C868] mt-4">
-                {featuredBook.subtitle}
-              </p>
-
-            )}
-
-
-            <p class="text-slate-400 text-sm font-mono mt-5">
-
-              By {featuredBook.author}
-
-              {featuredBook.publication_year && (
-                <> • {featuredBook.publication_year}</>
+              {featuredBook && (
+                <a href={'/books/' + featuredBook.slug} class="inline-flex items-center justify-center px-8 py-4 border border-white/15 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">
+                  Read the Featured Story
+                </a>
               )}
+            </div>
+          </div>
 
-            </p>
-
-
-            {featuredBook.synopsis && (
-
-              <p class="text-slate-300 text-lg leading-8 mt-7">
-                {featuredBook.synopsis}
-              </p>
-
-            )}
-
-
-            <a
-              href={'/books/' + featuredBook.slug}
-              class="inline-flex mt-8
-              px-8 py-4
-              bg-[#E8C868]
-              text-[#02050B]
-              font-mono text-xs font-bold
-              uppercase tracking-widest
-              hover:bg-[#F6F3EC]
-              transition-colors"
-            >
-              Explore Book →
+          {featuredBook && (
+            <a href={'/books/' + featuredBook.slug} class="group mx-auto lg:ml-auto w-full max-w-sm relative block">
+              <div class="absolute -inset-8 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
+              <div class="relative border border-[#E8C868]/25 bg-[#080D16] p-3 shadow-2xl">
+                <img src={featuredBook.cover_image_url} alt={`${featuredBook.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-[1.015]" />
+                <div class="flex justify-between items-end gap-4 pt-4 px-1 pb-1">
+                  <div>
+                    <p class="text-[9px] font-mono uppercase tracking-[0.24em] text-[#E8C868]">Featured book</p>
+                    <p class="font-cinzel text-xl font-bold mt-1">{featuredBook.title}</p>
+                  </div>
+                  <span class="font-mono text-xs text-[#E8C868] group-hover:text-[#F6F3EC] transition-colors">Explore →</span>
+                </div>
+              </div>
             </a>
-
-          </div>
-
+          )}
         </div>
-
-      </section>
-
-    )}
-
-
-
-    <!-- =====================================================
-         BOOK COLLECTION PREVIEW
-    ====================================================== -->
-
-    <section class="border-y border-white/10 bg-[#050912]">
-
-      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
-
-        <div class="flex flex-wrap items-end justify-between gap-6 mb-11">
-
-          <div>
-
-            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">
-              The Collection
-            </p>
-
-            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold mt-4">
-              More stories to discover.
-            </h2>
-
-          </div>
-
-
-          <a
-            href="/books"
-            class="font-mono text-xs uppercase tracking-widest
-            text-[#E8C868]
-            hover:text-[#F6F3EC]
-            transition-colors"
-          >
-            View All Books →
-          </a>
-
-        </div>
-
-
-        {collectionBooks.length > 0 ? (
-
-          <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible">
-
-            {collectionBooks.map((book) => (
-
-              <a
-                href={'/books/' + book.slug}
-class="group flex-none w-[78vw] sm:w-auto snap-start block"
-              >
-
-                <div class="overflow-hidden bg-[#080D16] border border-white/10">
-
-                  <img
-                    src={book.cover_image_url}
-                    alt={`${book.title} book cover`}
-                    class="w-full aspect-[3/4] object-cover
-                    transition-transform duration-700
-                    group-hover:scale-105"
-                    loading="lazy"
-                  />
-
-                </div>
-
-
-                <div class="pt-5">
-
-                  {book.genre && (
-
-                    <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">
-                      {book.genre}
-                    </p>
-
-                  )}
-
-                  <h3 class="font-cinzel text-2xl font-bold mt-2
-                  group-hover:text-[#E8C868] transition-colors">
-
-                    {book.title}
-
-                  </h3>
-
-
-                  {book.subtitle && (
-
-                    <p class="font-editorial italic text-[#E8C868] mt-1">
-                      {book.subtitle}
-                    </p>
-
-                  )}
-
-                </div>
-
-              </a>
-
-            ))}
-
-          </div>
-
-        ) : (
-
-          <div class="border border-white/10 bg-[#080D16] p-10 text-center">
-
-            <p class="text-slate-500 font-mono text-sm">
-              More stories are coming soon.
-            </p>
-
-          </div>
-
-        )}
-
       </div>
-
     </section>
 
-
-
-    <!-- =====================================================
-         IMAGINATION WORLD
-    ====================================================== -->
-
-    <section class="border-b border-white/10 bg-[#02050B]">
-
-      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
-
-
-        <!-- HEADER -->
-
-        <div class="flex flex-col sm:flex-row
-        sm:items-end sm:justify-between
-        gap-6 mb-12">
-
-          <div>
-
-            <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">
-              Imagination World
-            </p>
-
-
-            <h2 class="font-cinzel text-3xl sm:text-5xl font-bold mt-4">
-
-              When invisible truths
-
-              <br />
-
-              <span class="italic font-editorial font-normal text-[#E8C868]">
-                become visible.
-              </span>
-
-            </h2>
-
-
-            <p class="text-slate-400 max-w-xl mt-5 leading-7">
-
-              Original stickman artworks and visual stories
-              created to turn faith, life, struggle and hope
-              into something you can see.
-
-            </p>
-
-          </div>
-
-
-          <a
-            href="/imagination"
-            class="font-mono text-xs uppercase tracking-widest
-            text-[#E8C868]
-            hover:text-[#F6F3EC]
-            transition-colors whitespace-nowrap"
-          >
-            View All Artwork →
-          </a>
-
+    <section class="border-y border-white/10 bg-[#050A12]">
+      <div class="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+        <div class="grid sm:grid-cols-3 gap-8 text-center sm:text-left">
+          <div><p class="font-cinzel text-2xl text-[#E8C868]">01</p><h2 class="font-cinzel text-xl font-bold mt-3">Stories</h2><p class="text-sm leading-7 text-slate-400 mt-2">Worlds that stay with you.</p></div>
+          <div><p class="font-cinzel text-2xl text-[#E8C868]">02</p><h2 class="font-cinzel text-xl font-bold mt-3">Imagination</h2><p class="text-sm leading-7 text-slate-400 mt-2">Faith made visible.</p></div>
+          <div><p class="font-cinzel text-2xl text-[#E8C868]">03</p><h2 class="font-cinzel text-xl font-bold mt-3">Faith</h2><p class="text-sm leading-7 text-slate-400 mt-2">Truth, hope, and Jesus.</p></div>
         </div>
-
-
-
-        <!-- ARTWORK ERROR -->
-
-        {artworksError && (
-
-          <div class="border border-red-500/20 bg-[#080D16] p-10 text-center">
-
-            <p class="text-red-400 font-mono text-xs uppercase tracking-widest">
-              Artwork could not be loaded
-            </p>
-
-            <p class="text-slate-500 text-sm mt-3">
-              {artworksError.message}
-            </p>
-
-          </div>
-
-        )}
-
-
-
-        <!-- ARTWORKS -->
-
-        {!artworksError && previewArtworks.length > 0 && (
-
-          <div
-            class="
-            flex gap-6
-            overflow-x-auto
-            snap-x snap-mandatory
-            pb-6
-
-            -mx-6 px-6
-
-            sm:mx-0 sm:px-0
-
-            sm:grid
-            sm:grid-cols-2
-            lg:grid-cols-4
-
-            sm:overflow-visible
-            "
-          >
-
-            {previewArtworks.map((artwork) => (
-
-              <a
-                href={'/imagination/' + artwork.slug}
-                class="
-                group
-                flex-none
-                w-[78vw]
-                sm:w-auto
-                snap-start
-                block
-                "
-              >
-
-
-                <!-- IMAGE -->
-
-                <div
-                  class="
-                  overflow-hidden
-                  border border-white/10
-                  bg-[#080D16]
-                  "
-                >
-
-                  <img
-                    src={artwork.image_url}
-                    alt={
-                      artwork.alt_text ||
-                      artwork.title ||
-                      'Blossom artwork'
-                    }
-                    class="
-                    w-full
-                    aspect-square
-                    object-cover
-                    transition-transform
-                    duration-700
-                    group-hover:scale-105
-                    "
-                    loading="lazy"
-                  />
-
-                </div>
-
-
-                <!-- INFORMATION -->
-
-                <div class="pt-5">
-
-                  {artwork.category && (
-
-                    <p class="text-[9px] font-mono uppercase
-                    tracking-[0.22em] text-slate-500">
-
-                      {artwork.category}
-
-                    </p>
-
-                  )}
-
-
-                  <h3
-                    class="
-                    font-cinzel
-                    text-xl
-                    font-bold
-                    mt-2
-                    group-hover:text-[#E8C868]
-                    transition-colors
-                    "
-                  >
-                    {artwork.title}
-                  </h3>
-
-
-                  {artwork.caption && (
-
-                    <p class="font-editorial italic
-                    text-[#E8C868] mt-1">
-
-                      {artwork.caption}
-
-                    </p>
-
-                  )}
-
-
-                  <p class="
-                    font-mono
-                    text-[10px]
-                    uppercase
-                    tracking-widest
-                    text-slate-500
-                    mt-4
-                  ">
-                    Explore Artwork →
-                  </p>
-
-                </div>
-
-              </a>
-
-            ))}
-
-          </div>
-
-        )}
-
-
-
-        <!-- NO ARTWORK -->
-
-        {!artworksError && previewArtworks.length === 0 && (
-
-          <div
-            class="
-            border border-white/10
-            bg-[#080D16]
-            p-12
-            text-center
-            "
-          >
-
-            <p class="
-              text-[#E8C868]
-              font-mono
-              text-xs
-              uppercase
-              tracking-[0.3em]
-            ">
-              Imagination World
-            </p>
-
-
-            <h3 class="
-              font-cinzel
-              text-2xl
-              sm:text-3xl
-              font-bold
-              mt-4
-            ">
-              Your artwork will appear here.
-            </h3>
-
-
-            <p class="
-              text-slate-500
-              max-w-xl
-              mx-auto
-              mt-4
-              leading-7
-            ">
-              Add artwork with a valid image URL and slug
-              to your Supabase artworks table.
-            </p>
-
-          </div>
-
-        )}
-
       </div>
-
     </section>
-
-
-
-    <!-- =====================================================
-         THREE CREATIVE PILLARS
-    ====================================================== -->
 
     <section class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
-
-      <div class="grid md:grid-cols-3 gap-px bg-white/10">
-
-
-        <div class="bg-[#02050B] p-8 lg:p-10">
-
-          <span class="text-[#E8C868] font-mono text-xs">
-            01
-          </span>
-
-          <h3 class="font-cinzel text-2xl font-bold mt-6">
-            Stories
-          </h3>
-
-          <p class="text-slate-400 leading-7 mt-4">
-            Books and written works created to entertain,
-            challenge, inspire and leave something behind.
-          </p>
-
-          <a
-            href="/books"
-            class="inline-block mt-6 text-[#E8C868]
-            font-mono text-xs uppercase tracking-widest"
-          >
-            Explore Books →
-          </a>
-
+      <div class="flex flex-wrap items-end justify-between gap-6 mb-11">
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-3">The collection</p>
+          <h2 class="font-cinzel text-3xl sm:text-4xl font-bold">Find your next story.</h2>
         </div>
-
-
-        <div class="bg-[#02050B] p-8 lg:p-10">
-
-          <span class="text-[#E8C868] font-mono text-xs">
-            02
-          </span>
-
-          <h3 class="font-cinzel text-2xl font-bold mt-6">
-            Imagination
-          </h3>
-
-          <p class="text-slate-400 leading-7 mt-4">
-            Original visual creations where ordinary moments
-            become extraordinary stories.
-          </p>
-
-          <a
-            href="/imagination"
-            class="inline-block mt-6 text-[#E8C868]
-            font-mono text-xs uppercase tracking-widest"
-          >
-            Explore Art →
-          </a>
-
-        </div>
-
-
-        <div class="bg-[#02050B] p-8 lg:p-10">
-
-          <span class="text-[#E8C868] font-mono text-xs">
-            03
-          </span>
-
-          <h3 class="font-cinzel text-2xl font-bold mt-6">
-            Faith
-          </h3>
-
-          <p class="text-slate-400 leading-7 mt-4">
-            Reflections, creative expressions and stories
-            pointing people back to God.
-          </p>
-
-          <a
-            href="/journal"
-            class="inline-block mt-6 text-[#E8C868]
-            font-mono text-xs uppercase tracking-widest"
-          >
-            Read Journal →
-          </a>
-
-        </div>
-
+        <a href="/books" class="font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:text-[#F6F3EC] transition-colors">View all books →</a>
       </div>
 
+      {collectionBooks.length > 0 ? (
+<div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible">
+            {collectionBooks.map((book) => (
+            <a href={'/books/' + book.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
+              <div class="overflow-hidden bg-[#080D16] border border-white/10">
+                <img src={book.cover_image_url} alt={`${book.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+              </div>
+              <div class="pt-5">
+                {book.genre && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{book.genre}</p>}
+                <h3 class="font-cinzel text-2xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{book.title}</h3>
+                {book.subtitle && <p class="font-editorial italic text-[#E8C868] mt-1">{book.subtitle}</p>}
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">
+          The collection is coming soon.
+        </div>
+      )}
     </section>
 
+    <section class="border-t border-white/10 bg-[#050A12]">
+      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div class="flex flex-wrap items-end justify-between gap-6 mb-10">
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-3">A glimpse of the visual world</p>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold">Imagination in frames.</h2>
+          </div>
+          <a href="/imagination" class="font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:text-[#F6F3EC] transition-colors">View all artwork →</a>
+        </div>
+        {artworksError ? (
+          <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is temporarily unavailable.</div>
+        ) : previewArtworks.length > 0 ? (
+          <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible">
+            {previewArtworks.map((artwork) => (
+              <a href={'/imagination/' + artwork.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
+                <div class="overflow-hidden border border-white/10 bg-[#080D16]"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
+                <div class="pt-5">
+                  {artwork.category && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{artwork.category}</p>}
+                  <h3 class="font-cinzel text-xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{artwork.title}</h3>
+                  {artwork.caption && <p class="font-editorial italic text-[#E8C868] mt-1">{artwork.caption}</p>}
+                  <p class="font-mono text-[10px] uppercase tracking-widest text-slate-500 mt-4">Explore artwork →</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is coming soon.</div>
+        )}
+      </div>
+    </section>
 
+    <section class="border-t border-white/10 bg-[#050A12]">
+      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div class="grid gap-8 lg:grid-cols-2">
+          <a href="/about" class="group border border-white/10 bg-[#080D16] p-8 sm:p-10 transition-colors hover:border-[#E8C868]/60">
+            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">About BLOSSOM</p>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5">Meet the mind behind the stories.</h2>
+            <p class="mt-5 max-w-xl leading-8 text-slate-400">Learn about Olaoluwa Michael, the creative work behind BLOSSOM, and ways to work together.</p>
+            <span class="inline-flex mt-8 px-6 py-3 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#E8C868] group-hover:text-[#02050B] transition-colors">Explore About →</span>
+          </a>
 
-    <!-- =====================================================
-         ABOUT BLOSSOM
-    ====================================================== -->
+          <a href="/journal" class="group border border-[#E8C868]/30 bg-[#0A111D] p-8 sm:p-10 transition-colors hover:border-[#E8C868]">
+            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Faith Journal</p>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5">Reflections for the journey.</h2>
+            {journalError ? (
+              <p class="mt-5 leading-8 text-slate-400">Bible-based thoughts and encouragement from BLOSSOM.</p>
+            ) : featuredJournal ? (
+              <p class="mt-5 leading-8 text-slate-400">{featuredJournal.excerpt || 'Bible-based thoughts and encouragement for everyday faith.'}</p>
+            ) : (
+              <p class="mt-5 leading-8 text-slate-400">Bible-based thoughts and encouragement for everyday faith.</p>
+            )}
+            <span class="inline-flex mt-8 px-6 py-3 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#F6F3EC] transition-colors">Enter the Journal →</span>
+          </a>
+        </div>
+      </div>
+    </section>
 
-    <section class="bg-[#050912] border-y border-white/10">
-
+    <section class="border-t border-white/10">
       <div class="max-w-4xl mx-auto px-6 py-20 lg:py-28 text-center">
-
-        <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">
-          About BLOSSOM
-        </p>
-
-        <h2 class="font-cinzel text-3xl sm:text-5xl font-bold mt-5">
-          Creativity with meaning.
-        </h2>
-
-        <p class="text-slate-400 text-lg leading-8 mt-7">
-
-                    BLOSSOM is the creative world of Olaoluwa Michael —
-
-          a space for books, visual storytelling, faith,
-
-          imagination and ideas that deserve to be remembered.
-
-        </p>
-
-        <a
-          href="/about"
-          class="inline-flex mt-7 px-7 py-3 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors"
-        >
-          Meet Olaoluwa →
-        </a>
-
+        <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">BLOSSOM</p>
+        <h2 class="font-cinzel text-3xl sm:text-5xl font-bold leading-tight mt-5">Many stories leave something behind.</h2>
+        <p class="font-editorial italic text-2xl sm:text-3xl text-[#E8C868] mt-4">Let these leave you closer to Jesus.</p>
+        <a href="/books" class="inline-flex mt-9 px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Begin with a book</a>
       </div>
-
     </section>
-
-
-
-    <!-- =====================================================
-         FINAL CTA
-    ====================================================== -->
-
-    <section class="max-w-5xl mx-auto px-6 py-24 text-center">
-
-      <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">
-        BLOSSOM
-      </p>
-
-      <h2 class="font-cinzel text-4xl sm:text-6xl font-bold mt-5 leading-tight">
-
-        Many stories leave something behind.
-
-      </h2>
-
-      <p class="font-editorial italic text-2xl sm:text-3xl text-[#E8C868] mt-4">
-
-        Let these leave you closer to Jesus.
-
-      </p>
-
-      <a
-        href="/books"
-        class="
-        inline-flex
-        mt-9
-        px-8 py-4
-        border border-[#E8C868]/50
-        text-[#E8C868]
-        font-mono text-xs font-bold
-        uppercase tracking-widest
-        hover:bg-[#E8C868]
-        hover:text-[#02050B]
-        transition-colors
-        "
-      >
-        Begin With a Book
-      </a>
-
-    </section>
-
-
   </main>
-
 </BaseLayout>

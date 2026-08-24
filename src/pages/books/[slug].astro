@@ -40,9 +40,9 @@ const orderMessage = priceLabel
   : `Hi, my name is [your name]. I would like to order a copy of "${book.title}".`;
 
 const whatsappOrderUrl = `https://wa.me/2348148034092?text=${encodeURIComponent(orderMessage)}`;
-const emailOrderUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-  'michaelolaoluwag@gmail.com'
-)}&su=${encodeURIComponent(`Book order: ${book.title}`)}&body=${encodeURIComponent(orderMessage)}`;
+const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURIComponent(
+  `Book order: ${book.title}`
+)}&body=${encodeURIComponent(orderMessage)}`;
 ---
 
 <BaseLayout
@@ -150,7 +150,7 @@ const emailOrderUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURI
                   rel="noopener noreferrer"
                   class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-all duration-300"
                 >
-                  Order Your Copy
+                  Order on WhatsApp
                 </a>
 
                 <a

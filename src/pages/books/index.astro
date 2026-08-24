@@ -4,114 +4,419 @@ import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
 
-const { data: books, error: booksError } = await supabase
+const { data: books, error } = await supabase
   .from('books')
-  .select('*')
-  .order('created_at', { ascending: false });
+  .select('*');
 
-const allBooks = books ?? [];
-const featuredBook = allBooks.find((book) => book.featured === true) ?? allBooks[0];
-const collectionBooks = featuredBook
-  ? allBooks.filter((book) => book.id !== featuredBook.id)
-  : allBooks;
+const featuredBook = books?.find((book) => book.featured === true);
 
-const formatPrice = (book) => {
-  const price = Number(book.price_ngn ?? 0);
-  return price > 0 ? `₦${price.toLocaleString('en-NG')}` : 'Free';
+// Keep the complete collection visible. Featured status controls the hero section,
+// but must never hide a book from the main grid.
+const collectionBooks = books ?? [];
+
+const isFreeBook = (book: any) =>
+  Boolean(book.download_url) &&
+  (book.price_ngn === null ||
+    book.price_ngn === undefined ||
+    book.price_ngn === '' ||
+    Number(book.price_ngn) === 0);
+
+const formatNaira = (price: number | string | null) => {
+  if (price === null || price === undefined || price === '') {
+    return 'Price available soon';
+  }
+
+  return `₦${Number(price).toLocaleString('en-NG')}`;
 };
 ---
 
 <BaseLayout
   title="Books | BLOSSOM"
-  description="Explore the books and written works of Olaoluwa Michael."
+  description="Explore the books of Olaoluwa Michael."
 >
   <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
-    <section class="relative overflow-hidden border-b border-white/10">
+
+    <!-- HERO -->
+    <section class="relative overflow-hidden">
+
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(232,200,104,0.12),transparent_45%)]"></div>
-      <div class="relative mx-auto max-w-7xl px-6 pb-20 pt-24 text-center lg:pb-28">
-        <p class="text-xs font-mono uppercase tracking-[0.4em] text-[#E8C868]">BLOSSOM BOOKS</p>
-        <h1 class="mt-6 font-cinzel text-5xl font-bold leading-tight sm:text-7xl">
-          Stories that
+
+      <div class="relative max-w-7xl mx-auto px-6 pt-16 pb-16 lg:pt-24 lg:pb-20 text-center">
+
+        <a
+          href="/"
+          class="inline-block text-[10px] font-mono uppercase tracking-[0.3em] text-slate-500 hover:text-[#E8C868] transition-colors mb-10"
+        >
+          ← Back to Home
+        </a>
+
+        <span class="block text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">
+          BLOSSOM BOOKS
+        </span>
+
+        <h1 class="font-cinzel text-4xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mt-5">
+          Stories. Ideas.
           <br />
-          <span class="font-editorial font-normal italic text-[#E8C868]">stay with you.</span>
+          <span class="italic font-editorial font-normal text-[#E8C868]">
+            Worlds to Discover.
+          </span>
         </h1>
-        <p class="mx-auto mt-8 max-w-2xl text-base leading-8 text-slate-400 sm:text-lg">
-          Explore stories and written works created to entertain, challenge, inspire and leave something meaningful behind.
+
+        <p class="text-slate-400 max-w-2xl mx-auto mt-7 text-base sm:text-lg leading-relaxed">
+          Enter the literary world of Olaoluwa Michael — stories, ideas,
+          reflections and imagination created to inspire, challenge and
+          leave something behind.
         </p>
+
       </div>
     </section>
 
-    <section class="mx-auto max-w-7xl px-6 py-20 lg:py-28">
-      {booksError && (
-        <div class="border border-red-500/20 bg-[#080D16] p-10 text-center">
-          <p class="font-mono text-xs uppercase tracking-widest text-red-400">Books could not be loaded</p>
-          <p class="mt-3 text-sm text-slate-500">{booksError.message}</p>
+
+    <!-- FEATURED BOOK -->
+    {!error && featuredBook && (
+      <section class="max-w-7xl mx-auto px-6 py-12 lg:py-20">
+
+        <div class="flex items-center gap-4 mb-12">
+          <span class="h-px flex-1 bg-white/10"></span>
+
+          <span class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">
+            Featured Book
+          </span>
+
+          <span class="h-px flex-1 bg-white/10"></span>
         </div>
-      )}
 
-      {!booksError && featuredBook && (
-        <div class="mb-20 grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-          <a href={`/books/${featuredBook.slug}`} class="group mx-auto block w-full max-w-md">
-            <div class="overflow-hidden border border-white/10 bg-[#080D16]">
-              <img
-                src={featuredBook.cover_image_url}
-                alt={`${featuredBook.title} book cover`}
-                class="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            </div>
-          </a>
 
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+          <!-- COVER -->
+          <div class="mx-auto w-full max-w-md">
+
+            <a
+              href={'/books/' + featuredBook.slug}
+              class="group block relative"
+            >
+
+              <div class="absolute -inset-6 bg-[#E8C868]/5 blur-3xl"></div>
+
+              <div class="relative overflow-hidden">
+
+                <img
+                  src={featuredBook.cover_image_url}
+                  alt={`${featuredBook.title} book cover`}
+                  class="w-full rounded-sm shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
+                />
+
+              </div>
+
+            </a>
+
+
+            <!-- VERY OBVIOUS FREE DOWNLOAD LABEL -->
+            {featuredBook.download_url && (
+              <div class="relative mt-6 text-center">
+
+                <div
+                  class="inline-flex items-center justify-center gap-3
+                  px-6 py-3
+                  border border-[#E8C868]
+                  bg-[#E8C868]/10
+                  text-[#E8C868]
+                  font-mono
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-[0.2em]"
+                >
+                  <span class="text-base">↓</span>
+                  Free E-Book Download
+                </div>
+
+                <p class="text-xs text-slate-500 font-mono mt-3">
+                  Download the digital edition completely free.
+                </p>
+
+              </div>
+            )}
+
+          </div>
+
+
+          <!-- INFORMATION -->
           <div>
-            <p class="mb-5 text-xs font-mono uppercase tracking-[0.3em] text-[#E8C868]">Featured Book</p>
-            <h2 class="font-cinzel text-4xl font-bold leading-tight sm:text-5xl">{featuredBook.title}</h2>
-            {featuredBook.subtitle && <p class="mt-4 font-editorial text-xl italic text-[#E8C868]">{featuredBook.subtitle}</p>}
-            <p class="mt-5 text-sm font-mono text-slate-400">
-              By {featuredBook.author}{featuredBook.publication_year && <> • {featuredBook.publication_year}</>}
+
+            {featuredBook.genre && (
+              <p class="text-xs font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-5">
+                {featuredBook.genre}
+              </p>
+            )}
+
+            <h2 class="font-cinzel text-4xl sm:text-5xl font-bold leading-tight">
+              {featuredBook.title}
+            </h2>
+
+            {featuredBook.subtitle && (
+              <p class="font-editorial italic text-xl text-[#E8C868] mt-3">
+                {featuredBook.subtitle}
+              </p>
+            )}
+
+            <p class="text-slate-400 text-sm font-mono mt-5">
+              By {featuredBook.author}
+              {featuredBook.publication_year && ` • ${featuredBook.publication_year}`}
             </p>
-            {featuredBook.synopsis && <p class="mt-7 text-lg leading-8 text-slate-300">{featuredBook.synopsis}</p>}
-            <div class="mt-8 flex flex-wrap items-center gap-4">
-              <span class="font-mono text-sm uppercase tracking-widest text-[#E8C868]">{formatPrice(featuredBook)}</span>
-              <a href={`/books/${featuredBook.slug}`} class="inline-flex bg-[#E8C868] px-8 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-colors hover:bg-[#F6F3EC]">
+
+            {featuredBook.synopsis && (
+              <p class="text-slate-300 text-lg leading-relaxed mt-7">
+                {featuredBook.synopsis}
+              </p>
+            )}
+
+
+            <!-- FEATURED BOOK ACTIONS -->
+            <div class="flex flex-wrap gap-4 mt-8">
+
+              <a
+                href={'/books/' + featuredBook.slug}
+                class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors"
+              >
                 Explore Book →
               </a>
+
+              {featuredBook.download_url && (
+                <a
+                  href={featuredBook.download_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors"
+                >
+                  Download Free
+                </a>
+              )}
+
             </div>
+
           </div>
-        </div>
-      )}
 
-      <div class="border-t border-white/10 pt-16">
-        <div class="mb-11">
-          <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">The Collection</p>
-          <h2 class="mt-4 font-cinzel text-3xl font-bold sm:text-4xl">More stories to discover.</h2>
         </div>
 
-        {!booksError && collectionBooks.length > 0 ? (
-          <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      </section>
+    )}
+
+
+    <!-- COLLECTION -->
+    <section class="pb-28 pt-12">
+
+      <div class="max-w-7xl mx-auto px-6">
+
+        <div class="flex items-end justify-between gap-6 mb-10">
+
+          <div>
+
+            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-3">
+              All Books
+            </p>
+
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold">
+              More Stories
+            </h2>
+
+          </div>
+
+          <div class="hidden sm:block text-right">
+
+            <p class="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500">
+              Swipe / Scroll
+            </p>
+
+            <p class="text-slate-600 text-lg mt-1">
+              ← →
+            </p>
+
+          </div>
+
+        </div>
+
+
+        {error && (
+          <div class="text-center py-20">
+            <p class="text-red-400 font-mono text-sm">
+              Unable to load books.
+            </p>
+
+            <p class="text-slate-500 text-xs mt-3">
+              {error.message}
+            </p>
+          </div>
+        )}
+
+
+        {!error && collectionBooks.length > 0 && (
+
+          <div
+            class="flex gap-7 overflow-x-auto snap-x snap-mandatory pb-8 -mx-6 px-6 scroll-smooth"
+            style="scrollbar-width: thin;"
+          >
+
             {collectionBooks.map((book) => (
-              <a href={`/books/${book.slug}`} class="group block">
-                <div class="overflow-hidden border border-white/10 bg-[#080D16]">
-                  <img
-                    src={book.cover_image_url}
-                    alt={`${book.title} book cover`}
-                    loading="lazy"
-                    class="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+
+              <article
+                class="group flex-none w-[78vw] sm:w-[360px] lg:w-[390px] snap-start"
+              >
+
+                <!-- COVER -->
+                <a
+                  href={'/books/' + book.slug}
+                  class="block relative overflow-hidden bg-[#080D16] border border-white/10"
+                >
+
+                  <div class="aspect-[3/4] overflow-hidden">
+
+                    <img
+                      src={book.cover_image_url}
+                      alt={`${book.title} book cover`}
+                      class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                    />
+
+                  </div>
+
+
+                  <!-- Hover -->
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-end justify-center">
+
+                    <span class="mb-8 px-6 py-3 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      Explore Book →
+                    </span>
+
+                  </div>
+
+                </a>
+
+
+                <!-- INFORMATION -->
+                <div class="pt-6">
+
+                  {book.genre && (
+                    <p class="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500">
+                      {book.genre}
+                    </p>
+                  )}
+
+                  <h3 class="font-cinzel text-2xl sm:text-3xl font-bold mt-2 leading-tight">
+                    {book.title}
+                  </h3>
+
+                  {book.subtitle && (
+                    <p class="font-editorial italic text-[#E8C868] text-lg mt-2">
+                      {book.subtitle}
+                    </p>
+                  )}
+
+                  {book.synopsis && (
+                    <p class="text-slate-400 text-sm leading-7 mt-4 line-clamp-3">
+                      {book.synopsis}
+                    </p>
+                  )}
+
+
+                  <!-- PRICE + ACTION -->
+                  <div class="mt-6 pt-5 border-t border-white/10">
+
+                    <div class="flex items-center justify-between gap-4">
+
+                      <!-- PROMINENT PRICE -->
+                      <div>
+
+                        <p class="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-500 mb-1">
+                          Get Your Copy
+                        </p>
+
+                        <p class="font-cinzel text-xl sm:text-2xl font-bold text-[#E8C868]">
+                          {formatNaira(book.price_ngn)}
+                        </p>
+
+                      </div>
+
+
+                      <div class="flex flex-wrap items-center justify-end gap-4">
+                        <a
+                          href={'/books/' + book.slug}
+                          class="shrink-0 font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:text-[#F6F3EC] transition-colors"
+                        >
+                          View Book →
+                        </a>
+                        {isFreeBook(book) && (
+                          <a
+                            href={book.download_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="shrink-0 font-mono text-[10px] uppercase tracking-widest text-slate-300 hover:text-[#E8C868] transition-colors"
+                          >
+                            Download →
+                          </a>
+                        )}
+                      </div>
+
+                    </div>
+
+                  </div>
+
                 </div>
-                <div class="pt-5">
-                  {book.genre && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{book.genre}</p>}
-                  <h3 class="mt-2 font-cinzel text-2xl font-bold transition-colors group-hover:text-[#E8C868]">{book.title}</h3>
-                  {book.subtitle && <p class="mt-1 font-editorial italic text-[#E8C868]">{book.subtitle}</p>}
-                  <p class="mt-3 font-mono text-sm text-slate-400">{formatPrice(book)}</p>
-                </div>
-              </a>
+
+              </article>
+
             ))}
+
           </div>
-        ) : !booksError ? (
-          <div class="border border-white/10 bg-[#080D16] p-10 text-center">
-            <p class="font-mono text-sm text-slate-500">More stories are coming soon.</p>
+
+        )}
+
+        {!error && collectionBooks.length === 0 && (
+          <div class="text-center py-20">
+            <p class="text-slate-500 font-mono text-sm">
+              No books found yet.
+            </p>
           </div>
-        ) : null}
+        )}
+
       </div>
+
     </section>
+
+
+    <!-- CLOSING MESSAGE -->
+    <section class="border-t border-white/10">
+
+      <div class="max-w-4xl mx-auto px-6 py-20 text-center">
+
+        <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">
+          BLOSSOM
+        </p>
+
+        <h2 class="font-cinzel text-3xl sm:text-4xl font-bold mt-4">
+          Many stories leave something behind.
+        </h2>
+
+        <p class="font-editorial italic text-xl sm:text-2xl text-[#E8C868] mt-4">
+          Let these leave you closer to Jesus.
+        </p>
+
+        <p class="text-slate-500 mt-5 max-w-xl mx-auto leading-relaxed">
+          Stories written to inspire, challenge, awaken faith,
+          and leave something meaningful in the heart.
+        </p>
+
+        <a
+          href="/"
+          class="inline-flex mt-8 px-7 py-3 border border-white/10 text-xs font-mono uppercase tracking-widest text-slate-400 hover:border-[#E8C868]/50 hover:text-[#E8C868] transition-colors"
+        >
+          Back to Home
+        </a>
+
+      </div>
+
+    </section>
+
   </main>
 </BaseLayout>
