@@ -14,21 +14,21 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ success: true }), { status: 200 });
     }
 
-    const postId = clean(payload.post_id, 80);
-    const name = clean(payload.name, 80);
-    const email = clean(payload.email, 160).toLowerCase();
-    const body = clean(payload.body, 2000);
+    const articleId = clean(payload.post_id, 80);
+    const authorName = clean(payload.name, 80);
+    const authorEmail = clean(payload.email, 160).toLowerCase();
+    const content = clean(payload.body, 2000);
 
-    if (!postId || !name || !body) {
+    if (!articleId || !authorName || !content) {
       return new Response(JSON.stringify({ error: 'Name and comment are required.' }), { status: 400 });
     }
 
     const { error } = await supabase.from('comments').insert({
-      post_id: postId,
-      name,
-      email: email || null,
-      body,
-      status: 'APPROVED',
+      article_id: articleId,
+      author_name: authorName,
+      author_email: authorEmail || null,
+      content,
+      published: true,
     });
 
     if (error) {

@@ -15,14 +15,21 @@ const post = (publishedRows ?? []).find(
   (row) => String(row.slug ?? '').trim() === requestedSlug,
 ) ?? null;
 
-const { data: comments, error: commentsError } = post
+const { data: commentRows, error: commentsError } = post
   ? await supabase
       .from('comments')
-      .select('id, name, body, created_at')
-      .eq('post_id', post.id)
-      .eq('status', 'APPROVED')
+      .select('id, author_name, author_email, content, created_at')
+      .eq('article_id', post.id)
+      .eq('published', true)
       .order('created_at', { ascending: false })
   : { data: [], error: null };
+
+const comments = (commentRows ?? []).map((comment) => ({
+  id: comment.id,
+  name: comment.author_name,
+  body: comment.content,
+  created_at: comment.created_at,
+}));
 
 const formatDate = (value) => {
   if (!value) return '';
