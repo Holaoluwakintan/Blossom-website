@@ -3,13 +3,36 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
+  canonical?: string;
+  noindex?: boolean;
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
   title = "BLOSSOM — The Creative World of Olaoluwa Michael",
-  description = "Official publishing ecosystem of Olaoluwa Michael: Author of 'TWISTED' & 'GOLGOTHA', AI Creative Specialist, and Stickman Storyteller.",
-  image = "/assets/images/input_file_11.png"
+  description = "Official publishing ecosystem of Olaoluwa Michael: books, faith-based reflections, visual imagination, and creative work by Olaoluwa Michael.",
+  image = "/assets/images/input_file_11.png",
+  canonical,
+  noindex = false,
+  structuredData,
 } = Astro.props;
+
+const siteUrl = 'https://olaoluwamichael.vercel.app';
+const canonicalUrl = canonical || new URL(Astro.url.pathname, siteUrl).toString();
+const imageUrl = image.startsWith('http') ? image : new URL(image, siteUrl).toString();
+const defaultStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'BLOSSOM',
+  alternateName: 'The Creative World of Olaoluwa Michael',
+  url: siteUrl,
+  description,
+  publisher: {
+    '@type': 'Person',
+    name: 'Olaoluwa Michael',
+  },
+};
+const schemaItems = structuredData ? (Array.isArray(structuredData) ? structuredData : [structuredData]) : [defaultStructuredData];
 ---
 
 <!DOCTYPE html>
@@ -19,6 +42,22 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="author" content="Olaoluwa Michael" />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta name="theme-color" content="#02050B" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BLOSSOM" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:alt" content={title} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+    {schemaItems.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item).replace(/</g, '\\u003c')} />)}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />

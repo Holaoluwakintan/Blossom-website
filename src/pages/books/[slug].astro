@@ -47,7 +47,28 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
 
 <BaseLayout
   title={`${book.title} | BLOSSOM`}
-  description={book.synopsis ?? book.description ?? `Explore ${book.title} by ${book.author}.`}
+  description={book.synopsis ?? book.description ?? `Explore ${book.title} by ${book.author ?? 'Olaoluwa Michael'}.`}
+  image={book.cover_image_url}
+  canonical={`https://olaoluwamichael.vercel.app/books/${book.slug}`}
+  structuredData={{
+    '@context': 'https://schema.org',
+    '@type': 'Book',
+    name: book.title,
+    author: { '@type': 'Person', name: book.author ?? 'Olaoluwa Michael' },
+    image: book.cover_image_url,
+    description: book.synopsis ?? book.description,
+    genre: book.genre,
+    datePublished: book.publication_year ? String(book.publication_year) : undefined,
+    url: `https://olaoluwamichael.vercel.app/books/${book.slug}`,
+    isAccessibleForFree: isFree,
+    offers: !isFree && book.price_ngn ? {
+      '@type': 'Offer',
+      price: Number(book.price_ngn),
+      priceCurrency: 'NGN',
+      availability: 'https://schema.org/InStock',
+      url: `https://olaoluwamichael.vercel.app/books/${book.slug}`,
+    } : undefined,
+  }}
 >
   <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
 

@@ -19,7 +19,23 @@ if (error || !artwork) {
 
 ---
 
-<BaseLayout title={`${artwork.title} | Imagination World | BLOSSOM`} description={artwork.caption || artwork.story || `Explore ${artwork.title} in Imagination World.`}>
+<BaseLayout
+  title={`${artwork.title} | Imagination World | BLOSSOM`}
+  description={artwork.caption || artwork.story || `Explore ${artwork.title} in Imagination World.`}
+  image={artwork.image_url}
+  canonical={`https://olaoluwamichael.vercel.app/imagination/${artwork.slug}`}
+  structuredData={{
+    '@context': 'https://schema.org',
+    '@type': 'VisualArtwork',
+    name: artwork.title,
+    image: artwork.image_url,
+    description: artwork.caption || artwork.story,
+    artMedium: 'Digital illustration',
+    artform: 'Faith-based stickman artwork',
+    creator: { '@type': 'Person', name: 'Olaoluwa Michael' },
+    url: `https://olaoluwamichael.vercel.app/imagination/${artwork.slug}`,
+  }}
+>
   <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
     <section class="max-w-7xl mx-auto px-6 pt-8 lg:pt-12">
       <a href="/imagination" class="inline-flex items-center gap-3 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 hover:text-[#E8C868] transition-colors"><span class="text-lg">←</span> Back to Imagination World</a>

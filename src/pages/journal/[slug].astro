@@ -40,6 +40,20 @@ const paragraphs = (post?.content_markdown || '')
 <BaseLayout
   title={post ? `${post.title} | Faith Journal` : 'Journal Article | BLOSSOM'}
   description={post?.excerpt || 'A Bible-based reflection from the BLOSSOM Faith Journal.'}
+  image={post?.featured_image_url || undefined}
+  canonical={post ? `https://olaoluwamichael.vercel.app/journal/${post.slug}` : undefined}
+  structuredData={post ? {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.featured_image_url || undefined,
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at || post.published_at || post.created_at,
+    author: { '@type': 'Person', name: post.author_name || 'Olaoluwa Michael' },
+    publisher: { '@type': 'Person', name: 'Olaoluwa Michael' },
+    mainEntityOfPage: `https://olaoluwamichael.vercel.app/journal/${post.slug}`,
+  } : undefined}
 >
   <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
     {!post && (
