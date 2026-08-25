@@ -65,7 +65,7 @@ const formatDate = (value) => {
       )}
 
       {featuredPost && (
-        <a href={`/journal/${featuredPost.slug}`} class="group grid gap-8 border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60 md:grid-cols-[0.8fr_1.2fr] md:p-10">
+        <a href={`/journal/${featuredPost.slug.trim()}`} class="group grid gap-8 border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60 md:grid-cols-[0.8fr_1.2fr] md:p-10">
           {featuredPost.cover_image_url ? (
             <img src={featuredPost.cover_image_url} alt={featuredPost.title} class="aspect-[16/10] w-full object-cover" />
           ) : (
@@ -94,7 +94,7 @@ const formatDate = (value) => {
           </div>
           <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {collectionPosts.map((post) => (
-              <a href={`/journal/${post.slug}`} class="group border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60">
+              <a href={`/journal/${post.slug.trim()}`} class="group border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60">
                 {post.cover_image_url && <img src={post.cover_image_url} alt={post.title} class="mb-6 aspect-[16/10] w-full object-cover" loading="lazy" />}
                 <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-[#E8C868]">{post.category}</p>
                 <h3 class="mt-4 font-cinzel text-2xl font-bold leading-tight transition-colors group-hover:text-[#E8C868]">{post.title}</h3>
