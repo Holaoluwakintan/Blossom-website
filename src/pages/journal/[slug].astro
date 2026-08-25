@@ -25,11 +25,8 @@ const { data: commentRows, error: commentsError } = post
 const comments = (commentRows ?? [])
   .filter((comment) => {
     const commentArticleId = comment.article_id ?? comment.post_id;
-    const isVisible =
-      comment.published === true ||
-      comment.published === 'true' ||
-      comment.status === 'APPROVED' ||
-      comment.status === 'PUBLISHED';
+    const publicationValue = comment.PUBLISHED ?? comment.published ?? comment.status;
+    const isVisible = ['PUBLISHED', 'APPROVED', 'true', true].includes(publicationValue);
     return String(commentArticleId) === String(post?.id) && isVisible;
   })
   .map((comment) => ({

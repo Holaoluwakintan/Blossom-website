@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
       author_name: authorName,
       author_email: authorEmail || null,
       content,
-      published: true,
+      PUBLISHED: 'PUBLISHED',
     });
 
     if (error) {
