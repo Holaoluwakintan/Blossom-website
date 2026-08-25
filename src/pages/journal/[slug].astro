@@ -18,18 +18,26 @@ const post = (publishedRows ?? []).find(
 const { data: commentRows, error: commentsError } = post
   ? await supabase
       .from('comments')
-      .select('id, author_name, author_email, content, created_at')
-      .eq('article_id', post.id)
-      .eq('published', true)
+      .select('*')
       .order('created_at', { ascending: false })
   : { data: [], error: null };
 
-const comments = (commentRows ?? []).map((comment) => ({
-  id: comment.id,
-  name: comment.author_name,
-  body: comment.content,
-  created_at: comment.created_at,
-}));
+const comments = (commentRows ?? [])
+  .filter((comment) => {
+    const commentArticleId = comment.article_id ?? comment.post_id;
+    const isVisible =
+      comment.published === true ||
+      comment.published === 'true' ||
+      comment.status === 'APPROVED' ||
+      comment.status === 'PUBLISHED';
+    return String(commentArticleId) === String(post?.id) && isVisible;
+  })
+  .map((comment) => ({
+    id: comment.id,
+    name: comment.author_name ?? comment.name ?? comment.author ?? 'Reader',
+    body: comment.content ?? comment.comment ?? comment.text ?? '',
+    created_at: comment.created_at,
+  }));
 
 const formatDate = (value) => {
   if (!value) return '';
