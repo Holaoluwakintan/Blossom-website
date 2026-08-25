@@ -18,6 +18,19 @@ if (error || !book) {
   );
 }
 
+const { data: reviews, error: reviewsError } = await supabase
+  .from('book_reviews')
+  .select('id, rating, review_title, review_body, reviewer_name, created_at')
+  .eq('book_id', book.id)
+  .eq('status', 'PUBLISHED')
+  .order('created_at', { ascending: false });
+
+const publishedReviews = reviews ?? [];
+const averageRating = publishedReviews.length
+  ? publishedReviews.reduce((sum, review) => sum + Number(review.rating), 0) / publishedReviews.length
+  : 0;
+const roundedAverageRating = averageRating ? averageRating.toFixed(1) : '0.0';
+
 const downloadUrl = book.download_url ?? null;
 
 // Balm of Gilead remains a free download when it has a download URL and no price.
@@ -257,6 +270,63 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
       )}
 
 
+      <!-- REVIEWS -->
+      <section id="book-reviews" class="max-w-4xl mx-auto mt-20 pt-12 border-t border-white/10">
+        <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-xs font-mono uppercase tracking-[0.25em] text-[#E8C868] mb-5">Reader response</p>
+            <h2 class="font-cinzel text-2xl sm:text-3xl font-bold">Reviews for {book.title}</h2>
+          </div>
+          <div class="text-left sm:text-right">
+            <p class="text-3xl font-cinzel font-bold text-[#E8C868]">{roundedAverageRating} <span class="text-xl">★</span></p>
+            <p class="text-xs font-mono uppercase tracking-widest text-slate-500">{publishedReviews.length} {publishedReviews.length === 1 ? 'review' : 'reviews'}</p>
+          </div>
+        </div>
+
+        {reviewsError && <p class="mt-8 text-sm text-red-300">Reviews could not be loaded right now.</p>}
+        {!reviewsError && publishedReviews.length === 0 && <p class="mt-8 leading-8 text-slate-400">No reviews yet. Be the first reader to share a thoughtful response.</p>}
+        <div class="mt-8 space-y-5">
+          {publishedReviews.map((review) => (
+            <article class="border border-white/10 bg-[#080D16] p-6">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{review.reviewer_name}</p>
+                <p class="text-[#E8C868]" aria-label={`${review.rating} out of 5 stars`}>{'★'.repeat(Number(review.rating))}{'☆'.repeat(5 - Number(review.rating))}</p>
+              </div>
+              {review.review_title && <h3 class="mt-4 font-cinzel text-lg font-bold text-[#F6F3EC]">{review.review_title}</h3>}
+              <p class="mt-3 leading-8 text-slate-300">{review.review_body}</p>
+              <p class="mt-4 font-mono text-[10px] uppercase tracking-widest text-slate-600">{formatDate(review.created_at)}</p>
+            </article>
+          ))}
+        </div>
+
+        <div class="mt-12 border border-[#E8C868]/20 bg-[#080D16] p-7 sm:p-9">
+          <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868]">Share your thoughts</p>
+          <h3 class="mt-3 font-cinzel text-2xl font-bold">Leave a review.</h3>
+          <p class="mt-4 leading-7 text-slate-400">Your review will appear immediately. Please keep it honest, respectful, and useful to future readers.</p>
+          <form id="book-review-form" class="mt-7 space-y-5">
+            <input type="hidden" name="book_id" value={book.id} />
+            <input type="text" name="website_url" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+            <div>
+              <label for="review-rating" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400">Rating</label>
+              <select id="review-rating" name="rating" required class="mt-2 w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]">
+                <option value="">Choose a rating</option>
+                <option value="5">5 — Excellent</option>
+                <option value="4">4 — Very good</option>
+                <option value="3">3 — Good</option>
+                <option value="2">2 — Needs improvement</option>
+                <option value="1">1 — Not for me</option>
+              </select>
+            </div>
+            <input name="reviewer_name" required maxlength="80" placeholder="Your name" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+            <input name="reviewer_email" type="email" maxlength="160" placeholder="Email (kept private, optional)" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+            <input name="review_title" maxlength="120" placeholder="Review headline (optional)" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+            <textarea name="review_body" required maxlength="2000" rows="6" placeholder="What did you think about the book?" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]"></textarea>
+            <button type="submit" class="bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC]">Publish review →</button>
+            <p id="book-review-status" class="text-sm text-slate-400" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
       <!-- BACK TO BOOKS -->
       <div class="max-w-4xl mx-auto mt-16 pt-8 border-t border-white/10">
 
@@ -311,4 +381,33 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
       });
     </script>
   )}
+  <script is:inline>
+    const reviewForm = document.getElementById('book-review-form');
+    const reviewStatus = document.getElementById('book-review-status');
+
+    reviewForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!reviewForm || !reviewStatus) return;
+      reviewStatus.textContent = 'Publishing your review…';
+      const submitButton = reviewForm.querySelector('button[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
+
+      try {
+        const response = await fetch('/api/book-reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(new FormData(reviewForm).entries())),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'Review could not be published.');
+        reviewForm.reset();
+        reviewStatus.textContent = 'Thank you. Your review is now visible.';
+        window.setTimeout(() => window.location.reload(), 700);
+      } catch (error) {
+        reviewStatus.textContent = error instanceof Error ? error.message : 'Review could not be published.';
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    });
+  </script>
 </BaseLayout>
