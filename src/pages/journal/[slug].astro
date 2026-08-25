@@ -4,20 +4,22 @@ import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
 
-const { slug } = Astro.params;
+const requestedSlug = (Astro.params.slug ?? '').trim();
 
-const { data: post, error: postError } = await supabase
+const { data: publishedRows, error: postError } = await supabase
   .from('journal_posts')
   .select('*')
-  .eq('slug', slug)
-  .eq('status', 'PUBLISHED')
-  .maybeSingle();
+  .eq('status', 'PUBLISHED');
+
+const post = (publishedRows ?? []).find(
+  (row) => String(row.slug ?? '').trim() === requestedSlug,
+) ?? null;
 
 const { data: comments, error: commentsError } = post
   ? await supabase
       .from('comments')
-      .select('id, author_name, content, created_at')
-      .eq('article_id', post.id)
+      .select('id, name, body, created_at')
+      .eq('post_id', post.id)
       .eq('status', 'APPROVED')
       .order('created_at', { ascending: false })
   : { data: [], error: null };
@@ -40,20 +42,6 @@ const paragraphs = (post?.content_markdown || '')
 <BaseLayout
   title={post ? `${post.title} | Faith Journal` : 'Journal Article | BLOSSOM'}
   description={post?.excerpt || 'A Bible-based reflection from the BLOSSOM Faith Journal.'}
-  image={post?.featured_image_url || undefined}
-  canonical={post ? `https://olaoluwamichael.vercel.app/journal/${post.slug}` : undefined}
-  structuredData={post ? {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: post.title,
-    description: post.excerpt,
-    image: post.featured_image_url || undefined,
-    datePublished: post.published_at || post.created_at,
-    dateModified: post.updated_at || post.published_at || post.created_at,
-    author: { '@type': 'Person', name: post.author_name || 'Olaoluwa Michael' },
-    publisher: { '@type': 'Person', name: 'Olaoluwa Michael' },
-    mainEntityOfPage: `https://olaoluwamichael.vercel.app/journal/${post.slug}`,
-  } : undefined}
 >
   <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
     {!post && (
@@ -102,8 +90,8 @@ const paragraphs = (post?.content_markdown || '')
               <div class="mt-8 space-y-5">
                 {comments?.map((comment) => (
                   <article class="border border-white/10 bg-[#080D16] p-6">
-                    <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{comment.author_name}</p>
-                    <p class="mt-4 leading-8 text-slate-300">{comment.content}</p>
+                    <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{comment.name}</p>
+                    <p class="mt-4 leading-8 text-slate-300">{comment.body}</p>
                     <p class="mt-4 font-mono text-[10px] uppercase tracking-widest text-slate-600">{formatDate(comment.created_at)}</p>
                   </article>
                 ))}
@@ -115,10 +103,10 @@ const paragraphs = (post?.content_markdown || '')
               <h2 class="mt-4 font-cinzel text-3xl font-bold">Leave a response.</h2>
               <p class="mt-5 leading-8 text-slate-400">Your comment will be reviewed before it appears publicly.</p>
               <form id="comment-form" class="mt-8 space-y-5">
-                <input type="hidden" name="article_id" value={post.id} />
-                <input name="author_name" required maxlength="80" placeholder="Your name" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
-                <input name="author_email" type="email" required maxlength="160" placeholder="Email address" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
-                <textarea name="content" required maxlength="2000" rows="6" placeholder="Write your response..." class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]"></textarea>
+                <input type="hidden" name="post_id" value={post.id} />
+                <input name="name" required maxlength="80" placeholder="Your name" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+                <input name="email" type="email" maxlength="160" placeholder="Email (optional)" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+                <textarea name="body" required maxlength="2000" rows="6" placeholder="Write your response..." class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]"></textarea>
                 <button type="submit" class="bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B]">Submit for review →</button>
                 <p id="comment-status" class="text-sm text-slate-400" aria-live="polite"></p>
               </form>
@@ -142,7 +130,7 @@ const paragraphs = (post?.content_markdown || '')
     const payload = Object.fromEntries(formData.entries());
 
     try {
-      const response = await fetch('/api/comments/submit', {
+      const response = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
