@@ -30,6 +30,8 @@ const averageRating = publishedReviews.length
   ? publishedReviews.reduce((sum, review) => sum + Number(review.rating), 0) / publishedReviews.length
   : 0;
 const roundedAverageRating = averageRating ? averageRating.toFixed(1) : '0.0';
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium' }).format(new Date(value));
 
 const downloadUrl = book.download_url ?? null;
 
