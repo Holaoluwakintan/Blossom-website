@@ -19,8 +19,8 @@ export const POST: APIRoute = async ({ request }) => {
     const authorEmail = clean(payload.email, 160).toLowerCase();
     const content = clean(payload.body, 2000);
 
-    if (!articleId || !authorName || !content) {
-      return new Response(JSON.stringify({ error: 'Name and comment are required.' }), { status: 400 });
+    if (!articleId || !authorName || !authorEmail || !content) {
+      return new Response(JSON.stringify({ error: 'Name, email, and comment are required.' }), { status: 400 });
     }
 
     const { error } = await supabase.from('comments').insert({
