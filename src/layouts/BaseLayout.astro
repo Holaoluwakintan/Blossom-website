@@ -49,6 +49,12 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'} />
     <link rel="canonical" href={canonicalUrl} />
     <meta name="theme-color" content="#02050B" />
+    <script is:inline>
+      try {
+        const savedTheme = localStorage.getItem('blossom-theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+      } catch {}
+    </script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="BLOSSOM" />
     <meta property="og:title" content={title} />
@@ -69,10 +75,21 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
       ::selection { background-color: #D4AF37; color: #02050B; }
       .editorial-grid-lines {
         background-size: 64px 64px;
-        background-image: 
+        background-image:
           linear-gradient(to right, rgba(212, 175, 55, 0.03) 1px, transparent 1px),
           linear-gradient(to bottom, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
-      } 
+      }
+      main > * { animation: blossom-rise 650ms ease both; }
+      @keyframes blossom-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
+      html[data-theme="light"] body { background-color: #f7f4ec !important; color: #27303a !important; background-image: none !important; }
+      html[data-theme="light"] [class*="bg-[#02050B]"], html[data-theme="light"] [class*="bg-[#050A12]"], html[data-theme="light"] [class*="bg-[#081021]"], html[data-theme="light"] [class*="bg-[#080D16]"] { background-color: #f7f4ec !important; }
+      html[data-theme="light"] [class*="text-[#F6F3EC]"] { color: #20252b !important; }
+      html[data-theme="light"] [class*="text-slate-300"], html[data-theme="light"] [class*="text-slate-400"], html[data-theme="light"] [class*="text-slate-500"] { color: #52606d !important; }
+      html[data-theme="light"] [class*="border-white/10"], html[data-theme="light"] [class*="border-white/\[0.1\]"], html[data-theme="light"] [class*="border-[#D4AF37]/10"] { border-color: rgba(111, 83, 18, 0.2) !important; }
+      html[data-theme="light"] nav { background-color: rgba(247, 244, 236, 0.92) !important; }
+      html[data-theme="light"] footer { background-color: #eee9dd !important; }
+      html[data-theme="light"] .editorial-grid-lines { background-image: linear-gradient(to right, rgba(111, 83, 18, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(111, 83, 18, 0.06) 1px, transparent 1px); }
 
     </style>
   </head>
@@ -93,6 +110,9 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
           <a href="/about" class="hover:text-[#E8C868]">About</a>
           <a href="/journal" class="hover:text-[#E8C868]">Journal</a>
         </div>
+        <button type="button" id="theme-toggle" class="border border-[#D4AF37]/30 px-3 py-2 text-[10px] uppercase tracking-[0.14em] font-mono text-[#E8C868] transition-colors hover:bg-[#D4AF37]/10 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60" aria-label="Switch to light mode" title="Switch theme">
+          <span id="theme-toggle-label">Light mode</span>
+        </button>
         <button
           type="button"
           id="mobile-menu-button"
@@ -127,6 +147,19 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
     <script is:inline>
       const mobileMenuButton = document.getElementById('mobile-menu-button');
       const mobileMenu = document.getElementById('mobile-menu');
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeToggleLabel = document.getElementById('theme-toggle-label');
+      const applyTheme = (theme) => {
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem('blossom-theme', theme); } catch {}
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        themeToggle?.setAttribute('aria-label', `Switch to ${nextTheme} mode`);
+        if (themeToggleLabel) themeToggleLabel.textContent = `${nextTheme} mode`;
+      };
+      applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+      themeToggle?.addEventListener('click', () => {
+        applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+      });
 
       mobileMenuButton?.addEventListener('click', () => {
         const isOpen = mobileMenuButton.getAttribute('aria-expanded') === 'true';
