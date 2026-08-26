@@ -118,7 +118,7 @@ const paragraphs = (post?.content_markdown || '')
                 <input name="name" required maxlength="80" placeholder="Your name" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
                 <input name="email" type="email" required maxlength="160" placeholder="Email" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
                 <textarea name="body" required maxlength="2000" rows="6" placeholder="Write your response..." class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]"></textarea>
-                <button type="submit" class="bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B]">Submit for review →</button>
+                <button type="submit" class="bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B]">Publish response →</button>
                 <p id="comment-status" class="text-sm text-slate-400" aria-live="polite"></p>
               </form>
             </div>
@@ -149,7 +149,7 @@ const paragraphs = (post?.content_markdown || '')
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || 'Comment could not be submitted.');
       form.reset();
-      status.textContent = 'Thank you. Your comment has been submitted for review.';
+      status.textContent = 'Thank you. Your comment has been published.';
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : 'Comment could not be submitted.';
     }
