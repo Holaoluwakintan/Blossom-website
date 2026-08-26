@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { supabase } from '../../lib/supabase';
+import ShareActions from '../../components/ShareActions.astro';
 
 export const prerender = false;
 
 const { slug } = Astro.params;
+const shareUrl = `https://olaoluwamichael.vercel.app/imagination/${String(slug ?? '').trim()}`;
 
 const { data: artwork, error } = await supabase
   .from('artworks')
@@ -70,6 +72,7 @@ if (error || !artwork) {
             <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500 mb-4">Artwork access</p>
             <a href={artwork.image_url} target="_blank" rel="noopener noreferrer" download class="inline-flex items-center justify-center px-7 py-4 border border-white/20 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Open / Save Watermarked Artwork</a>
             <p class="text-xs leading-6 text-slate-500 mt-5">This artwork is part of the BLOSSOM faith-based creative world. The public gallery version is watermarked and is displayed for reflection, not sale.</p>
+            <ShareActions title={artwork.title} url={shareUrl} label="Share this artwork" />
           </div>
         </div>
       </div>

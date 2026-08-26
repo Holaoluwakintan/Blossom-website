@@ -1,0 +1,39 @@
+---
+interface Props {
+  title: string;
+  url: string;
+  label?: string;
+}
+
+const { title, url, label = 'Share this' } = Astro.props;
+const encodedUrl = encodeURIComponent(url);
+const encodedText = encodeURIComponent(`${title} — ${url}`);
+const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+---
+
+<div class="mt-10 border-y border-white/10 py-7" data-share-block>
+  <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868]">{label}</p>
+  <div class="mt-4 flex flex-wrap gap-3">
+    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center border border-[#E8C868]/40 px-4 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-[#E8C868] transition-colors hover:bg-[#E8C868] hover:text-[#02050B]">WhatsApp</a>
+    <a href={facebookUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center border border-white/15 px-4 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 transition-colors hover:border-[#E8C868] hover:text-[#E8C868]">Facebook</a>
+    <button type="button" data-copy-share={url} class="inline-flex items-center justify-center border border-white/15 px-4 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 transition-colors hover:border-[#E8C868] hover:text-[#E8C868]">Copy link</button>
+  </div>
+  <p data-copy-status class="mt-3 min-h-5 text-xs text-slate-500" aria-live="polite"></p>
+</div>
+
+<script is:inline>
+  document.querySelectorAll('[data-share-block]').forEach((block) => {
+    const button = block.querySelector('[data-copy-share]');
+    const status = block.querySelector('[data-copy-status]');
+    button?.addEventListener('click', async () => {
+      const value = button.getAttribute('data-copy-share') || window.location.href;
+      try {
+        await navigator.clipboard.writeText(value);
+        if (status) status.textContent = 'Link copied.';
+      } catch {
+        window.prompt('Copy this link:', value);
+      }
+    });
+  });
+</script>

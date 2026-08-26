@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { supabase } from '../../lib/supabase';
+import ShareActions from '../../components/ShareActions.astro';
 
 export const prerender = false;
 
@@ -58,6 +59,7 @@ const whatsappOrderUrl = `https://wa.me/2348148034092?text=${encodeURIComponent(
 const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURIComponent(
   `Book order: ${book.title}`
 )}&body=${encodeURIComponent(orderMessage)}`;
+const shareUrl = `https://olaoluwamichael.vercel.app/books/${String(book.slug).trim()}`;
 ---
 
 <BaseLayout
@@ -163,6 +165,8 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
             </div>
           )}
 
+
+          <ShareActions title={book.title} url={shareUrl} label="Share this book" />
 
           <!-- ACTION AREA -->
           <div class="flex flex-wrap gap-4 mb-8">

@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { supabase } from '../../lib/supabase';
+import ShareActions from '../../components/ShareActions.astro';
 
 export const prerender = false;
 
 const requestedSlug = (Astro.params.slug ?? '').trim();
+const shareUrl = `https://olaoluwamichael.vercel.app/journal/${requestedSlug}`;
 
 const { data: publishedRows, error: postError } = await supabase
   .from('journal_posts')
@@ -89,6 +91,8 @@ const paragraphs = (post?.content_markdown || '')
               return heading ? <h2>{text}</h2> : <p>{text}</p>;
             })}
           </div>
+
+          <ShareActions title={post.title} url={shareUrl} label="Share this reflection" />
         </article>
 
         <section class="border-t border-white/10 bg-[#050912]">
