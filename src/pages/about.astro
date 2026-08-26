@@ -1,56 +1,146 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-export const prerender = true;
+const services = [
+  {
+    number: '01',
+    title: 'AI Creative Services',
+    text: 'AI-powered visual creation, prompt engineering, image generation, creative concepts and practical AI workflows designed to turn ideas into finished creative work.'
+  },
+  {
+    number: '02',
+    title: 'Content Creation',
+    text: 'Creative content for brands, individuals and organizations — from concepts and storytelling to social media visuals and engaging digital campaigns.'
+  },
+  {
+    number: '03',
+    title: 'AI Training & Education',
+    text: 'Practical AI training for beginners, creators, businesses and professionals who want to understand how to use AI effectively in their everyday work.'
+  },
+  {
+    number: '04',
+    title: 'Digital Marketing',
+    text: 'Social media strategy, content planning, audience engagement and practical digital marketing guidance designed to help ideas reach the right people.'
+  },
+  {
+    number: '05',
+    title: 'Creative Design',
+    text: 'Graphic design, visual communication, branding, promotional artwork, book promotion and creative campaign development.'
+  },
+  {
+    number: '06',
+    title: 'Creative Collaboration',
+    text: 'I am open to meaningful collaborations with creators, brands, organizations, churches, publishers and individuals with ideas worth bringing to life.'
+  }
+];
+
+const community = [
+  {
+    number: '01',
+    title: 'Daily Christian Stories',
+    text: 'I create and share daily Christian stories, reflections and visual content designed to make people think, laugh, reflect and ultimately draw closer to Jesus.'
+  },
+  {
+    number: '02',
+    title: 'Stickman Stories',
+    text: 'My distinctive stickman storytelling style turns everyday situations, Bible stories and invisible truths into simple visual experiences people can easily connect with.'
+  },
+  {
+    number: '03',
+    title: 'Creative Experiments',
+    text: 'I constantly experiment with AI, storytelling, visual creativity and technology — and share what I learn along the way.'
+  }
+];
 ---
 
 <BaseLayout
   title="About | BLOSSOM"
-  description="Learn about Olaoluwa Michael and the faith-rooted creative world behind BLOSSOM."
+  description="Learn about Olaoluwa Michael, his creative work, and the faith-rooted purpose behind BLOSSOM."
 >
-  <main class="bg-[#02050B] text-[#F6F3EC] overflow-hidden">
+  <main class="min-h-screen overflow-hidden bg-[#02050B] text-[#F6F3EC]">
     <section class="relative overflow-hidden border-b border-white/10">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(232,200,104,0.15),transparent_34%),radial-gradient(circle_at_15%_80%,rgba(232,200,104,0.08),transparent_30%)]"></div>
-      <div class="relative max-w-5xl mx-auto px-6 py-24 lg:py-32 text-center">
-        <p class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868] mb-7">About BLOSSOM</p>
-        <h1 class="font-cinzel text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight">A creative world<br /><span class="font-editorial italic font-normal text-[#E8C868]">with purpose.</span></h1>
-        <p class="max-w-2xl mx-auto mt-8 text-base sm:text-lg leading-8 text-slate-400">BLOSSOM is the creative home of Olaoluwa Michael—a growing ecosystem of stories, visual imagination, and faith-rooted ideas made to leave something meaningful in the heart.</p>
+      <div class="pointer-events-none absolute inset-0">
+        <div class="absolute left-1/2 top-0 h-[560px] w-[900px] -translate-x-1/2 bg-[radial-gradient(circle,rgba(232,200,104,0.14),transparent_65%)]"></div>
+      </div>
+      <div class="relative mx-auto max-w-7xl px-6 pb-24 pt-24 lg:pb-32 lg:pt-32">
+        <p class="mb-7 text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">About Olaoluwa Michael</p>
+        <div class="grid items-end gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <h1 class="font-cinzel text-5xl font-bold leading-[1.02] sm:text-7xl lg:text-8xl">
+            A creative life<br />
+            <span class="font-editorial font-normal italic text-[#E8C868]">with purpose.</span>
+          </h1>
+          <p class="max-w-xl text-base leading-8 text-slate-400 sm:text-lg">
+            I am Olaoluwa Michael — a writer, creative storyteller, AI creative specialist and stickman storyteller building BLOSSOM at the meeting point of imagination, faith and meaningful work.
+          </p>
+        </div>
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
-      <div class="grid lg:grid-cols-[0.8fr_1.2fr] gap-12 lg:gap-20">
+    <section class="mx-auto max-w-7xl px-6 py-20 lg:py-28">
+      <div class="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-24">
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">The person behind the work</p>
-          <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5">Stories, images, and ideas that point somewhere.</h2>
+          <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">The person behind the work</p>
+          <h2 class="mt-6 max-w-md font-cinzel text-3xl font-bold leading-tight sm:text-5xl">Stories, ideas and images that point somewhere.</h2>
         </div>
-        <div class="space-y-6 text-slate-400 leading-8">
-          <p>Olaoluwa Michael is a writer and creative storyteller interested in the places where imagination, truth, and faith meet. Through books and visual work, he creates experiences that invite people to think deeply, feel honestly, and look again at the world around them.</p>
-          <p>BLOSSOM is more than a collection of finished works. It is a living creative space for stories that challenge, images that reflect, and ideas that encourage hope.</p>
-          <p>The work is rooted in a simple belief: creativity can be beautiful while still carrying purpose, and a good story can leave a person closer to truth, courage, and Jesus.</p>
+        <div class="space-y-6 text-base leading-8 text-slate-400 sm:text-lg">
+          <p>I create books, reflections, visual stories and practical creative work for people who believe that imagination can carry truth and that good work should leave something meaningful behind.</p>
+          <p>BLOSSOM is my growing creative ecosystem: a home for written stories, Bible-based reflections, stickman art, AI experiments and services that help other people bring their ideas to life.</p>
+          <p>My work is rooted in faith. I want creativity to be beautiful without becoming empty, and I want every story, image or collaboration to make room for courage, hope and a closer walk with Jesus.</p>
         </div>
       </div>
     </section>
 
     <section class="border-y border-white/10 bg-[#050A12]">
-      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
-        <div class="grid md:grid-cols-3 gap-10">
-          <div><p class="font-cinzel text-2xl text-[#E8C868]">01</p><h2 class="font-cinzel text-2xl font-bold mt-4">Writing</h2><p class="text-sm leading-7 text-slate-400 mt-4">Fiction, reflections, and stories built to open new worlds and stay with readers after the final page.</p></div>
-          <div><p class="font-cinzel text-2xl text-[#E8C868]">02</p><h2 class="font-cinzel text-2xl font-bold mt-4">Imagination</h2><p class="text-sm leading-7 text-slate-400 mt-4">Watermarked visual reflections and creative experiments that give faith and feeling a visible form.</p></div>
-          <div><p class="font-cinzel text-2xl text-[#E8C868]">03</p><h2 class="font-cinzel text-2xl font-bold mt-4">Collaboration</h2><p class="text-sm leading-7 text-slate-400 mt-4">A place for thoughtful creative partnerships, storytelling projects, and work that serves a meaningful purpose.</p></div>
+      <div class="mx-auto max-w-7xl px-6 py-20 lg:py-28">
+        <div class="mb-12 max-w-2xl">
+          <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">What I do</p>
+          <h2 class="mt-5 font-cinzel text-3xl font-bold sm:text-5xl">Creative work for ideas worth building.</h2>
+          <p class="mt-5 leading-8 text-slate-400">From a first concept to a finished piece of communication, I help turn ideas into clear, useful and memorable creative work.</p>
+        </div>
+        <div class="grid gap-px border border-white/10 bg-white/10 md:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <article class="bg-[#050A12] p-7 sm:p-8">
+              <p class="font-cinzel text-2xl text-[#E8C868]">{service.number}</p>
+              <h3 class="mt-5 font-cinzel text-xl font-bold">{service.title}</h3>
+              <p class="mt-4 text-sm leading-7 text-slate-400">{service.text}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
 
-    <section class="max-w-4xl mx-auto px-6 py-20 lg:py-28 text-center">
-      <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Come further in</p>
-      <h2 class="font-cinzel text-3xl sm:text-5xl font-bold mt-5">Explore the world.</h2>
-      <p class="text-slate-400 leading-8 mt-5 max-w-2xl mx-auto">Start with a book, spend time in Imagination World, or read a Bible-based reflection in the Faith Journal.</p>
-      <div class="flex flex-wrap justify-center gap-4 mt-9">
-        <a href="/books" class="inline-flex px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors">Explore Books</a>
-        <a href="/imagination" class="inline-flex px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Enter Imagination</a>
-        <a href="/journal" class="inline-flex px-8 py-4 border border-white/20 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Read Journal</a>
+    <section class="mx-auto max-w-7xl px-6 py-20 lg:py-28">
+      <div class="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
+        <div>
+          <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">Inside the ecosystem</p>
+          <h2 class="mt-6 font-cinzel text-3xl font-bold leading-tight sm:text-5xl">A community built around faith and creativity.</h2>
+        </div>
+        <div class="grid gap-8 sm:grid-cols-3">
+          {community.map((item) => (
+            <article>
+              <p class="font-cinzel text-2xl text-[#E8C868]">{item.number}</p>
+              <h3 class="mt-4 font-cinzel text-xl font-bold">{item.title}</h3>
+              <p class="mt-4 text-sm leading-7 text-slate-400">{item.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="border-t border-white/10 bg-[#050A12]">
+      <div class="mx-auto max-w-4xl px-6 py-20 text-center lg:py-28">
+        <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">Let us make something meaningful</p>
+        <h2 class="mt-6 font-cinzel text-3xl font-bold sm:text-5xl">Have an idea worth bringing to life?</h2>
+        <p class="mx-auto mt-6 max-w-2xl leading-8 text-slate-400">Whether you have a story, a campaign, a visual idea or a creative challenge, I would be glad to hear what you are building.</p>
+        <div class="mt-9 flex flex-wrap justify-center gap-4">
+          <a href="mailto:michaelo1aoluwa@gmail.com" class="inline-flex bg-[#E8C868] px-8 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-colors hover:bg-[#F6F3EC]">Start a conversation</a>
+          <a href="/books" class="inline-flex border border-[#E8C868]/50 px-8 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#E8C868] transition-colors hover:bg-[#E8C868] hover:text-[#02050B]">Explore BLOSSOM</a>
+        </div>
       </div>
     </section>
   </main>
 </BaseLayout>
+
+<style>
+  article { min-width: 0; }
+</style>
