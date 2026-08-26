@@ -9,7 +9,7 @@ const { data: books } = await supabase
   .select('*');
 
 const featuredBook = books?.find((book) => book.featured === true);
-const collectionBooks = books?.slice(0, 4) ?? [];
+const collectionBooks = (books ?? []).filter((book) => book.id !== featuredBook?.id).slice(0, 4);
 
 const { data: artworks, error: artworksError } = await supabase
   .from('artworks')
@@ -137,7 +137,7 @@ const featuredJournal = journalPosts?.[0];
       </div>
 
       {collectionBooks.length > 0 ? (
-<div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible">
+<div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {collectionBooks.map((book) => (
             <a href={'/books/' + book.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
               <div class="overflow-hidden bg-[#080D16] border border-white/10">
@@ -170,7 +170,7 @@ const featuredJournal = journalPosts?.[0];
         {artworksError ? (
           <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is temporarily unavailable.</div>
         ) : previewArtworks.length > 0 ? (
-          <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible">
+          <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {previewArtworks.map((artwork) => (
               <a href={'/imagination/' + artwork.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
                 <div class="overflow-hidden border border-white/10 bg-[#080D16]"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
@@ -215,21 +215,7 @@ const featuredJournal = journalPosts?.[0];
       </div>
     </section>
 
-    <section class="border-t border-white/10 bg-[#050A12]">
-      <div class="max-w-7xl mx-auto px-6 py-16 lg:py-20">
-        <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center border border-[#E8C868]/25 bg-[#080D16] p-8 sm:p-10">
-          <div>
-            <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Work with Olaoluwa</p>
-            <h2 class="mt-4 font-cinzel text-3xl sm:text-4xl font-bold">Have an idea worth bringing to life?</h2>
-            <p class="mt-4 max-w-2xl leading-8 text-slate-400">Writing, visual storytelling, creative design, AI-assisted concepts, and meaningful collaborations for brands, creators, churches, and organizations.</p>
-          </div>
-          <div class="flex flex-wrap gap-3 lg:justify-end">
-            <a href="mailto:michaelolaoluwagab@gmail.com?subject=Work%20with%20Olaoluwa" class="inline-flex items-center justify-center bg-[#E8C868] px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-[#02050B] transition-colors hover:bg-[#F6F3EC]">Start a conversation</a>
-            <a href="/about" class="inline-flex items-center justify-center border border-white/15 px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-[#F6F3EC] transition-colors hover:border-[#E8C868] hover:text-[#E8C868]">See the work →</a>
-          </div>
-        </div>
-      </div>
-    </section>
+
 
     <section class="border-t border-white/10 bg-[#050A12]">
       <div class="max-w-7xl mx-auto px-6 py-16 lg:py-20">
