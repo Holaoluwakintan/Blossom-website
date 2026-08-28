@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { supabase } from '../../lib/supabase';
-import ShareActions from '../../components/ShareActions.astro';
 
 export const prerender = false;
 
@@ -37,29 +36,16 @@ const formatDate = (value: string) =>
 const downloadUrl = book.download_url ?? null;
 
 // Balm of Gilead remains a free download when it has a download URL and no price.
-const isFree =
-  Boolean(downloadUrl) &&
-  (book.price_ngn === null ||
-    book.price_ngn === undefined ||
-    Number(book.price_ngn) === 0);
+// BLOSSOM books are now free to access. Support is optional and shown below.
+const isFree = true;
 
 const formatNaira = (price: number | string | null) =>
   `₦${Number(price).toLocaleString('en-NG')}`;
 
-const priceLabel =
-  book.price_ngn === null || book.price_ngn === undefined || book.price_ngn === ''
-    ? null
-    : formatNaira(book.price_ngn);
+const priceLabel = 'Free';
 
-const orderMessage = priceLabel
-  ? `Hi, my name is [your name]. I would like to order a copy of "${book.title}" for ${priceLabel}.`
-  : `Hi, my name is [your name]. I would like to order a copy of "${book.title}".`;
-
-const whatsappOrderUrl = `https://wa.me/2348148034092?text=${encodeURIComponent(orderMessage)}`;
-const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURIComponent(
-  `Book order: ${book.title}`
-)}&body=${encodeURIComponent(orderMessage)}`;
-const shareUrl = `https://olaoluwamichael.vercel.app/books/${String(book.slug).trim()}`;
+const supportMessage = `Hello Olaoluwa, I would like to support the BLOSSOM project.`;
+const supportWhatsAppUrl = `https://wa.me/2348148034092?text=${encodeURIComponent(supportMessage)}`;
 ---
 
 <BaseLayout
@@ -166,12 +152,10 @@ const shareUrl = `https://olaoluwamichael.vercel.app/books/${String(book.slug).t
           )}
 
 
-          <ShareActions title={book.title} url={shareUrl} label="Share this book" />
-
           <!-- ACTION AREA -->
           <div class="flex flex-wrap gap-4 mb-8">
 
-            {downloadUrl && isFree && (
+            {downloadUrl ? (
               <a
                 href={downloadUrl}
                 target="_blank"
@@ -180,6 +164,10 @@ const shareUrl = `https://olaoluwamichael.vercel.app/books/${String(book.slug).t
               >
                 Download Free E-Book
               </a>
+            ) : (
+              <p class="border border-[#E8C868]/30 px-6 py-4 text-sm text-[#E8C868]">
+                Free access · Digital edition coming soon
+              </p>
             )}
 
             {!isFree && (
@@ -239,17 +227,14 @@ const shareUrl = `https://olaoluwamichael.vercel.app/books/${String(book.slug).t
             </p>
           )}
 
-          {!isFree && (
-            <div class="border-t border-white/10 pt-5">
-              <p class="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-500 mb-1">
-                Price
-              </p>
-
-              <p class="font-cinzel text-xl sm:text-2xl font-bold text-[#E8C868]">
-                {priceLabel ?? 'Price available on request'}
-              </p>
-            </div>
-          )}
+          <div class="border-t border-white/10 pt-5">
+            <p class="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-500 mb-1">
+              Access
+            </p>
+            <p class="font-cinzel text-xl sm:text-2xl font-bold text-[#E8C868]">
+              Free digital edition
+            </p>
+          </div>
 
         </div>
 
@@ -333,6 +318,48 @@ const shareUrl = `https://olaoluwamichael.vercel.app/books/${String(book.slug).t
         </div>
       </section>
 
+      <!-- SUPPORT THE PROJECT -->
+      <section class="max-w-4xl mx-auto mt-20 border border-[#E8C868]/25 bg-[#080D16] p-7 sm:p-10">
+        <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Support the project</p>
+        <h2 class="mt-4 font-cinzel text-2xl sm:text-3xl font-bold">Enjoyed this book?</h2>
+        <p class="mt-4 max-w-2xl text-slate-400 leading-8">
+          These books are free to read and download. If you would like to support the stories,
+          artwork, and faith-based creative work behind BLOSSOM, you can give by bank transfer.
+        </p>
+        <button
+          type="button"
+          id="support-project-button"
+          aria-expanded="false"
+          aria-controls="support-project-details"
+          class="mt-7 inline-flex items-center justify-center bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC] transition-colors"
+        >
+          If you want to support my projects →
+        </button>
+        <div id="support-project-details" hidden class="mt-7 border-t border-white/10 pt-7">
+          <p class="text-xs font-mono uppercase tracking-[0.2em] text-slate-500">Bank transfer</p>
+          <dl class="mt-5 grid gap-4 sm:grid-cols-3">
+            <div>
+              <dt class="text-[10px] font-mono uppercase tracking-widest text-slate-500">Bank</dt>
+              <dd class="mt-1 text-lg text-[#F6F3EC]">FCMB</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-mono uppercase tracking-widest text-slate-500">Account number</dt>
+              <dd class="mt-1 text-lg font-mono text-[#F6F3EC]">6683003010</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-mono uppercase tracking-widest text-slate-500">Account name</dt>
+              <dd class="mt-1 text-lg text-[#F6F3EC]">Olaoluwa Michael</dd>
+            </div>
+          </dl>
+          <p class="mt-7 font-editorial text-xl italic text-[#E8C868]">God bless you as you give. Thank you.</p>
+          <div class="mt-6 flex flex-wrap gap-4">
+            <button type="button" id="copy-support-account" class="border border-[#E8C868]/50 px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-[#E8C868] hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Copy account number</button>
+            <a href={supportWhatsAppUrl} target="_blank" rel="noopener noreferrer" class="border border-white/15 px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Message on WhatsApp</a>
+          </div>
+          <p id="support-copy-status" class="mt-3 text-xs text-slate-500" aria-live="polite"></p>
+        </div>
+      </section>
+
       <!-- BACK TO BOOKS -->
       <div class="max-w-4xl mx-auto mt-16 pt-8 border-t border-white/10">
 
@@ -388,6 +415,28 @@ const shareUrl = `https://olaoluwamichael.vercel.app/books/${String(book.slug).t
     </script>
   )}
   <script is:inline>
+    const supportButton = document.getElementById('support-project-button');
+    const supportDetails = document.getElementById('support-project-details');
+    const copySupportAccount = document.getElementById('copy-support-account');
+    const supportCopyStatus = document.getElementById('support-copy-status');
+
+    supportButton?.addEventListener('click', () => {
+      if (!supportDetails) return;
+      const opening = supportDetails.hidden;
+      supportDetails.hidden = !opening;
+      supportButton.setAttribute('aria-expanded', String(opening));
+      supportButton.textContent = opening ? 'Hide support details' : 'If you want to support my projects →';
+    });
+
+    copySupportAccount?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText('6683003010');
+        if (supportCopyStatus) supportCopyStatus.textContent = 'Account number copied.';
+      } catch {
+        if (supportCopyStatus) supportCopyStatus.textContent = 'Account number: 6683003010';
+      }
+    });
+
     const reviewForm = document.getElementById('book-review-form');
     const reviewStatus = document.getElementById('book-review-status');
 

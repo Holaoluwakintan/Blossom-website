@@ -14,20 +14,9 @@ const featuredBook = books?.find((book) => book.featured === true);
 // but must never hide a book from the main grid.
 const collectionBooks = books ?? [];
 
-const isFreeBook = (book: any) =>
-  Boolean(book.download_url) &&
-  (book.price_ngn === null ||
-    book.price_ngn === undefined ||
-    book.price_ngn === '' ||
-    Number(book.price_ngn) === 0);
+const isFreeBook = (_book: any) => true;
 
-const formatNaira = (price: number | string | null) => {
-  if (price === null || price === undefined || price === '') {
-    return 'Price available soon';
-  }
-
-  return `₦${Number(price).toLocaleString('en-NG')}`;
-};
+const formatNaira = (_price: number | string | null) => 'Free';
 ---
 
 <BaseLayout
@@ -112,9 +101,8 @@ const formatNaira = (price: number | string | null) => {
             </a>
 
 
-            <!-- VERY OBVIOUS FREE DOWNLOAD LABEL -->
-            {featuredBook.download_url && (
-              <div class="relative mt-6 text-center">
+            <!-- CLEAR FREE ACCESS LABEL -->
+            <div class="relative mt-6 text-center">
 
                 <div
                   class="inline-flex items-center justify-center gap-3
@@ -129,15 +117,14 @@ const formatNaira = (price: number | string | null) => {
                   tracking-[0.2em]"
                 >
                   <span class="text-base">↓</span>
-                  Free E-Book Download
+                  Free Book Access
                 </div>
 
                 <p class="text-xs text-slate-500 font-mono mt-3">
-                  Download the digital edition completely free.
+                  Every BLOSSOM book is free to read. Download when available.
                 </p>
 
               </div>
-            )}
 
           </div>
 
@@ -325,11 +312,11 @@ const formatNaira = (price: number | string | null) => {
 
                     <div class="flex items-center justify-between gap-4">
 
-                      <!-- PROMINENT PRICE -->
+                      <!-- FREE ACCESS -->
                       <div>
 
                         <p class="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-500 mb-1">
-                          Get Your Copy
+                          Free access
                         </p>
 
                         <p class="font-cinzel text-xl sm:text-2xl font-bold text-[#E8C868]">
