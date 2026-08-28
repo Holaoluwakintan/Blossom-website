@@ -33,7 +33,9 @@ const roundedAverageRating = averageRating ? averageRating.toFixed(1) : '0.0';
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium' }).format(new Date(value));
 
-const downloadUrl = book.download_url ?? null;
+const downloadUrl = [book.download_url, book.file_url, book.public_url]
+  .find((value) => typeof value === 'string' && value.trim())
+  ?.trim() ?? null;
 
 // Balm of Gilead remains a free download when it has a download URL and no price.
 // BLOSSOM books are now free to access. Support is optional and shown below.
@@ -44,8 +46,7 @@ const formatNaira = (price: number | string | null) =>
 
 const priceLabel = 'Free';
 
-const supportMessage = `Hello Olaoluwa, I would like to support the BLOSSOM project.`;
-const supportWhatsAppUrl = `https://wa.me/2348148034092?text=${encodeURIComponent(supportMessage)}`;
+
 ---
 
 <BaseLayout
@@ -354,7 +355,6 @@ const supportWhatsAppUrl = `https://wa.me/2348148034092?text=${encodeURIComponen
           <p class="mt-7 font-editorial text-xl italic text-[#E8C868]">God bless you as you give. Thank you.</p>
           <div class="mt-6 flex flex-wrap gap-4">
             <button type="button" id="copy-support-account" class="border border-[#E8C868]/50 px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-[#E8C868] hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Copy account number</button>
-            <a href={supportWhatsAppUrl} target="_blank" rel="noopener noreferrer" class="border border-white/15 px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">Message on WhatsApp</a>
           </div>
           <p id="support-copy-status" class="mt-3 text-xs text-slate-500" aria-live="polite"></p>
         </div>

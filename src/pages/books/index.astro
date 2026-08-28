@@ -14,7 +14,12 @@ const featuredBook = books?.find((book) => book.featured === true);
 // but must never hide a book from the main grid.
 const collectionBooks = books ?? [];
 
-const isFreeBook = (_book: any) => true;
+const getDownloadUrl = (book: any) =>
+  [book.download_url, book.file_url, book.public_url]
+    .find((value) => typeof value === 'string' && value.trim())
+    ?.trim() ?? null;
+
+const isFreeBook = (book: any) => Boolean(getDownloadUrl(book));
 
 const formatNaira = (_price: number | string | null) => 'Free';
 ---
@@ -170,9 +175,9 @@ const formatNaira = (_price: number | string | null) => 'Free';
                 Explore Book →
               </a>
 
-              {featuredBook.download_url && (
+              {getDownloadUrl(featuredBook) && (
                 <a
-                  href={featuredBook.download_url}
+                  href={getDownloadUrl(featuredBook) ?? '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   class="inline-flex items-center justify-center px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors"
@@ -333,10 +338,10 @@ const formatNaira = (_price: number | string | null) => 'Free';
                         >
                           View Book →
                         </a>
-                        {isFreeBook(book) && (
-                          <a
-                            href={book.download_url}
-                            target="_blank"
+                        {getDownloadUrl(book) && (
+                <a
+                  href={getDownloadUrl(book) ?? '#'}
+                  target="_blank"
                             rel="noopener noreferrer"
                             class="shrink-0 font-mono text-[10px] uppercase tracking-widest text-slate-300 hover:text-[#E8C868] transition-colors"
                           >
