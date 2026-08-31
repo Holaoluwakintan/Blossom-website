@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { supabase } from '../../lib/supabase';
+import { getBookDownloadSource, getBookDownloadHref } from '../../lib/content';
+
+export const prerender = false;
+const slug = Astro.params.slug?.trim();
+const { data: book } = slug
+  ? await supabase.from('books').select('*').eq('slug', slug).maybeSingle()
+  : { data: null };
+
+if (!book) return Astro.redirect('/books');
+const hasDownload = Boolean(getBookDownloadSource(book));
+const downloadEndpoint = `/api/download/${encodeURIComponent(book.slug)}`;
+---
+
+<BaseLayout title={`Download ${book.title} | BLOSSOM`} description={`Download ${book.title} free from BLOSSOM.`}>
+  <main class="min-h-screen bg-[#02050B] px-6 py-20 text-[#F6F3EC] sm:py-28">
+    <section class="mx-auto max-w-3xl text-center">
+      <p class="font-mono text-[10px] uppercase tracking-[0.35em] text-[#E8C868]">Your free book is ready</p>
+      <h1 class="mt-6 font-cinzel text-4xl font-bold leading-tight sm:text-6xl">{book.title}</h1>
+      <p class="mx-auto mt-6 max-w-xl text-base leading-8 text-slate-400">Thank you for spending time with BLOSSOM. Your download should begin shortly. While you wait, you can discover another story or join the letter for future releases.</p>
+
+      {hasDownload ? (
+        <div class="mt-10 flex flex-wrap justify-center gap-4">
+          <a id="download-trigger" href={downloadEndpoint} class="inline-flex min-h-12 items-center justify-center bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-colors hover:bg-[#F6F3EC]">Download the book →</a>
+          <a href={`/books/${book.slug}`} class="inline-flex min-h-12 items-center justify-center border border-white/15 px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#F6F3EC] transition-colors hover:border-[#E8C868] hover:text-[#E8C868]">View book details</a>
+        </div>
+      ) : (
+        <div class="mt-10 border border-[#E8C868]/30 bg-[#080D16] p-7 text-left">
+          <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">Download temporarily unavailable</p>
+          <p class="mt-3 leading-7 text-slate-400">This book is marked free, but its file has not been connected yet. Please return to the Books page or contact Olaoluwa so the file can be restored.</p>
+        </div>
+      )}
+
+      <div class="mt-16 grid gap-4 text-left sm:grid-cols-2">
+        <a href="/books" class="border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60"><p class="font-mono text-[10px] uppercase tracking-widest text-[#E8C868]">Keep reading</p><p class="mt-3 font-cinzel text-xl font-bold">Find another book →</p></a>
+        <a href="/journal" class="border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60"><p class="font-mono text-[10px] uppercase tracking-widest text-[#E8C868]">Stay close</p><p class="mt-3 font-cinzel text-xl font-bold">Read the Journal →</p></a>
+      </div>
+    </section>
+  </main>
+  {hasDownload && <script is:inline>
+    window.setTimeout(() => document.getElementById('download-trigger')?.click(), 700);
+  </script>}
+</BaseLayout>

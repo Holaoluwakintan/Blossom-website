@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DownloadGate from '../../components/DownloadGate.astro';
-import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
 import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
@@ -15,6 +14,12 @@ const featuredBook = books?.find((book) => book.featured === true);
 // Keep the complete collection visible. Featured status controls the hero section,
 // but must never hide a book from the main grid.
 const collectionBooks = books ?? [];
+
+const getDownloadUrl = (book: any) =>
+  [book.download_url, book.file_url, book.public_url]
+    .find((value) => typeof value === 'string' && value.trim())
+    ?.trim() ?? null;
+
 
 const formatNaira = (_price: number | string | null) => 'Free';
 ---
@@ -91,7 +96,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
               <div class="relative overflow-hidden">
 
                 <img
-                  src={getBookCoverUrl(featuredBook) ?? ''}
+                  src={featuredBook.cover_image_url}
                   alt={`${featuredBook.title} book cover`}
                   class="w-full rounded-sm shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
                 />
@@ -174,7 +179,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
                 bookId={featuredBook.id}
                 bookSlug={featuredBook.slug}
                 bookTitle={featuredBook.title}
-                downloadUrl={getBookDownloadUrl(featuredBook)}
+                downloadUrl={getDownloadUrl(featuredBook)}
                 featured
               />
 
@@ -257,7 +262,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
                   <div class="aspect-[3/4] overflow-hidden">
 
                     <img
-                      src={getBookCoverUrl(book) ?? ''}
+                      src={book.cover_image_url}
                       alt={`${book.title} book cover`}
                       class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       loading="lazy"
@@ -334,7 +339,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
                           bookId={book.id}
                           bookSlug={book.slug}
                           bookTitle={book.title}
-                          downloadUrl={getBookDownloadUrl(book)}
+                          downloadUrl={getDownloadUrl(book)}
                         />
                       </div>
 

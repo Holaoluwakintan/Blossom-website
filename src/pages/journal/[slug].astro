@@ -2,16 +2,22 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { supabase } from '../../lib/supabase';
 import ShareActions from '../../components/ShareActions.astro';
+import { formatDate, formatRelativeFreshness, getContentDate } from '../../lib/content';
 
 export const prerender = false;
 
 const requestedSlug = (Astro.params.slug ?? '').trim();
 const shareUrl = `https://olaoluwamichael.vercel.app/journal/${requestedSlug}`;
 
-const { data: publishedRows, error: postError } = await supabase
+let { data: publishedRows, error: postError } = await supabase
   .from('journal_posts')
   .select('*')
-  .eq('status', 'PUBLISHED');
+  .eq('published', true);
+if (postError) {
+  const fallback = await supabase.from('journal_posts').select('*').eq('status', 'PUBLISHED');
+  publishedRows = fallback.data;
+  postError = fallback.error;
+}
 
 const post = (publishedRows ?? []).find(
   (row) => String(row.slug ?? '').trim() === requestedSlug,
@@ -27,7 +33,7 @@ const { data: commentRows, error: commentsError } = post
 const comments = (commentRows ?? [])
   .filter((comment) => {
     const commentArticleId = comment.article_id ?? comment.post_id;
-    const isVisible = String(comment.PUBLISHED ?? '').trim().toUpperCase() === 'PUBLISHED';
+    const isVisible = String(comment.status ?? comment.PUBLISHED ?? '').trim().toUpperCase() === 'PUBLISHED';
     return String(commentArticleId) === String(post?.id) && isVisible;
   })
   .map((comment) => ({
@@ -36,15 +42,6 @@ const comments = (commentRows ?? [])
     body: comment.content ?? comment.comment ?? comment.text ?? '',
     created_at: comment.created_at,
   }));
-
-const formatDate = (value) => {
-  if (!value) return '';
-  return new Intl.DateTimeFormat('en-NG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(value));
-};
 
 const paragraphs = (post?.content_markdown || '')
   .split(/\n\s*\n/)
@@ -72,10 +69,10 @@ const paragraphs = (post?.content_markdown || '')
           <p class="mt-12 font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">{post.category}</p>
           <h1 class="mt-5 font-cinzel text-4xl font-bold leading-tight sm:text-6xl">{post.title}</h1>
           <p class="mt-6 font-mono text-xs uppercase tracking-widest text-slate-500">
-            {formatDate(post.published_at || post.created_at)}{post.reading_time ? ` · ${post.reading_time} min read` : ''}
+            {formatDate(post.published_at || post.created_at)} · {formatRelativeFreshness(getContentDate(post))}{post.reading_time_minutes || post.reading_time ? ` · ${post.reading_time_minutes || post.reading_time} min read` : ''}
           </p>
 
-          {post.cover_image_url && <img src={post.cover_image_url} alt={post.title} class="mt-12 max-h-[520px] w-full object-cover" />}
+          {(post.cover_image_url || post.featured_image_url) && <img src={post.cover_image_url || post.featured_image_url} alt={post.title} class="mt-12 max-h-[520px] w-full object-cover" />}
 
           {(post.bible_reference || post.bible_verse) && (
             <aside class="my-12 border-l-2 border-[#E8C868] bg-[#080D16] px-6 py-5">
@@ -116,11 +113,11 @@ const paragraphs = (post?.content_markdown || '')
             <div>
               <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Join the conversation</p>
               <h2 class="mt-4 font-cinzel text-3xl font-bold">Leave a response.</h2>
-              <p class="mt-5 leading-8 text-slate-400">Your comment will appear immediately after submission. You can remove inappropriate comments from Supabase.</p>
+              <p class="mt-5 leading-8 text-slate-400">Responses are reviewed before they appear publicly. Please keep your contribution thoughtful and respectful.</p>
               <form id="comment-form" class="mt-8 space-y-5">
                 <input type="hidden" name="post_id" value={post.id} />
                 <input name="name" required maxlength="80" placeholder="Your name" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
-                <input name="email" type="email" required maxlength="160" placeholder="Email" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+                <input name="email" type="email" required maxlength="160" placeholder="Email (kept private)" class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
                 <textarea name="body" required maxlength="2000" rows="6" placeholder="Write your response..." class="w-full border border-white/15 bg-[#080D16] px-4 py-4 text-[#F6F3EC] outline-none focus:border-[#E8C868]"></textarea>
                 <button type="submit" class="bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B]">Publish response →</button>
                 <p id="comment-status" class="text-sm text-slate-400" aria-live="polite"></p>
@@ -153,7 +150,7 @@ const paragraphs = (post?.content_markdown || '')
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || 'Comment could not be submitted.');
       form.reset();
-      status.textContent = 'Thank you. Your comment has been published.';
+      status.textContent = 'Thank you. Your response has been received for review.';
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : 'Comment could not be submitted.';
     }

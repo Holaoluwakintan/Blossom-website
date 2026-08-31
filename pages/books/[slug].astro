@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DownloadGate from '../../components/DownloadGate.astro';
-import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
 import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
@@ -35,7 +34,9 @@ const roundedAverageRating = averageRating ? averageRating.toFixed(1) : '0.0';
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium' }).format(new Date(value));
 
-const downloadUrl = getBookDownloadUrl(book);
+const downloadUrl = [book.download_url, book.file_url, book.public_url]
+  .find((value) => typeof value === 'string' && value.trim())
+  ?.trim() ?? null;
 
 // Balm of Gilead remains a free download when it has a download URL and no price.
 // BLOSSOM books are now free to access. Support is optional and shown below.
@@ -101,7 +102,7 @@ const priceLabel = 'Free';
             <div class="absolute -inset-4 bg-[#E8C868]/5 blur-3xl"></div>
 
             <img
-              src={getBookCoverUrl(book) ?? ''}
+              src={book.cover_image_url}
               alt={`${book.title} book cover`}
               class="relative w-full rounded-sm shadow-2xl"
             />

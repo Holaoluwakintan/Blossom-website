@@ -1,0 +1,60 @@
+---
+interface Props {
+  compact?: boolean;
+  heading?: string;
+  description?: string;
+}
+
+const {
+  compact = false,
+  heading = 'Stay close to what comes next.',
+  description = 'Get new books, visual stories, and quiet reflections from BLOSSOM in your inbox.',
+} = Astro.props;
+---
+
+<section class={`border border-[#E8C868]/25 bg-[#080D16] ${compact ? 'p-6' : 'p-8 sm:p-10'}`} aria-labelledby="newsletter-title">
+  <div class={compact ? '' : 'max-w-2xl'}>
+    <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">BLOSSOM LETTER</p>
+    <h2 id="newsletter-title" class="mt-4 font-cinzel text-2xl font-bold sm:text-3xl">{heading}</h2>
+    <p class="mt-4 leading-8 text-slate-400">{description}</p>
+  </div>
+  <form id="newsletter-form" class="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]" novalidate>
+    <label class="sr-only" for="newsletter-email">Email address</label>
+    <input id="newsletter-email" name="email" type="email" required autocomplete="email" maxlength="160" placeholder="you@example.com" class="min-h-12 border border-white/15 bg-[#02050B] px-4 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868] focus:ring-2 focus:ring-[#E8C868]/30" />
+    <input name="website_url" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+    <button type="submit" class="min-h-12 bg-[#E8C868] px-6 font-mono text-[10px] font-bold uppercase tracking-widest text-[#02050B] transition-colors hover:bg-[#F6F3EC] disabled:cursor-wait disabled:opacity-60">Subscribe →</button>
+  </form>
+  <p id="newsletter-status" class="mt-3 text-sm text-slate-400" aria-live="polite"></p>
+</section>
+
+<script is:inline>
+  const newsletterForm = document.getElementById('newsletter-form');
+  const newsletterStatus = document.getElementById('newsletter-status');
+  newsletterForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!newsletterForm || !newsletterStatus) return;
+    const submit = newsletterForm.querySelector('button[type="submit"]');
+    const email = new FormData(newsletterForm).get('email');
+    if (typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email)) {
+      newsletterStatus.textContent = 'Please enter a valid email address.';
+      return;
+    }
+    if (submit) { submit.disabled = true; submit.textContent = 'Saving…'; }
+    newsletterStatus.textContent = '';
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(new FormData(newsletterForm).entries())),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'We could not save your subscription.');
+      newsletterForm.reset();
+      newsletterStatus.textContent = 'You are on the list. Thank you for staying close to BLOSSOM.';
+    } catch (error) {
+      newsletterStatus.textContent = error instanceof Error ? error.message : 'We could not save your subscription.';
+    } finally {
+      if (submit) { submit.disabled = false; submit.textContent = 'Subscribe →'; }
+    }
+  });
+</script>

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getBookCoverUrl } from '../lib/book-downloads';
 import { supabase } from '../lib/supabase';
 
 export const prerender = false;
@@ -72,7 +73,7 @@ const featuredJournal = journalPosts?.[0];
             <a href={'/books/' + featuredBook.slug} class="group mx-auto lg:ml-auto w-full max-w-sm relative block">
               <div class="absolute -inset-8 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
               <div class="relative border border-[#E8C868]/25 bg-[#080D16] p-3 shadow-2xl">
-                <img src={featuredBook.cover_image_url} alt={`${featuredBook.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-[1.015]" />
+                <img src={getBookCoverUrl(featuredBook) ?? ''} alt={`${featuredBook.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-[1.015]" />
                 <div class="flex justify-between items-end gap-4 pt-4 px-1 pb-1">
                   <div>
                     <p class="text-[9px] font-mono uppercase tracking-[0.24em] text-[#E8C868]">Featured book</p>
@@ -132,7 +133,7 @@ const featuredJournal = journalPosts?.[0];
             {collectionBooks.map((book) => (
             <a href={'/books/' + book.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
               <div class="overflow-hidden bg-[#080D16] border border-white/10">
-                <img src={book.cover_image_url} alt={`${book.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                <img src={getBookCoverUrl(book) ?? ''} alt={`${book.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
               </div>
               <div class="pt-5">
                 {book.genre && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{book.genre}</p>}

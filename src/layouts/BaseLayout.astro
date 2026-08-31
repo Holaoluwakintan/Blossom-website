@@ -1,4 +1,7 @@
 ---
+import NewsletterForm from '../components/NewsletterForm.astro';
+import '../styles/global.css';
+
 interface Props {
   title?: string;
   description?: string;
@@ -136,6 +139,7 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
     <main class="flex-grow">
       <slot />
     </main>
+    <div class="mx-auto w-full max-w-7xl px-6 pb-12 pt-16"><NewsletterForm compact /></div>
     <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] py-12 px-4 text-center">
       <div class="flex flex-wrap justify-center gap-x-6 gap-y-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-400">
         <a href="/books" class="transition-colors hover:text-[#E8C868]">Find a book</a>
