@@ -9,7 +9,7 @@ export const getBookDownloadSource = (book: BookLike | null | undefined) => {
 
 export const getBookDownloadHref = (slug: string) => `/download/${encodeURIComponent(slug)}`;
 
-export const DOWNLOAD_COUNTER_START_DATE = 'August 29, 2026';
+export const DOWNLOAD_COUNTER_START_DATE = 'August 31, 2026';
 
 export const formatDownloadCount = (value: number | string | null | undefined) => {
   const count = Math.max(0, Number(value ?? 0) || 0);
@@ -23,8 +23,13 @@ export const normalizeArtworkCategory = (value: string | null | undefined) => {
 
 export const normalizeArtworkText = (value: string | null | undefined) =>
   value?.trim()
+    .replace(/okaayyy/gi, '')
     .replace(/Release\.God/gi, 'Release. God')
-    .replace(/\s+/g, ' ') ?? '';
+    .replace(/The Mountains can move!/gi, 'The mountains can move.')
+    .replace(/Where shall i run/gi, 'Where shall I run')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim() ?? '';
 
 export const getContentDate = (item: Record<string, any>) =>
   item.updated_at ?? item.published_at ?? item.created_at ?? null;

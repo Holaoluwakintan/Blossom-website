@@ -38,9 +38,6 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response('The free download is temporarily unavailable. Please try again soon.', { status: 502 });
   }
 
-  const { error: counterError } = await supabase.rpc('increment_book_download', { p_book_id: book.id });
-  if (counterError) console.error('Download counter update failed:', counterError.message);
-
   const safeFilename = String(book.title || slug).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'blossom-book';
   return new Response(upstream.body, {
     status: 200,

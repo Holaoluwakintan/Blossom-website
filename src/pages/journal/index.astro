@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { supabase } from '../../lib/supabase';
-import { formatDate, formatRelativeFreshness, getContentDate } from '../../lib/content';
+import { formatDate, formatRelativeFreshness, getContentDate, normalizeArtworkCategory } from '../../lib/content';
 
 export const prerender = false;
 
@@ -73,7 +73,7 @@ const collectionPosts = featuredPost
           <div class="flex flex-col justify-center">
             <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Featured reflection</p>
             <p class="mt-5 font-mono text-xs uppercase tracking-widest text-slate-500">
-              {featuredPost.category}{featuredPost.published_at && ` · ${formatDate(featuredPost.published_at)}`}<span class="text-[#E8C868]"> · {formatRelativeFreshness(getContentDate(featuredPost))}</span>
+              {normalizeArtworkCategory(featuredPost.category)}{featuredPost.published_at && ` · ${formatDate(featuredPost.published_at)}`}<span class="text-[#E8C868]"> · {formatRelativeFreshness(getContentDate(featuredPost))}</span>
             </p>
             <h2 class="mt-4 font-cinzel text-3xl font-bold leading-tight transition-colors group-hover:text-[#E8C868] sm:text-5xl">{featuredPost.title}</h2>
             {featuredPost.excerpt && <p class="mt-5 max-w-2xl leading-8 text-slate-400">{featuredPost.excerpt}</p>}
@@ -95,7 +95,7 @@ const collectionPosts = featuredPost
             {collectionPosts.map((post) => (
               <a href={`/journal/${post.slug.trim()}`} class="group border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60">
                 {(post.cover_image_url || post.featured_image_url) && <img src={post.cover_image_url || post.featured_image_url} alt={post.title} class="mb-6 aspect-[16/10] w-full object-cover" loading="lazy" />}
-                <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-[#E8C868]">{post.category}</p>
+                <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-[#E8C868]">{normalizeArtworkCategory(post.category)}</p>
                 <h3 class="mt-4 font-cinzel text-2xl font-bold leading-tight transition-colors group-hover:text-[#E8C868]">{post.title}</h3>
                 {post.excerpt && <p class="mt-4 line-clamp-3 leading-7 text-slate-400">{post.excerpt}</p>}
                 <p class="mt-6 font-mono text-[10px] uppercase tracking-widest text-slate-500">{formatDate(post.published_at || post.created_at)} · {formatRelativeFreshness(getContentDate(post))} · Read →</p>

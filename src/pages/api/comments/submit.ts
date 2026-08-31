@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request }) => {
       author_name: String(author_name).replace(/<[^>]*>?/gm, '').trim(),
       author_email: author_email.trim().toLowerCase(),
       content: String(content).replace(/<[^>]*>?/gm, '').trim(),
-      status: 'PENDING'
+      status: 'PUBLISHED'
     });
 
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { supabase } from '../../lib/supabase';
+import { normalizeArtworkCategory, normalizeArtworkText } from '../../lib/content';
 
 export const prerender = false;
 
@@ -45,10 +46,10 @@ const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true)
               </a>
               <div>
                 <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Featured artwork</p>
-                {featuredArtwork.category && <p class="text-xs font-mono uppercase tracking-[0.2em] text-slate-500 mt-5">{featuredArtwork.category}</p>}
-                <h2 class="font-cinzel text-4xl sm:text-5xl font-bold leading-tight mt-3">{featuredArtwork.title}</h2>
-                {featuredArtwork.caption && <p class="font-editorial italic text-xl sm:text-2xl text-[#E8C868] mt-4">{featuredArtwork.caption}</p>}
-                {featuredArtwork.story && <p class="text-slate-300 text-lg leading-relaxed mt-7">{featuredArtwork.story}</p>}
+                {featuredArtwork.category && <p class="text-xs font-mono uppercase tracking-[0.2em] text-slate-500 mt-5">{normalizeArtworkCategory(featuredArtwork.category)}</p>}
+                <h2 class="font-cinzel text-4xl sm:text-5xl font-bold leading-tight mt-3">{normalizeArtworkText(featuredArtwork.title)}</h2>
+                {featuredArtwork.caption && <p class="font-editorial italic text-xl sm:text-2xl text-[#E8C868] mt-4">{normalizeArtworkText(featuredArtwork.caption)}</p>}
+                {featuredArtwork.story && <p class="text-slate-300 text-lg leading-relaxed mt-7">{normalizeArtworkText(featuredArtwork.story)}</p>}
                 <a href={'/imagination/' + featuredArtwork.slug} class="inline-flex mt-8 px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors">View artwork →</a>
               </div>
             </div>
@@ -67,9 +68,9 @@ const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true)
                   <a href={'/imagination/' + artwork.slug} class="block">
                     <div class="overflow-hidden border border-white/10 bg-[#080D16]"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
                     <div class="pt-5">
-                      {artwork.category && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{artwork.category}</p>}
-                      <h3 class="font-cinzel text-2xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{artwork.title}</h3>
-                      {artwork.caption && <p class="font-editorial italic text-[#E8C868] mt-1">{artwork.caption}</p>}
+                      {artwork.category && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{normalizeArtworkCategory(artwork.category)}</p>}
+                      <h3 class="font-cinzel text-2xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{normalizeArtworkText(artwork.title)}</h3>
+                      {artwork.caption && <p class="font-editorial italic text-[#E8C868] mt-1">{normalizeArtworkText(artwork.caption)}</p>}
                     </div>
                   </a>
                 </article>

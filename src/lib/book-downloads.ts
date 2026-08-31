@@ -8,6 +8,7 @@ const fallbackDownloadUrls: Record<string, string> = {
 };
 
 const fallbackCoverUrls: Record<string, string> = {
+  golgotha: `${publicSupabaseUrl}/storage/v1/object/public/book-covers/golgotha-land-of-zombies-selar.com-6a854a299d475.png`,
   'crack-the-algorithm': `${publicSupabaseUrl}/storage/v1/object/public/book-covers/crack-the-algorithm-master-cover-redesign%20(2).png`,
 };
 
@@ -16,9 +17,8 @@ export function getBookCoverUrl(book: Record<string, unknown> | null | undefined
   if (typeof book.slug === 'string' && fallbackCoverUrls[book.slug]) {
     return fallbackCoverUrls[book.slug];
   }
-  return typeof book.cover_image_url === 'string' && book.cover_image_url.trim()
-    ? book.cover_image_url.trim()
-    : null;
+  if (typeof book.cover_image_url !== 'string' || !book.cover_image_url.trim()) return null;
+  return book.cover_image_url.trim().replace('/storage/v1/object/public/Books/', '/storage/v1/object/public/book-covers/');
 }
 
 export function getBookDownloadUrl(book: Record<string, unknown> | null | undefined) {
