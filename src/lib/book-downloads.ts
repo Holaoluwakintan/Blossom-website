@@ -5,9 +5,6 @@ const publicSupabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://rlbrhp
 const fallbackDownloadUrls: Record<string, string> = {
   twisted: `${publicSupabaseUrl}/storage/v1/object/public/Books/TWISTED.pdf`,
   golgotha: `${publicSupabaseUrl}/storage/v1/object/public/Books/GOLGOTHA-Land-Of-Zombies-GOLGOTHA-Land-Of-Zombiespdf%20(2).pdf`,
-  // Keep the final book downloadable even when its database row has not yet
-  // been updated with download_url/download_path.
-  'crack-the-algorithm': `${publicSupabaseUrl}/storage/v1/object/public/Books/CRACK%20THE%20ALGORITHM.pdf`,
 };
 
 const fallbackCoverUrls: Record<string, string> = {

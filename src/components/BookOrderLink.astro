@@ -1,0 +1,23 @@
+---
+interface Props {
+  bookTitle: string;
+  featured?: boolean;
+}
+
+const { bookTitle, featured = false } = Astro.props;
+const subject = encodeURIComponent(`Order ${bookTitle}`);
+const body = encodeURIComponent(`Hello Olaoluwa,\n\nI would like to order ${bookTitle}. Please share the available format, price, and payment details.\n\nThank you.`);
+const href = `mailto:michaelolaoluwagab@gmail.com?subject=${subject}&body=${body}`;
+---
+
+<a
+  href={href}
+  class:list={[
+    'inline-flex items-center justify-center font-mono uppercase tracking-widest transition-colors',
+    featured
+      ? 'px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] text-xs font-bold hover:bg-[#E8C868] hover:text-[#02050B]'
+      : 'shrink-0 text-[10px] text-slate-300 hover:text-[#E8C868]'
+  ]}
+>
+  {featured ? 'Order This Book' : 'Order →'}
+</a>
