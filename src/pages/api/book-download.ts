@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getBookDownloadUrl } from '../../lib/book-downloads';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://rlbrhpjljjgpqpqjrpkc.supabase.co';
-const serviceRoleKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -16,20 +16,20 @@ const safeFilename = (title: string) =>
 
 export const GET: APIRoute = async ({ url }) => {
   try {
-    if (!serviceRoleKey) return json({ error: 'Download service is not configured.' }, 503);
+    if (!supabaseAnonKey) return json({ error: 'Download service is not configured.' }, 503);
 
     const bookId = url.searchParams.get('bookId')?.trim() || '';
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(bookId)) {
       return json({ error: 'This book could not be identified.' }, 400);
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+    const supabasePublic = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    const { data: book, error } = await supabaseAdmin
+    const { data: book, error } = await supabasePublic
       .from('books')
-      .select('id, title, slug, download_url')
+      .select('id, title, slug, download_url, download_path')
       .eq('id', bookId)
       .maybeSingle();
 
