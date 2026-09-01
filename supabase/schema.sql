@@ -64,7 +64,7 @@ CREATE TABLE comments (
     author_name VARCHAR(120) NOT NULL,
     author_email VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    status VARCHAR(20) DEFAULT 'PENDING',
+    status VARCHAR(20) DEFAULT 'PUBLISHED',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
