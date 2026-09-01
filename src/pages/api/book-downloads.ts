@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://rlbrhpjljjgpqpqjrpkc.supabase.co';
 const serviceRoleKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+const publicAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 const emailPattern = /^\S+@\S+\.\S+$/;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -46,6 +47,20 @@ export const POST: APIRoute = async ({ request }) => {
       });
       if (error) console.error('Book download tracking failed:', error.message);
       record = (Array.isArray(data) ? data[0] : data) ?? null;
+    }
+
+    // The counter itself remains available even when optional email capture is
+    // not configured in Vercel. The RPC is security-definer and only receives
+    // a validated book UUID from this form.
+    if (!record?.download_count && publicAnonKey) {
+      const supabasePublic = createClient(supabaseUrl, publicAnonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: count, error } = await supabasePublic.rpc('increment_book_download', {
+        p_book_id: bookId,
+      });
+      if (error) console.error('Book counter increment failed:', error.message);
+      if (!error && count != null) record = { download_count: count };
     }
 
     return json({

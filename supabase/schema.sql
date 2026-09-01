@@ -139,6 +139,7 @@ $$;
 
 REVOKE ALL ON FUNCTION increment_book_download(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION increment_book_download(UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION increment_book_download(UUID) TO anon, authenticated;
 
 
 CREATE TABLE IF NOT EXISTS book_downloads (
