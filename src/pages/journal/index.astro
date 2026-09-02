@@ -22,6 +22,7 @@ const featuredPost = publishedPosts.find((post) => post.featured) ?? publishedPo
 const collectionPosts = featuredPost
   ? publishedPosts.filter((post) => post.id !== featuredPost.id)
   : publishedPosts;
+const formatArticleCount = (value: number | string | null | undefined, label: string) => `${Number(value ?? 0).toLocaleString('en-NG')} ${label}`;
 
 
 ---
@@ -64,7 +65,7 @@ const collectionPosts = featuredPost
       )}
 
       {featuredPost && (
-        <a href={`/journal/${featuredPost.slug.trim()}`} class="group grid gap-8 border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60 md:grid-cols-[0.8fr_1.2fr] md:p-10">
+        <a href={`/journal/${featuredPost.slug.trim()}`} data-article-click={featuredPost.id} class="group grid gap-8 border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60 md:grid-cols-[0.8fr_1.2fr] md:p-10">
           {(featuredPost.cover_image_url || featuredPost.featured_image_url) ? (
             <img src={featuredPost.cover_image_url || featuredPost.featured_image_url} alt={featuredPost.title} class="aspect-[16/10] w-full object-cover" />
           ) : (
@@ -78,6 +79,7 @@ const collectionPosts = featuredPost
             <h2 class="mt-4 font-cinzel text-3xl font-bold leading-tight transition-colors group-hover:text-[#E8C868] sm:text-5xl">{featuredPost.title}</h2>
             {featuredPost.excerpt && <p class="mt-5 max-w-2xl leading-8 text-slate-400">{featuredPost.excerpt}</p>}
             {featuredPost.bible_reference && <p class="mt-5 font-editorial text-xl italic text-[#E8C868]">{featuredPost.bible_reference}</p>}
+            <p class="mt-5 font-mono text-[10px] uppercase tracking-widest text-slate-500">{formatArticleCount(featuredPost.view_count, 'views')} · {formatArticleCount(featuredPost.click_count, 'clicks')}</p>
             <span class="mt-8 font-mono text-xs uppercase tracking-widest text-[#E8C868]">Read reflection →</span>
           </div>
         </a>
@@ -93,12 +95,12 @@ const collectionPosts = featuredPost
           </div>
           <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {collectionPosts.map((post) => (
-              <a href={`/journal/${post.slug.trim()}`} class="group border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60">
+              <a href={`/journal/${post.slug.trim()}`} data-article-click={post.id} class="group border border-white/10 bg-[#080D16] p-6 transition-colors hover:border-[#E8C868]/60">
                 {(post.cover_image_url || post.featured_image_url) && <img src={post.cover_image_url || post.featured_image_url} alt={post.title} class="mb-6 aspect-[16/10] w-full object-cover" loading="lazy" />}
                 <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-[#E8C868]">{normalizeArtworkCategory(post.category)}</p>
                 <h3 class="mt-4 font-cinzel text-2xl font-bold leading-tight transition-colors group-hover:text-[#E8C868]">{post.title}</h3>
                 {post.excerpt && <p class="mt-4 line-clamp-3 leading-7 text-slate-400">{post.excerpt}</p>}
-                <p class="mt-6 font-mono text-[10px] uppercase tracking-widest text-slate-500">{formatDate(post.published_at || post.created_at)} · {formatRelativeFreshness(getContentDate(post))} · Read →</p>
+                <p class="mt-6 font-mono text-[10px] uppercase tracking-widest text-slate-500">{formatDate(post.published_at || post.created_at)} · {formatRelativeFreshness(getContentDate(post))} · {formatArticleCount(post.view_count, 'views')} · {formatArticleCount(post.click_count, 'clicks')} · Read →</p>
               </a>
             ))}
           </div>
@@ -107,6 +109,15 @@ const collectionPosts = featuredPost
     </section>
   </main>
 </BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-article-click]').forEach((link) => {
+    link.addEventListener('click', () => {
+      const articleId = link.dataset.articleClick;
+      if (articleId) fetch('/api/views/click', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ articleId }), keepalive: true }).catch(() => {});
+    });
+  });
+</script>
 
 <style>
   .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

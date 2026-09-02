@@ -39,6 +39,7 @@ CREATE TABLE journal_posts (
     published_at TIMESTAMPTZ DEFAULT NOW(),
     reading_time_minutes INT DEFAULT 5,
     view_count BIGINT DEFAULT 0,
+    click_count BIGINT DEFAULT 0,
     comments_enabled BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -97,6 +98,29 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS click_count BIGINT NOT NULL DEFAULT 0;
+
+CREATE OR REPLACE FUNCTION increment_article_click(p_article_id UUID)
+RETURNS BIGINT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE next_count BIGINT;
+BEGIN
+  UPDATE journal_posts
+  SET click_count = COALESCE(click_count, 0) + 1
+  WHERE id = p_article_id AND published = true
+  RETURNING click_count INTO next_count;
+  IF next_count IS NULL THEN RAISE EXCEPTION 'Article not found'; END IF;
+  RETURN next_count;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION track_article_view(UUID, VARCHAR) TO anon, authenticated;
+REVOKE ALL ON FUNCTION increment_article_click(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION increment_article_click(UUID) TO anon, authenticated;
 
 ALTER TABLE books ADD COLUMN IF NOT EXISTS download_path TEXT;
 ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
