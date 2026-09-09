@@ -159,6 +159,10 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
           <a href="/imagination" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Imagination</a>
           <a href="/about" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">About</a>
           <a href="/journal" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Journal</a>
+          <div class="pt-3 border-t border-white/10 flex flex-col gap-2">
+            <a href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x" target="_blank" rel="noopener noreferrer" class="text-[#25D366] p-2 rounded-xl hover:bg-[#25D366]/10 transition-colors">📱 WhatsApp Channel →</a>
+            <a href="https://www.facebook.com/share/1DTMt74HuT/" target="_blank" rel="noopener noreferrer" class="text-[#1877F2] p-2 rounded-xl hover:bg-[#1877F2]/10 transition-colors">👥 Facebook Page →</a>
+          </div>
         </div>
       </div>
     </nav>
@@ -166,11 +170,21 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
       <slot />
     </main>
     <div class="mx-auto w-full max-w-7xl px-6 pb-12 pt-16 reveal-on-scroll"><NewsletterForm compact /></div>
-    <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] py-12 px-4 text-center">
+    <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] py-14 px-4 text-center">
+      <div class="flex flex-wrap justify-center items-center gap-3 text-xs mb-6">
+        <a href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] font-mono text-[10px] uppercase tracking-widest hover:bg-[#25D366] hover:text-[#02050B] transition-all">
+          <span>📱 Follow WhatsApp Channel</span>
+        </a>
+        <a href="https://www.facebook.com/share/1DTMt74HuT/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1877F2]/10 border border-[#1877F2]/30 text-[#1877F2] font-mono text-[10px] uppercase tracking-widest hover:bg-[#1877F2] hover:text-white transition-all">
+          <span>👥 Follow on Facebook</span>
+        </a>
+      </div>
       <div class="flex flex-wrap justify-center gap-x-6 gap-y-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-400">
+        <a href="/" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Home</a>
         <a href="/books" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Find a book</a>
         <a href="/imagination" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">See artwork</a>
         <a href="/journal" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Read Journal</a>
+        <a href="/about" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">About & Community</a>
       </div>
       <p class="mt-6 text-xs font-mono text-slate-500">© {new Date().getFullYear()} Olaoluwa Michael • BLOSSOM Ecosystem • Nigeria</p>
     </footer>

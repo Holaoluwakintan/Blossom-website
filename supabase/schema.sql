@@ -69,6 +69,18 @@ CREATE TABLE comments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public can read comments" ON comments;
+CREATE POLICY "Public can read comments"
+    ON comments FOR SELECT TO anon, authenticated
+    USING (true);
+
+DROP POLICY IF EXISTS "Anyone can insert comments" ON comments;
+CREATE POLICY "Anyone can insert comments"
+    ON comments FOR INSERT TO anon, authenticated
+    WITH CHECK (length(content) > 0 AND length(author_name) > 0);
+
+
 CREATE TABLE article_views (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     article_id UUID NOT NULL REFERENCES journal_posts(id) ON DELETE CASCADE,

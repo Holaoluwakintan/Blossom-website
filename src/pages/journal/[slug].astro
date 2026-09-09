@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseServer } from '../../lib/supabase';
 import ShareActions from '../../components/ShareActions.astro';
 import { formatDate, formatRelativeFreshness, getContentDate } from '../../lib/content';
 
@@ -24,23 +24,22 @@ const post = (publishedRows ?? []).find(
 ) ?? null;
 
 const { data: commentRows, error: commentsError } = post
-  ? await supabase
+  ? await supabaseServer
       .from('comments')
-      .select('*')
+      .select('id, article_id, author_name, content, status, created_at')
+      .eq('article_id', post.id)
       .order('created_at', { ascending: false })
   : { data: [], error: null };
 
 const comments = (commentRows ?? [])
   .filter((comment) => {
-    const commentArticleId = comment.article_id ?? comment.post_id;
     const status = String(comment.status ?? '').trim().toUpperCase();
-    const isVisible = status === 'APPROVED' || status === 'PUBLISHED' || !status || status === '';
-    return String(commentArticleId) === String(post?.id) && isVisible;
+    return status === 'APPROVED' || status === 'PUBLISHED' || status === 'ACTIVE' || !status;
   })
   .map((comment) => ({
     id: comment.id,
-    name: comment.author_name ?? comment.name ?? comment.author ?? 'Reader',
-    body: comment.content ?? comment.comment ?? comment.text ?? '',
+    name: comment.author_name ?? 'Reader',
+    body: comment.content ?? '',
     created_at: comment.created_at,
   }));
 
@@ -190,6 +189,42 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
   const noCommentsMsg = document.querySelector('#no-comments-msg');
   const statBadge = document.querySelector('#comments-count-stat');
   const countBadge = document.querySelector('#comments-badge-count');
+
+  // Real-time client-side hydration for comments:
+  // Fetches latest comments so any freshly approved or submitted comments show immediately
+  if (articleId && commentsList) {
+    fetch(`/api/comments?articleId=${encodeURIComponent(articleId)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
+          if (noCommentsMsg) (noCommentsMsg as HTMLElement).classList.add('hidden');
+          commentsList.innerHTML = '';
+          data.comments.forEach((c: any) => {
+            const card = document.createElement('article');
+            card.className = 'rounded-2xl border border-white/10 bg-[#080D16] p-6 sm:p-7 transition-all duration-300 hover:border-[#E8C868]/40 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(232,200,104,0.08)]';
+            const top = document.createElement('div');
+            top.className = 'flex items-center justify-between gap-2';
+            const author = document.createElement('p');
+            author.className = 'font-mono text-xs uppercase tracking-widest text-[#E8C868]';
+            author.textContent = c.name || 'Reader';
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'font-mono text-[10px] uppercase tracking-widest text-slate-500';
+            dateSpan.textContent = c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+            top.appendChild(author);
+            top.appendChild(dateSpan);
+            const body = document.createElement('p');
+            body.className = 'mt-3 leading-8 text-slate-300 whitespace-pre-line';
+            body.textContent = c.body || '';
+            card.appendChild(top);
+            card.appendChild(body);
+            commentsList.appendChild(card);
+          });
+          if (statBadge) statBadge.textContent = String(data.comments.length);
+          if (countBadge) countBadge.textContent = String(data.comments.length);
+        }
+      })
+      .catch(() => {});
+  }
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
