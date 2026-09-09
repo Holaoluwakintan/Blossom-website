@@ -24,7 +24,7 @@ const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true)
 <BaseLayout title="Imagination World | BLOSSOM" description="A visual collection of stickman art, reflections, and faith by Olaoluwa Michael.">
   <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
     <section class="relative overflow-hidden border-b border-white/10">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_0%,rgba(232,200,104,0.13),transparent_34%),radial-gradient(circle_at_15%_70%,rgba(232,200,104,0.06),transparent_28%)]"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_0%,rgba(232,200,104,0.13),transparent_34%),radial-gradient(circle_at_15%_70%,rgba(232,200,104,0.06),transparent_28%)] animate-gold-glow"></div>
       <div class="relative max-w-7xl mx-auto px-6 pt-16 pb-20 lg:pt-24 lg:pb-28 text-center">
         <p class="text-[10px] font-mono uppercase tracking-[0.35em] text-[#E8C868]">BLOSSOM presents</p>
         <h1 class="font-cinzel text-5xl sm:text-6xl lg:text-8xl font-extrabold leading-tight mt-5">Imagination<span class="block font-editorial italic font-normal text-[#E8C868]">World.</span></h1>
@@ -38,11 +38,11 @@ const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true)
     ) : artworks && artworks.length > 0 ? (
       <>
         {featuredArtwork && (
-          <section class="max-w-7xl mx-auto px-6 py-16 lg:py-24">
+          <section class="max-w-7xl mx-auto px-6 py-16 lg:py-24 reveal-on-scroll">
             <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               <a href={'/imagination/' + featuredArtwork.slug} class="group relative block max-w-xl w-full mx-auto lg:mx-0">
-                <div class="absolute -inset-6 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
-                <div class="relative overflow-hidden border border-[#E8C868]/25 bg-[#080D16]"><img src={featuredArtwork.image_url} alt={featuredArtwork.alt_text || featuredArtwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-[1.03]" /></div>
+                <div class="absolute -inset-6 bg-[#E8C868]/15 blur-3xl rounded-full"></div>
+                <div class="relative overflow-hidden rounded-3xl border border-[#E8C868]/25 bg-[#080D16] shadow-2xl shadow-black/80 transition-all duration-500 group-hover:border-[#E8C868]/50 group-hover:shadow-[#E8C868]/10"><img src={featuredArtwork.image_url} alt={featuredArtwork.alt_text || featuredArtwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-[1.03]" /></div>
               </a>
               <div>
                 <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Featured artwork</p>
@@ -50,13 +50,13 @@ const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true)
                 <h2 class="font-cinzel text-4xl sm:text-5xl font-bold leading-tight mt-3">{normalizeArtworkText(featuredArtwork.title)}</h2>
                 {featuredArtwork.caption && <p class="font-editorial italic text-xl sm:text-2xl text-[#E8C868] mt-4">{normalizeArtworkText(featuredArtwork.caption)}</p>}
                 {featuredArtwork.story && <p class="text-slate-300 text-lg leading-relaxed mt-7">{normalizeArtworkText(featuredArtwork.story)}</p>}
-                <a href={'/imagination/' + featuredArtwork.slug} class="inline-flex mt-8 px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors">View artwork →</a>
+                <a href={'/imagination/' + featuredArtwork.slug} class="inline-flex mt-8 px-8 py-4 rounded-full bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-all shadow-lg shadow-[#E8C868]/20">View artwork →</a>
               </div>
             </div>
           </section>
         )}
 
-        <section class="border-t border-white/10 bg-[#050A12] py-16 lg:py-24">
+        <section class="border-t border-white/10 bg-[#050A12] py-16 lg:py-24 reveal-on-scroll">
           <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-wrap items-end justify-between gap-5 mb-10">
               <div><p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-3">The gallery</p><h2 class="font-cinzel text-3xl sm:text-4xl font-bold">Pause. Look closer.</h2></div>
@@ -66,7 +66,7 @@ const galleryArtworks = artworks?.filter((artwork) => artwork.featured !== true)
               {galleryArtworks.map((artwork) => (
                 <article class="group flex-none w-[78vw] sm:w-auto snap-start">
                   <a href={'/imagination/' + artwork.slug} class="block">
-                    <div class="overflow-hidden border border-white/10 bg-[#080D16]"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
+                    <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#080D16] shadow-lg transition-all duration-500 group-hover:border-[#E8C868]/40 group-hover:shadow-xl group-hover:shadow-[#E8C868]/10 group-hover:-translate-y-1.5"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
                     <div class="pt-5">
                       {artwork.category && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{normalizeArtworkCategory(artwork.category)}</p>}
                       <h3 class="font-cinzel text-2xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{normalizeArtworkText(artwork.title)}</h3>

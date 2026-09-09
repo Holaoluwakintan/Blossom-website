@@ -47,7 +47,9 @@ const formatNaira = (price: number | string | null) =>
 
 const priceLabel = 'Free';
 
-
+const whatsappOrderText = encodeURIComponent(`Hello Olaoluwa, I would like to order the book: "${book.title}".`);
+const whatsappOrderUrl = `https://wa.me/2348000000000?text=${whatsappOrderText}`;
+const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURIComponent(`Book Order: ${book.title}`)}&body=${encodeURIComponent(`Hello Olaoluwa,\n\nI would like to order "${book.title}". Please send me details on how to receive a copy.\n\nThank you!`)}`;
 ---
 
 <BaseLayout
@@ -81,9 +83,9 @@ const priceLabel = 'Free';
     <section class="max-w-7xl mx-auto px-6 pt-8 lg:pt-12">
       <a
         href="/books"
-        class="inline-flex items-center gap-3 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 hover:text-[#E8C868] transition-colors"
+        class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors"
       >
-        <span class="text-lg">←</span>
+        <span class="text-sm">←</span>
         Back to Books
       </a>
     </section>
@@ -97,14 +99,14 @@ const priceLabel = 'Free';
         <!-- BOOK COVER -->
         <div class="flex justify-center">
 
-          <div class="w-full max-w-md relative">
+          <div class="w-full max-w-md relative group">
 
-            <div class="absolute -inset-4 bg-[#E8C868]/5 blur-3xl"></div>
+            <div class="absolute -inset-6 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
 
             <img
               src={getBookCoverUrl(book) ?? ''}
               alt={`${book.title} book cover`}
-              class="relative w-full rounded-sm shadow-2xl"
+              class="relative w-full rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
             />
 
           </div>
@@ -140,7 +142,7 @@ const priceLabel = 'Free';
 
           <!-- SYNOPSIS -->
           {book.synopsis && (
-            <div class="mb-8">
+            <div class="mb-8 rounded-2xl border border-white/10 bg-[#080D16] p-6 sm:p-7">
 
               <h2 class="text-xs font-mono uppercase tracking-[0.25em] text-[#E8C868] mb-3">
                 About the Book
@@ -175,7 +177,7 @@ const priceLabel = 'Free';
                   type="button"
                   id="paystack-button"
                   data-book-id={book.id}
-                  class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-all duration-300"
+                  class="inline-flex items-center justify-center rounded-full px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)] transition-all duration-300"
                 >
                   Buy with Paystack
                 </button>
@@ -183,14 +185,14 @@ const priceLabel = 'Free';
                   href={whatsappOrderUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-all duration-300"
+                  class="inline-flex items-center justify-center rounded-full px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-all duration-300"
                 >
                   Order on WhatsApp
                 </a>
 
                 <a
                   href={emailOrderUrl}
-                  class="inline-flex items-center justify-center px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors"
+                  class="inline-flex items-center justify-center rounded-full px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors"
                 >
                   Order by Email
                 </a>
@@ -201,7 +203,7 @@ const priceLabel = 'Free';
 
           {!isFree && (
             <div id="paystack-panel" class="hidden fixed inset-0 z-50 items-center justify-center bg-[#02050B]/85 px-6 backdrop-blur-sm">
-              <div class="w-full max-w-md border border-[#E8C868]/30 bg-[#080D16] p-7 shadow-2xl">
+              <div class="w-full max-w-md rounded-3xl border border-[#E8C868]/30 bg-[#080D16] p-7 sm:p-9 shadow-2xl">
                 <div class="flex items-start justify-between gap-6">
                   <div>
                     <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868]">Secure checkout</p>
@@ -212,8 +214,8 @@ const priceLabel = 'Free';
                 <p class="mt-5 text-sm leading-7 text-slate-400">Enter your email. Paystack will open a secure payment page, then return you here to download your book.</p>
                 <form id="paystack-form" class="mt-6 space-y-4">
                   <label class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400" for="customer-email">Email address</label>
-                  <input id="customer-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
-                  <button type="submit" class="w-full bg-[#E8C868] px-6 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC]">Continue to payment</button>
+                  <input id="customer-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
+                  <button type="submit" class="w-full rounded-full bg-[#E8C868] px-6 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC]">Continue to payment</button>
                   <p id="paystack-error" class="hidden text-sm text-red-300"></p>
                 </form>
               </div>
@@ -281,9 +283,9 @@ const priceLabel = 'Free';
         {!reviewsError && publishedReviews.length === 0 && <p class="mt-8 leading-8 text-slate-400">No reviews yet. Be the first reader to share a thoughtful response.</p>}
         <div class="mt-8 space-y-5">
           {publishedReviews.map((review) => (
-            <article class="border border-white/10 bg-[#080D16] p-6">
+            <article class="rounded-2xl border border-white/10 bg-[#080D16] p-6 sm:p-7 transition-all duration-300 hover:border-[#E8C868]/40 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(232,200,104,0.08)]">
               <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{review.reviewer_name}</p>
+                <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868] font-bold">{review.reviewer_name}</p>
                 <p class="text-[#E8C868]" aria-label={`${review.rating} out of 5 stars`}>{'★'.repeat(Number(review.rating))}{'☆'.repeat(5 - Number(review.rating))}</p>
               </div>
               {review.review_title && <h3 class="mt-4 font-cinzel text-lg font-bold text-[#F6F3EC]">{review.review_title}</h3>}
@@ -293,16 +295,16 @@ const priceLabel = 'Free';
           ))}
         </div>
 
-        <div class="mt-12 border border-[#E8C868]/20 bg-[#080D16] p-7 sm:p-9">
+        <div class="mt-12 rounded-3xl border border-[#E8C868]/20 bg-[#080D16] p-7 sm:p-9 shadow-2xl">
           <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868]">Share your thoughts</p>
           <h3 class="mt-3 font-cinzel text-2xl font-bold">Leave a review.</h3>
-          <p class="mt-4 leading-7 text-slate-400">Your review will appear immediately. Please keep it honest, respectful, and useful to future readers.</p>
-          <form id="book-review-form" class="mt-7 space-y-5">
+          <p class="mt-3 leading-7 text-slate-400 text-sm">Your review will appear immediately. Please keep it honest, respectful, and useful to future readers.</p>
+          <form id="book-review-form" class="mt-7 space-y-4">
             <input type="hidden" name="book_id" value={book.id} />
             <input type="text" name="website_url" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
             <div>
-              <label for="review-rating" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400">Rating</label>
-              <select id="review-rating" name="rating" required class="mt-2 w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]">
+              <label for="review-rating" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Rating</label>
+              <select id="review-rating" name="rating" required class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors focus:border-[#E8C868]">
                 <option value="">Choose a rating</option>
                 <option value="5">5 — Excellent</option>
                 <option value="4">4 — Very good</option>
@@ -311,21 +313,33 @@ const priceLabel = 'Free';
                 <option value="1">1 — Not for me</option>
               </select>
             </div>
-            <input name="reviewer_name" required maxlength="80" placeholder="Your name" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
-            <input name="reviewer_email" type="email" maxlength="160" placeholder="Email (kept private, optional)" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
-            <input name="review_title" maxlength="120" placeholder="Review headline (optional)" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]" />
-            <textarea name="review_body" required maxlength="2000" rows="6" placeholder="What did you think about the book?" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 text-[#F6F3EC] outline-none focus:border-[#E8C868]"></textarea>
-            <button type="submit" class="bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC]">Publish review →</button>
-            <p id="book-review-status" class="text-sm text-slate-400" aria-live="polite"></p>
+            <div>
+              <label for="review-author-name" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Your Name</label>
+              <input id="review-author-name" name="reviewer_name" required maxlength="80" placeholder="Your name" class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868]" />
+            </div>
+            <div>
+              <label for="review-author-email" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Email (optional, kept private)</label>
+              <input id="review-author-email" name="reviewer_email" type="email" maxlength="160" placeholder="Email (kept private, optional)" class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868]" />
+            </div>
+            <div>
+              <label for="review-title-input" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Review Headline (optional)</label>
+              <input id="review-title-input" name="review_title" maxlength="120" placeholder="Review headline (optional)" class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868]" />
+            </div>
+            <div>
+              <label for="review-body-input" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Your Review</label>
+              <textarea id="review-body-input" name="review_body" required maxlength="2000" rows="5" placeholder="What did you think about the book?" class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868]"></textarea>
+            </div>
+            <button type="submit" class="w-full rounded-full bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-all hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)]">Publish review →</button>
+            <p id="book-review-status" class="min-h-5 text-sm text-slate-400" aria-live="polite"></p>
           </form>
         </div>
       </section>
 
       <!-- SUPPORT THE PROJECT -->
-      <section class="max-w-4xl mx-auto mt-20 border border-[#E8C868]/25 bg-[#080D16] p-7 sm:p-10">
+      <section class="max-w-4xl mx-auto mt-20 rounded-3xl border border-[#E8C868]/25 bg-[#080D16] p-7 sm:p-10 shadow-2xl">
         <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Support the project</p>
-        <h2 class="mt-4 font-cinzel text-2xl sm:text-3xl font-bold">Enjoyed this book?</h2>
-        <p class="mt-4 max-w-2xl text-slate-400 leading-8">
+        <h2 class="mt-3 font-cinzel text-2xl sm:text-3xl font-bold">Enjoyed this book?</h2>
+        <p class="mt-4 max-w-2xl text-slate-400 leading-8 text-sm sm:text-base">
           These books are free to read and download. If you would like to support the stories,
           artwork, and faith-based creative work behind BLOSSOM, you can give by bank transfer.
         </p>
@@ -334,45 +348,43 @@ const priceLabel = 'Free';
           id="support-project-button"
           aria-expanded="false"
           aria-controls="support-project-details"
-          class="mt-7 inline-flex items-center justify-center bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC] transition-colors"
+          class="mt-7 inline-flex items-center justify-center rounded-full bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)] transition-all"
         >
           If you want to support my projects →
         </button>
         <div id="support-project-details" hidden class="mt-7 border-t border-white/10 pt-7">
           <p class="text-xs font-mono uppercase tracking-[0.2em] text-slate-500">Bank transfer</p>
           <dl class="mt-5 grid gap-4 sm:grid-cols-3">
-            <div>
+            <div class="rounded-xl border border-white/10 bg-[#02050B] p-4">
               <dt class="text-[10px] font-mono uppercase tracking-widest text-slate-500">Bank</dt>
               <dd class="mt-1 text-lg text-[#F6F3EC]">FCMB</dd>
             </div>
-            <div>
+            <div class="rounded-xl border border-white/10 bg-[#02050B] p-4">
               <dt class="text-[10px] font-mono uppercase tracking-widest text-slate-500">Account number</dt>
               <dd class="mt-1 text-lg font-mono text-[#F6F3EC]">6683003010</dd>
             </div>
-            <div>
+            <div class="rounded-xl border border-white/10 bg-[#02050B] p-4">
               <dt class="text-[10px] font-mono uppercase tracking-widest text-slate-500">Account name</dt>
               <dd class="mt-1 text-lg text-[#F6F3EC]">Olaoluwa Michael</dd>
             </div>
           </dl>
           <p class="mt-7 font-editorial text-xl italic text-[#E8C868]">God bless you as you give. Thank you.</p>
           <div class="mt-6 flex flex-wrap gap-4">
-            <button type="button" id="copy-support-account" class="border border-[#E8C868]/50 px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-[#E8C868] hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Copy account number</button>
+            <button type="button" id="copy-support-account" class="rounded-full border border-[#E8C868]/50 px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-[#E8C868] hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Copy account number</button>
           </div>
           <p id="support-copy-status" class="mt-3 text-xs text-slate-500" aria-live="polite"></p>
         </div>
       </section>
 
       <!-- BACK TO BOOKS -->
-      <div class="max-w-4xl mx-auto mt-16 pt-8 border-t border-white/10">
-
+      <div class="max-w-4xl mx-auto mt-16 pt-8 border-t border-white/10 text-center sm:text-left">
         <a
           href="/books"
-          class="inline-flex items-center gap-3 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 hover:text-[#E8C868] transition-colors"
+          class="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2.5 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors"
         >
           <span>←</span>
           Explore All Books
         </a>
-
       </div>
 
     </section>

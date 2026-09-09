@@ -82,9 +82,33 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
           linear-gradient(to right, rgba(212, 175, 55, 0.03) 1px, transparent 1px),
           linear-gradient(to bottom, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
       }
-      main > * { animation: blossom-rise 650ms ease both; }
-      @keyframes blossom-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
+      main > * { animation: blossom-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+      @keyframes blossom-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes gold-glow {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.65; transform: scale(1.06); }
+      }
+      .animate-gold-glow {
+        animation: gold-glow 9s ease-in-out infinite;
+      }
+      .reveal-on-scroll {
+        opacity: 0;
+        transform: translateY(22px);
+        transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: opacity, transform;
+      }
+      .reveal-on-scroll.is-revealed {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
       html[data-theme="light"] body { background-color: #f7f4ec !important; color: #27303a !important; background-image: none !important; }
       html[data-theme="light"] [class*="bg-[#02050B]"], html[data-theme="light"] [class*="bg-[#050A12]"], html[data-theme="light"] [class*="bg-[#081021]"], html[data-theme="light"] [class*="bg-[#080D16]"] { background-color: #f7f4ec !important; }
       html[data-theme="light"] [class*="text-[#F6F3EC]"] { color: #20252b !important; }
@@ -97,54 +121,56 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
     </style>
   </head>
   <body class="bg-[#02050B] text-slate-300 font-sans antialiased overflow-x-hidden editorial-grid-lines min-h-screen flex flex-col justify-between">
-    <nav class="sticky top-0 z-40 bg-[#02050B]/90 backdrop-blur-xl border-b border-[#D4AF37]/10">
+    <nav class="sticky top-0 z-40 bg-[#02050B]/90 backdrop-blur-xl border-b border-[#D4AF37]/10 transition-all duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <a href="/" class="flex items-center space-x-3.5 group">
-          <div class="w-11 h-11 border border-[#D4AF37]/40 bg-[#081021] flex items-center justify-center font-cinzel text-xl font-black text-[#E8C868]">B</div>
+          <div class="w-11 h-11 rounded-2xl border border-[#D4AF37]/40 bg-[#081021] flex items-center justify-center font-cinzel text-xl font-black text-[#E8C868] shadow-md shadow-[#D4AF37]/10 group-hover:border-[#E8C868] group-hover:scale-105 transition-all duration-300">B</div>
           <div class="flex flex-col">
             <span class="font-cinzel tracking-[0.3em] text-lg font-bold text-[#F6F3EC]">BLOSSOM</span>
             <span class="text-[9px] font-mono tracking-[0.25em] text-[#D4AF37]/80 uppercase">Olaoluwa Michael</span>
           </div>
         </a>
         <div class="hidden xl:flex items-center space-x-7 text-[11px] uppercase tracking-[0.22em] font-mono text-slate-300">
-          <a href="/" class="hover:text-[#E8C868]">Home</a>
-          <a href="/books" class="hover:text-[#E8C868]">Books</a>
-          <a href="/imagination" class="hover:text-[#E8C868]">Imagination</a>
-          <a href="/about" class="hover:text-[#E8C868]">About</a>
-          <a href="/journal" class="hover:text-[#E8C868]">Journal</a>
+          <a href="/" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Home</a>
+          <a href="/books" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Books</a>
+          <a href="/imagination" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Imagination</a>
+          <a href="/about" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">About</a>
+          <a href="/journal" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Journal</a>
         </div>
-        <button type="button" id="theme-toggle" class="border border-[#D4AF37]/30 px-3 py-2 text-[10px] uppercase tracking-[0.14em] font-mono text-[#E8C868] transition-colors hover:bg-[#D4AF37]/10 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60" aria-label="Switch to light mode" title="Switch theme">
-          <span id="theme-toggle-label">Light mode</span>
-        </button>
-        <button
-          type="button"
-          id="mobile-menu-button"
-          class="xl:hidden border border-[#D4AF37]/30 px-3 py-2 text-[10px] uppercase tracking-[0.18em] font-mono text-[#E8C868] transition-colors hover:bg-[#D4AF37]/10 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60"
-          aria-expanded="false"
-          aria-controls="mobile-menu"
-        >
-          Menu
-        </button>
+        <div class="flex items-center gap-3">
+          <button type="button" id="theme-toggle" class="rounded-full border border-[#D4AF37]/30 px-4 py-2 text-[10px] uppercase tracking-[0.14em] font-mono text-[#E8C868] transition-all hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/60 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60" aria-label="Switch to light mode" title="Switch theme">
+            <span id="theme-toggle-label">Light mode</span>
+          </button>
+          <button
+            type="button"
+            id="mobile-menu-button"
+            class="xl:hidden rounded-full border border-[#D4AF37]/30 px-4 py-2 text-[10px] uppercase tracking-[0.18em] font-mono text-[#E8C868] transition-all hover:bg-[#D4AF37]/10 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+          >
+            Menu
+          </button>
+        </div>
       </div>
-      <div id="mobile-menu" class="hidden border-t border-[#D4AF37]/10 bg-[#02050B] px-4 py-4 xl:hidden" aria-label="Mobile navigation">
+      <div id="mobile-menu" class="hidden mx-4 mb-4 rounded-3xl border border-[#D4AF37]/20 bg-[#081021]/95 backdrop-blur-2xl p-6 shadow-2xl shadow-black/80 xl:hidden" aria-label="Mobile navigation">
         <div class="flex flex-col gap-4 text-[11px] uppercase tracking-[0.22em] font-mono text-slate-300">
-          <a href="/" class="hover:text-[#E8C868]">Home</a>
-          <a href="/books" class="hover:text-[#E8C868]">Books</a>
-          <a href="/imagination" class="hover:text-[#E8C868]">Imagination</a>
-          <a href="/about" class="hover:text-[#E8C868]">About</a>
-          <a href="/journal" class="hover:text-[#E8C868]">Journal</a>
+          <a href="/" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Home</a>
+          <a href="/books" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Books</a>
+          <a href="/imagination" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Imagination</a>
+          <a href="/about" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">About</a>
+          <a href="/journal" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Journal</a>
         </div>
       </div>
     </nav>
     <main class="flex-grow">
       <slot />
     </main>
-    <div class="mx-auto w-full max-w-7xl px-6 pb-12 pt-16"><NewsletterForm compact /></div>
+    <div class="mx-auto w-full max-w-7xl px-6 pb-12 pt-16 reveal-on-scroll"><NewsletterForm compact /></div>
     <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] py-12 px-4 text-center">
       <div class="flex flex-wrap justify-center gap-x-6 gap-y-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-400">
-        <a href="/books" class="transition-colors hover:text-[#E8C868]">Find a book</a>
-        <a href="/imagination" class="transition-colors hover:text-[#E8C868]">See artwork</a>
-        <a href="/journal" class="transition-colors hover:text-[#E8C868]">Read Journal</a>
+        <a href="/books" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Find a book</a>
+        <a href="/imagination" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">See artwork</a>
+        <a href="/journal" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Read Journal</a>
       </div>
       <p class="mt-6 text-xs font-mono text-slate-500">© {new Date().getFullYear()} Olaoluwa Michael • BLOSSOM Ecosystem • Nigeria</p>
     </footer>
@@ -177,6 +203,20 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
           mobileMenu?.classList.add('hidden');
         });
       });
+
+      if ('IntersectionObserver' in window) {
+        const revealObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-revealed');
+              revealObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.reveal-on-scroll').forEach((el) => revealObserver.observe(el));
+      } else {
+        document.querySelectorAll('.reveal-on-scroll').forEach((el) => el.classList.add('is-revealed'));
+      }
 
       if (window.lucide) window.lucide.createIcons();
     </script>

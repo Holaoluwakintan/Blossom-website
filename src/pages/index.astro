@@ -20,13 +20,27 @@ const { data: artworks, error: artworksError } = await supabase
 
 const previewArtworks = artworks?.filter((artwork) => artwork.image_url && artwork.slug) ?? [];
 
-const { data: journalPosts, error: journalError } = await supabase
+let { data: journalPosts, error: journalError } = await supabase
   .from('journal_posts')
   .select('*')
-  .eq('status', 'PUBLISHED')
-  .order('featured', { ascending: false })
+  .eq('published', true)
   .order('published_at', { ascending: false, nullsFirst: false })
+  .order('created_at', { ascending: false })
   .limit(3);
+
+if (journalError || !journalPosts || journalPosts.length === 0) {
+  const fallback = await supabase
+    .from('journal_posts')
+    .select('*')
+    .eq('status', 'PUBLISHED')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(3);
+  if (fallback.data && fallback.data.length > 0) {
+    journalPosts = fallback.data;
+    journalError = fallback.error;
+  }
+}
 
 const featuredJournal = journalPosts?.[0];
 ---
@@ -37,14 +51,15 @@ const featuredJournal = journalPosts?.[0];
 >
   <main class="bg-[#02050B] text-[#F6F3EC] overflow-hidden">
     <section class="relative min-h-[calc(100vh-5rem)] flex items-center overflow-hidden">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(232,200,104,0.15),transparent_24%),radial-gradient(circle_at_20%_5%,rgba(232,200,104,0.08),transparent_31%)]"></div>
-      <div class="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(232,200,104,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(232,200,104,0.04)_1px,transparent_1px)] [background-size:64px_64px]"></div>
+      <!-- Animated ambient aura -->
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(232,200,104,0.18),transparent_35%),radial-gradient(circle_at_20%_20%,rgba(232,200,104,0.1),transparent_30%)] animate-[pulse_8s_ease-in-out_infinite]"></div>
+      <div class="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(232,200,104,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(232,200,104,0.05)_1px,transparent_1px)] [background-size:64px_64px]"></div>
 
       <div class="relative max-w-7xl mx-auto w-full px-6 py-20 lg:py-28">
         <div class="grid lg:grid-cols-[1.15fr_0.85fr] gap-14 lg:gap-20 items-center">
           <div class="max-w-3xl">
-            <p class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868] mb-7">
-              The creative world of Olaoluwa Michael
+            <p class="inline-flex items-center gap-2 rounded-full border border-[#E8C868]/30 bg-[#E8C868]/10 px-4 py-1.5 text-[10px] sm:text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868] mb-7">
+              ✨ The creative world of Olaoluwa Michael
             </p>
 
             <h1 class="font-cinzel text-5xl sm:text-6xl lg:text-8xl font-extrabold leading-[0.98] tracking-tight">
@@ -58,12 +73,12 @@ const featuredJournal = journalPosts?.[0];
             </p>
 
             <div class="flex flex-wrap gap-4 mt-9">
-              <a href="/books" class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors">
+              <a href="/books" class="inline-flex items-center justify-center rounded-full px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#F6F3EC] hover:shadow-[0_0_25px_rgba(232,200,104,0.35)] transition-all">
                 Explore the Books →
               </a>
 
               {featuredBook && (
-                <a href={'/books/' + featuredBook.slug} class="inline-flex items-center justify-center px-8 py-4 border border-white/15 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:text-[#E8C868] transition-colors">
+                <a href={'/books/' + featuredBook.slug} class="inline-flex items-center justify-center rounded-full px-8 py-4 border border-white/15 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-all">
                   Read the Featured Story
                 </a>
               )}
@@ -72,15 +87,17 @@ const featuredJournal = journalPosts?.[0];
 
           {featuredBook && (
             <a href={'/books/' + featuredBook.slug} class="group mx-auto lg:ml-auto w-full max-w-sm relative block">
-              <div class="absolute -inset-8 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
-              <div class="relative border border-[#E8C868]/25 bg-[#080D16] p-3 shadow-2xl">
-                <img src={getBookCoverUrl(featuredBook) ?? ''} alt={`${featuredBook.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-[1.015]" />
-                <div class="flex justify-between items-end gap-4 pt-4 px-1 pb-1">
+              <div class="absolute -inset-8 bg-[#E8C868]/15 blur-3xl rounded-full transition-opacity group-hover:opacity-100"></div>
+              <div class="relative rounded-3xl border border-[#E8C868]/30 bg-[#080D16] p-4 shadow-2xl transition-all duration-500 group-hover:border-[#E8C868]/70 group-hover:-translate-y-2 group-hover:shadow-[0_20px_45px_rgba(232,200,104,0.18)]">
+                <div class="overflow-hidden rounded-2xl">
+                  <img src={getBookCoverUrl(featuredBook) ?? ''} alt={`${featuredBook.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                </div>
+                <div class="flex justify-between items-end gap-4 pt-4 px-2 pb-1">
                   <div>
                     <p class="text-[9px] font-mono uppercase tracking-[0.24em] text-[#E8C868]">Featured book</p>
-                    <p class="font-cinzel text-xl font-bold mt-1">{featuredBook.title}</p>
+                    <p class="font-cinzel text-xl font-bold mt-1 text-[#F6F3EC] group-hover:text-[#E8C868] transition-colors">{featuredBook.title}</p>
                   </div>
-                  <span class="font-mono text-xs text-[#E8C868] group-hover:text-[#F6F3EC] transition-colors">Explore →</span>
+                  <span class="rounded-full bg-[#E8C868]/15 px-3 py-1 font-mono text-xs text-[#E8C868] group-hover:bg-[#E8C868] group-hover:text-[#02050B] transition-all">Explore →</span>
                 </div>
               </div>
             </a>
@@ -89,32 +106,31 @@ const featuredJournal = journalPosts?.[0];
       </div>
     </section>
 
-
     <section class="border-t border-white/10 bg-[#050A12]">
-      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-24">
+      <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
         <div class="max-w-2xl">
           <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">There is more to BLOSSOM</p>
           <h2 class="font-cinzel text-3xl sm:text-5xl font-bold leading-tight mt-5">Read. See. Think.</h2>
           <p class="mt-5 text-base leading-8 text-slate-400">Books to read, images that make invisible truths visible, and reflections for the road ahead.</p>
         </div>
-        <div class="grid gap-4 mt-10 md:grid-cols-3">
-          <a href="/books" class="group border border-white/10 bg-[#080D16] p-7 transition-colors hover:border-[#E8C868]/70">
+        <div class="grid gap-6 mt-12 md:grid-cols-3">
+          <a href="/books" class="group rounded-3xl border border-white/10 bg-[#080D16] p-8 transition-all duration-500 hover:border-[#E8C868]/70 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]">
             <p class="font-cinzel text-2xl text-[#E8C868]">01</p>
-            <h3 class="mt-5 font-cinzel text-2xl font-bold group-hover:text-[#E8C868]">Read</h3>
-            <p class="mt-3 leading-7 text-slate-400">Discover stories created to stay with you.</p>
-            <span class="mt-7 inline-flex text-[10px] font-mono uppercase tracking-widest text-[#E8C868]">Explore books →</span>
+            <h3 class="mt-5 font-cinzel text-2xl font-bold group-hover:text-[#E8C868] transition-colors">Read</h3>
+            <p class="mt-3 leading-7 text-slate-400 text-sm sm:text-base">Discover stories created to stay with you.</p>
+            <span class="mt-8 inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-[#E8C868] group-hover:border-[#E8C868] group-hover:bg-[#E8C868]/10 transition-all">Explore books →</span>
           </a>
-          <a href="/imagination" class="group border border-white/10 bg-[#080D16] p-7 transition-colors hover:border-[#E8C868]/70">
+          <a href="/imagination" class="group rounded-3xl border border-white/10 bg-[#080D16] p-8 transition-all duration-500 hover:border-[#E8C868]/70 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]">
             <p class="font-cinzel text-2xl text-[#E8C868]">02</p>
-            <h3 class="mt-5 font-cinzel text-2xl font-bold group-hover:text-[#E8C868]">See</h3>
-            <p class="mt-3 leading-7 text-slate-400">Enter a visual world where faith becomes visible.</p>
-            <span class="mt-7 inline-flex text-[10px] font-mono uppercase tracking-widest text-[#E8C868]">Enter Imagination →</span>
+            <h3 class="mt-5 font-cinzel text-2xl font-bold group-hover:text-[#E8C868] transition-colors">See</h3>
+            <p class="mt-3 leading-7 text-slate-400 text-sm sm:text-base">Enter a visual world where faith becomes visible.</p>
+            <span class="mt-8 inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-[#E8C868] group-hover:border-[#E8C868] group-hover:bg-[#E8C868]/10 transition-all">Enter Imagination →</span>
           </a>
-          <a href="/journal" class="group border border-white/10 bg-[#080D16] p-7 transition-colors hover:border-[#E8C868]/70">
+          <a href="/journal" class="group rounded-3xl border border-white/10 bg-[#080D16] p-8 transition-all duration-500 hover:border-[#E8C868]/70 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]">
             <p class="font-cinzel text-2xl text-[#E8C868]">03</p>
-            <h3 class="mt-5 font-cinzel text-2xl font-bold group-hover:text-[#E8C868]">Think</h3>
-            <p class="mt-3 leading-7 text-slate-400">Read Bible-based reflections for everyday faith.</p>
-            <span class="mt-7 inline-flex text-[10px] font-mono uppercase tracking-widest text-[#E8C868]">Read the Journal →</span>
+            <h3 class="mt-5 font-cinzel text-2xl font-bold group-hover:text-[#E8C868] transition-colors">Think</h3>
+            <p class="mt-3 leading-7 text-slate-400 text-sm sm:text-base">Read Bible-based reflections for everyday faith.</p>
+            <span class="mt-8 inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-[#E8C868] group-hover:border-[#E8C868] group-hover:bg-[#E8C868]/10 transition-all">Read the Journal →</span>
           </a>
         </div>
       </div>
@@ -126,17 +142,17 @@ const featuredJournal = journalPosts?.[0];
           <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-3">The collection</p>
           <h2 class="font-cinzel text-3xl sm:text-4xl font-bold">Find your next story.</h2>
         </div>
-        <a href="/books" class="font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:text-[#F6F3EC] transition-colors">View all books →</a>
+        <a href="/books" class="rounded-full border border-white/15 px-5 py-2.5 font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:border-[#E8C868]/60 hover:bg-[#E8C868]/10 hover:text-[#F6F3EC] transition-all">View all books →</a>
       </div>
 
       {collectionBooks.length > 0 ? (
-<div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {collectionBooks.map((book) => (
-            <a href={'/books/' + book.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
-              <div class="overflow-hidden bg-[#080D16] border border-white/10">
+        <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {collectionBooks.map((book) => (
+            <a href={'/books/' + book.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block rounded-3xl border border-white/10 bg-[#080D16] p-5 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]">
+              <div class="overflow-hidden rounded-2xl bg-[#0D1522] border border-white/10">
                 <img src={getBookCoverUrl(book) ?? ''} alt={`${book.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
               </div>
-              <div class="pt-5">
+              <div class="pt-5 px-1 pb-1">
                 {book.genre && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{book.genre}</p>}
                 <h3 class="font-cinzel text-2xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{book.title}</h3>
                 {book.subtitle && <p class="font-editorial italic text-[#E8C868] mt-1">{book.subtitle}</p>}
@@ -146,7 +162,7 @@ const featuredJournal = journalPosts?.[0];
           ))}
         </div>
       ) : (
-        <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">
+        <div class="rounded-3xl border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">
           The collection is coming soon.
         </div>
       )}
@@ -159,26 +175,26 @@ const featuredJournal = journalPosts?.[0];
             <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868] mb-3">A glimpse of the visual world</p>
             <h2 class="font-cinzel text-3xl sm:text-4xl font-bold">Imagination in frames.</h2>
           </div>
-          <a href="/imagination" class="font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:text-[#F6F3EC] transition-colors">View all artwork →</a>
+          <a href="/imagination" class="rounded-full border border-white/15 px-5 py-2.5 font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:border-[#E8C868]/60 hover:bg-[#E8C868]/10 hover:text-[#F6F3EC] transition-all">View all artwork →</a>
         </div>
         {artworksError ? (
-          <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is temporarily unavailable.</div>
+          <div class="rounded-3xl border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is temporarily unavailable.</div>
         ) : previewArtworks.length > 0 ? (
-          <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {previewArtworks.map((artwork) => (
-              <a href={'/imagination/' + artwork.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block">
-                <div class="overflow-hidden border border-white/10 bg-[#080D16]"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
-                <div class="pt-5">
+              <a href={'/imagination/' + artwork.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block rounded-3xl border border-white/10 bg-[#080D16] p-4 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]">
+                <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#0D1522]"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
+                <div class="pt-4 px-1 pb-1">
                   {artwork.category && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{artwork.category}</p>}
                   <h3 class="font-cinzel text-xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{artwork.title}</h3>
-                  {artwork.caption && <p class="font-editorial italic text-[#E8C868] mt-1">{artwork.caption}</p>}
+                  {artwork.caption && <p class="font-editorial italic text-[#E8C868] mt-1 text-sm">{artwork.caption}</p>}
                   <p class="font-mono text-[10px] uppercase tracking-widest text-slate-500 mt-4">Explore artwork →</p>
                 </div>
               </a>
             ))}
           </div>
         ) : (
-          <div class="border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is coming soon.</div>
+          <div class="rounded-3xl border border-white/10 bg-[#080D16] p-10 text-center text-slate-500 font-mono text-sm">The artwork preview is coming soon.</div>
         )}
       </div>
     </section>
@@ -186,54 +202,53 @@ const featuredJournal = journalPosts?.[0];
     <section class="border-t border-white/10 bg-[#050A12]">
       <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
         <div class="grid gap-8 lg:grid-cols-2">
-          <a href="/about" class="group border border-white/10 bg-[#080D16] p-8 sm:p-10 transition-colors hover:border-[#E8C868]/60">
+          <a href="/about" class="group rounded-3xl border border-white/10 bg-[#080D16] p-8 sm:p-10 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(232,200,104,0.1)]">
             <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">About BLOSSOM</p>
-            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5">Meet the mind behind the stories.</h2>
-            <p class="mt-5 max-w-xl leading-8 text-slate-400">Learn about Olaoluwa Michael, the creative work behind BLOSSOM, and ways to work together.</p>
-            <span class="inline-flex mt-8 px-6 py-3 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#E8C868] group-hover:text-[#02050B] transition-colors">Explore About →</span>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5 group-hover:text-[#E8C868] transition-colors">Meet the mind behind the stories.</h2>
+            <p class="mt-5 max-w-xl leading-8 text-slate-400 text-sm sm:text-base">Learn about Olaoluwa Michael, the creative work behind BLOSSOM, and ways to work together.</p>
+            <span class="inline-flex mt-8 rounded-full border border-[#E8C868]/50 px-6 py-3 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#E8C868] group-hover:text-[#02050B] transition-all">Explore About →</span>
           </a>
 
-          <a href="/journal" class="group border border-[#E8C868]/30 bg-[#0A111D] p-8 sm:p-10 transition-colors hover:border-[#E8C868]">
+          <a href="/journal" class="group rounded-3xl border border-[#E8C868]/30 bg-[#0A111D] p-8 sm:p-10 transition-all duration-500 hover:border-[#E8C868] hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(232,200,104,0.15)]">
             <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Faith Journal</p>
-            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5">Reflections for the journey.</h2>
+            <h2 class="font-cinzel text-3xl sm:text-4xl font-bold leading-tight mt-5 group-hover:text-[#E8C868] transition-colors">Reflections for the journey.</h2>
             {journalError ? (
-              <p class="mt-5 leading-8 text-slate-400">Bible-based thoughts and encouragement from BLOSSOM.</p>
+              <p class="mt-5 leading-8 text-slate-400 text-sm sm:text-base">Bible-based thoughts and encouragement from BLOSSOM.</p>
             ) : featuredJournal ? (
-              <p class="mt-5 leading-8 text-slate-400">{featuredJournal.excerpt || 'Bible-based thoughts and encouragement for everyday faith.'}</p>
+              <p class="mt-5 leading-8 text-slate-400 text-sm sm:text-base">{featuredJournal.excerpt || 'Bible-based thoughts and encouragement for everyday faith.'}</p>
             ) : (
-              <p class="mt-5 leading-8 text-slate-400">Bible-based thoughts and encouragement for everyday faith.</p>
+              <p class="mt-5 leading-8 text-slate-400 text-sm sm:text-base">Bible-based thoughts and encouragement for everyday faith.</p>
             )}
-            <span class="inline-flex mt-8 px-6 py-3 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#F6F3EC] transition-colors">Enter the Journal →</span>
+            <span class="inline-flex mt-8 rounded-full bg-[#E8C868] px-6 py-3 text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest group-hover:bg-[#F6F3EC] transition-all">Enter the Journal →</span>
           </a>
         </div>
       </div>
     </section>
-
-
 
     <section class="border-t border-white/10 bg-[#050A12]">
       <div class="max-w-7xl mx-auto px-6 py-16 lg:py-20">
-        <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center border border-[#E8C868]/25 bg-[#080D16] p-8 sm:p-10">
+        <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center rounded-3xl border border-[#E8C868]/25 bg-[#080D16] p-8 sm:p-12 shadow-2xl">
           <div>
             <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Work with Olaoluwa</p>
             <h2 class="mt-4 font-cinzel text-3xl sm:text-4xl font-bold">Have an idea worth bringing to life?</h2>
-            <p class="mt-4 max-w-2xl leading-8 text-slate-400">Writing, visual storytelling, creative design, AI-assisted concepts, and meaningful collaborations for brands, creators, churches, and organizations.</p>
+            <p class="mt-4 max-w-2xl leading-8 text-slate-400 text-sm sm:text-base">Writing, visual storytelling, creative design, AI-assisted concepts, and meaningful collaborations for brands, creators, churches, and organizations.</p>
           </div>
           <div class="flex flex-wrap gap-3 lg:justify-end">
-            <a href="mailto:michaelolaoluwagab@gmail.com?subject=Work%20with%20Olaoluwa" class="inline-flex items-center justify-center bg-[#E8C868] px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-[#02050B] transition-colors hover:bg-[#F6F3EC]">Start a conversation</a>
-            <a href="/about" class="inline-flex items-center justify-center border border-white/15 px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-[#F6F3EC] transition-colors hover:border-[#E8C868] hover:text-[#E8C868]">See the work →</a>
+            <a href="mailto:michaelolaoluwagab@gmail.com?subject=Work%20with%20Olaoluwa" class="inline-flex items-center justify-center rounded-full bg-[#E8C868] px-7 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-[#02050B] transition-all hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)]">Start a conversation</a>
+            <a href="/about" class="inline-flex items-center justify-center rounded-full border border-white/15 px-7 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-[#F6F3EC] transition-all hover:border-[#E8C868] hover:bg-[#E8C868]/10 hover:text-[#E8C868]">See the work →</a>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="border-t border-white/10">
-      <div class="max-w-4xl mx-auto px-6 py-20 lg:py-28 text-center">
+    <section class="max-w-7xl mx-auto px-6 py-20 lg:py-28">
+      <div class="rounded-3xl border border-white/10 bg-[#050A12] p-10 sm:p-20 text-center shadow-2xl">
         <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">BLOSSOM</p>
-        <h2 class="font-cinzel text-3xl sm:text-5xl font-bold leading-tight mt-5">Many stories leave something behind.</h2>
+        <h2 class="font-cinzel text-3xl sm:text-5xl font-bold leading-tight mt-4">Many stories leave something behind.</h2>
         <p class="font-editorial italic text-2xl sm:text-3xl text-[#E8C868] mt-4">Let these leave you closer to Jesus.</p>
-        <a href="/books" class="inline-flex mt-9 px-8 py-4 border border-[#E8C868]/50 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] transition-colors">Begin with a book</a>
+        <a href="/books" class="inline-flex mt-9 rounded-full border border-[#E8C868]/50 px-8 py-4 text-[#E8C868] font-mono text-xs font-bold uppercase tracking-widest hover:bg-[#E8C868] hover:text-[#02050B] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)] transition-all">Begin with a book</a>
       </div>
     </section>
   </main>
 </BaseLayout>
+

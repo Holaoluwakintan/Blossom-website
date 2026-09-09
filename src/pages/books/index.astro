@@ -36,9 +36,9 @@ const formatNaira = (_price: number | string | null) => 'Free';
 
         <a
           href="/"
-          class="inline-block text-[10px] font-mono uppercase tracking-[0.3em] text-slate-500 hover:text-[#E8C868] transition-colors mb-10"
+          class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.3em] text-slate-400 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors mb-10"
         >
-          ← Back to Home
+          <span>←</span> Back to Home
         </a>
 
         <span class="block text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">
@@ -88,14 +88,14 @@ const formatNaira = (_price: number | string | null) => 'Free';
               class="group block relative"
             >
 
-              <div class="absolute -inset-6 bg-[#E8C868]/5 blur-3xl"></div>
+              <div class="absolute -inset-6 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
 
-              <div class="relative overflow-hidden">
+              <div class="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
 
                 <img
                   src={getBookCoverUrl(featuredBook) ?? ''}
                   alt={`${featuredBook.title} book cover`}
-                  class="w-full rounded-sm shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
+                  class="w-full transition-transform duration-700 group-hover:scale-[1.02]"
                 />
 
               </div>
@@ -108,7 +108,8 @@ const formatNaira = (_price: number | string | null) => 'Free';
 
                 <div
                   class="inline-flex items-center justify-center gap-3
-                  px-6 py-3
+                  px-6 py-2.5
+                  rounded-full
                   border border-[#E8C868]
                   bg-[#E8C868]/10
                   text-[#E8C868]
@@ -171,7 +172,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
 
               <a
                 href={'/books/' + featuredBook.slug}
-                class="inline-flex items-center justify-center px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] transition-colors"
+                class="inline-flex items-center justify-center rounded-full px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)] transition-all"
               >
                 Explore Book →
               </a>
@@ -229,7 +230,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
 
 
         {error && (
-          <div class="text-center py-20">
+          <div class="rounded-2xl border border-red-500/20 bg-[#080D16] p-10 text-center shadow-xl">
             <p class="text-red-400 font-mono text-sm">
               Unable to load books.
             </p>
@@ -251,13 +252,13 @@ const formatNaira = (_price: number | string | null) => 'Free';
             {collectionBooks.map((book) => (
 
               <article
-                class="group flex-none w-[78vw] sm:w-[360px] lg:w-[390px] snap-start"
+                class="group flex-none w-[78vw] sm:w-[360px] lg:w-[390px] snap-start flex flex-col justify-between rounded-3xl border border-white/10 bg-[#080D16] p-6 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]"
               >
 
                 <!-- COVER -->
                 <a
                   href={'/books/' + book.slug}
-                  class="block relative overflow-hidden bg-[#080D16] border border-white/10"
+                  class="block relative overflow-hidden rounded-2xl bg-[#0D1522] border border-white/10"
                 >
 
                   <div class="aspect-[3/4] overflow-hidden">
@@ -275,7 +276,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
                   <!-- Hover -->
                   <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-end justify-center">
 
-                    <span class="mb-8 px-6 py-3 bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <span class="mb-8 px-6 py-3 rounded-full bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500 shadow-xl">
                       Explore Book →
                     </span>
 
@@ -293,7 +294,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
                     </p>
                   )}
 
-                  <h3 class="font-cinzel text-2xl sm:text-3xl font-bold mt-2 leading-tight">
+                  <h3 class="font-cinzel text-2xl sm:text-3xl font-bold mt-2 leading-tight group-hover:text-[#E8C868] transition-colors">
                     {book.title}
                   </h3>
 
@@ -332,10 +333,10 @@ const formatNaira = (_price: number | string | null) => 'Free';
                       </div>
 
 
-                      <div class="flex flex-wrap items-center justify-end gap-4">
+                      <div class="flex flex-wrap items-center justify-end gap-3">
                         <a
                           href={'/books/' + book.slug}
-                          class="shrink-0 font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:text-[#F6F3EC] transition-colors"
+                          class="shrink-0 rounded-full border border-white/15 px-4 py-2 font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:border-[#E8C868]/60 hover:bg-[#E8C868]/10 hover:text-[#F6F3EC] transition-colors"
                         >
                           View Book →
                         </a>
@@ -366,7 +367,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
         )}
 
         {!error && collectionBooks.length === 0 && (
-          <div class="text-center py-20">
+          <div class="rounded-3xl border border-white/10 bg-[#080D16] p-12 text-center shadow-xl">
             <p class="text-slate-500 font-mono text-sm">
               No books found yet.
             </p>
@@ -379,9 +380,9 @@ const formatNaira = (_price: number | string | null) => 'Free';
 
 
     <!-- CLOSING MESSAGE -->
-    <section class="border-t border-white/10">
+    <section class="max-w-7xl mx-auto px-6 pb-20">
 
-      <div class="max-w-4xl mx-auto px-6 py-20 text-center">
+      <div class="rounded-3xl border border-white/10 bg-[#050A12] p-10 sm:p-16 text-center shadow-2xl">
 
         <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">
           BLOSSOM
@@ -402,14 +403,15 @@ const formatNaira = (_price: number | string | null) => 'Free';
 
         <a
           href="/"
-          class="inline-flex mt-8 px-7 py-3 border border-white/10 text-xs font-mono uppercase tracking-widest text-slate-400 hover:border-[#E8C868]/50 hover:text-[#E8C868] transition-colors"
+          class="inline-flex mt-8 items-center gap-2 rounded-full border border-white/15 px-7 py-3 text-xs font-mono uppercase tracking-widest text-slate-300 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors"
         >
-          Back to Home
+          <span>←</span> Back to Home
         </a>
 
       </div>
 
     </section>
+
 
   </main>
 </BaseLayout>

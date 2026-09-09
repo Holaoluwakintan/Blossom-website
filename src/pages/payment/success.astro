@@ -10,12 +10,12 @@ const reference = Astro.url.searchParams.get('reference') || '';
   description="Confirm your BLOSSOM book payment and access your digital download."
 >
   <main class="min-h-screen bg-[#02050B] px-6 py-24 text-[#F6F3EC]">
-    <section class="mx-auto max-w-xl text-center">
+    <section class="mx-auto max-w-xl text-center rounded-3xl border border-[#E8C868]/20 bg-[#081021]/80 p-10 sm:p-14 shadow-2xl shadow-black/80 backdrop-blur-sm">
       <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">BLOSSOM BOOKS</p>
       <h1 class="mt-5 font-cinzel text-4xl font-bold">Confirming your payment</h1>
       <p id="payment-message" class="mt-6 text-lg leading-8 text-slate-400">Please wait while we verify your Paystack payment.</p>
       <div id="download-area" class="mt-9"></div>
-      <a href="/books" class="mt-10 inline-flex border border-[#E8C868]/50 px-7 py-4 font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:bg-[#E8C868] hover:text-[#02050B]">Return to Books</a>
+      <a href="/books" class="mt-10 inline-flex rounded-full border border-[#E8C868]/50 px-8 py-4 font-mono text-xs uppercase tracking-widest text-[#E8C868] hover:bg-[#E8C868] hover:text-[#02050B] transition-all">Return to Books</a>
     </section>
   </main>
 
@@ -43,7 +43,7 @@ const reference = Astro.url.searchParams.get('reference') || '';
           if (!response.ok || !result.success) throw new Error(result.error || 'Payment could not be verified.');
           if (message) message.textContent = `${result.title} is ready to download.`;
           if (area) {
-            area.innerHTML = `<a href="${result.download_url}" class="inline-flex bg-[#E8C868] px-8 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC]" download>Download your book</a><p class="mt-4 text-xs text-slate-500">This private link expires in one hour. Save the file after downloading.</p>`;
+            area.innerHTML = `<a href="${result.download_url}" class="inline-flex rounded-full bg-[#E8C868] px-8 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC] shadow-lg shadow-[#E8C868]/20 transition-all" download>Download your book</a><p class="mt-4 text-xs text-slate-500">This private link expires in one hour. Save the file after downloading.</p>`;
           }
         })
         .catch((error) => showError(error.message));

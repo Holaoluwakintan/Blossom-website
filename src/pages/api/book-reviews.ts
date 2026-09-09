@@ -8,10 +8,16 @@ const clean = (value: unknown, maxLength: number) =>
     .slice(0, maxLength);
 
 export const POST: APIRoute = async ({ request }) => {
+  const json = (data: unknown, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
   try {
     const payload = await request.json();
     if (payload.website_url) {
-      return new Response(JSON.stringify({ success: true }), { status: 200 });
+      return json({ success: true });
     }
 
     const bookId = clean(payload.book_id, 80);
@@ -22,11 +28,11 @@ export const POST: APIRoute = async ({ request }) => {
     const rating = Number(payload.rating);
 
     if (!bookId || !reviewerName || !reviewBody || !Number.isInteger(rating) || rating < 1 || rating > 5) {
-      return new Response(JSON.stringify({ error: 'Please provide your name, rating, and review.' }), { status: 400 });
+      return json({ error: 'Please provide your name, rating, and review.' }, 400);
     }
 
     if (reviewerEmail && !/^\S+@\S+\.\S+$/.test(reviewerEmail)) {
-      return new Response(JSON.stringify({ error: 'Please enter a valid email address.' }), { status: 400 });
+      return json({ error: 'Please enter a valid email address.' }, 400);
     }
 
     const { data: book, error: bookError } = await supabase
@@ -36,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
       .maybeSingle();
 
     if (bookError || !book) {
-      return new Response(JSON.stringify({ error: 'That book could not be found.' }), { status: 404 });
+      return json({ error: 'That book could not be found.' }, 404);
     }
 
     const { error } = await supabase.from('book_reviews').insert({
@@ -50,11 +56,14 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      return json({ error: error.message }, 500);
     }
 
-    return new Response(JSON.stringify({ success: true }), { status: 201 });
+    return json({ success: true }, 201);
   } catch {
-    return new Response(JSON.stringify({ error: 'Review could not be published.' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Review could not be published.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 };

@@ -15,9 +15,9 @@ const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
 <div class="mt-10 border-y border-white/10 py-7" data-share-block>
   <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868]">{label}</p>
   <div class="mt-4 flex flex-wrap gap-3">
-    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center border border-[#E8C868]/40 px-4 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-[#E8C868] transition-colors hover:bg-[#E8C868] hover:text-[#02050B]">WhatsApp</a>
-    <a href={facebookUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center border border-white/15 px-4 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 transition-colors hover:border-[#E8C868] hover:text-[#E8C868]">Facebook</a>
-    <button type="button" data-copy-share={url} class="inline-flex items-center justify-center border border-white/15 px-4 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 transition-colors hover:border-[#E8C868] hover:text-[#E8C868]">Copy link</button>
+    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-[#E8C868]/40 px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest text-[#E8C868] transition-all hover:bg-[#E8C868] hover:text-[#02050B] shadow-sm">WhatsApp</a>
+    <a href={facebookUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-white/15 px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 transition-all hover:border-[#E8C868] hover:text-[#E8C868] shadow-sm">Facebook</a>
+    <button type="button" data-copy-share={url} class="inline-flex items-center justify-center rounded-full border border-white/15 px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 transition-all hover:border-[#E8C868] hover:text-[#E8C868] shadow-sm">Copy link</button>
   </div>
   <p data-copy-status class="mt-3 min-h-5 text-xs text-slate-500" aria-live="polite"></p>
 </div>
