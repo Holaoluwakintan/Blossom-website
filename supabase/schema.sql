@@ -154,6 +154,13 @@ CREATE POLICY "Anyone can subscribe with a valid email"
   ON newsletter_subscribers FOR INSERT TO anon, authenticated
   WITH CHECK (length(email) BETWEEN 5 AND 254 AND email = lower(email));
 
+DROP POLICY IF EXISTS "Anyone can update their subscription status" ON newsletter_subscribers;
+CREATE POLICY "Anyone can update their subscription status"
+  ON newsletter_subscribers FOR UPDATE TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
+
 ALTER TABLE books ADD COLUMN IF NOT EXISTS download_count BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE books ADD COLUMN IF NOT EXISTS download_counter_started_at DATE NOT NULL DEFAULT DATE '2026-08-31';
 

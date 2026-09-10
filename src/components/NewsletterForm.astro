@@ -28,33 +28,57 @@ const {
 </section>
 
 <script is:inline>
-  const newsletterForm = document.getElementById('newsletter-form');
-  const newsletterStatus = document.getElementById('newsletter-status');
-  newsletterForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    if (!newsletterForm || !newsletterStatus) return;
-    const submit = newsletterForm.querySelector('button[type="submit"]');
-    const email = new FormData(newsletterForm).get('email');
-    if (typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email)) {
-      newsletterStatus.textContent = 'Please enter a valid email address.';
-      return;
-    }
-    if (submit) { submit.disabled = true; submit.textContent = 'Saving…'; }
-    newsletterStatus.textContent = '';
-    try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(new FormData(newsletterForm).entries())),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || 'We could not save your subscription.');
-      newsletterForm.reset();
-      newsletterStatus.textContent = 'You are on the list. Thank you for staying close to BLOSSOM.';
-    } catch (error) {
-      newsletterStatus.textContent = error instanceof Error ? error.message : 'We could not save your subscription.';
-    } finally {
-      if (submit) { submit.disabled = false; submit.textContent = 'Subscribe →'; }
-    }
+  document.querySelectorAll('#newsletter-form').forEach((newsletterForm) => {
+    const section = newsletterForm.closest('section');
+    const newsletterStatus = section?.querySelector('#newsletter-status');
+    newsletterForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const submit = newsletterForm.querySelector('button[type="submit"]');
+      const emailInput = newsletterForm.querySelector('input[type="email"]');
+      const email = emailInput?.value?.trim();
+
+      if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+        if (newsletterStatus) {
+          newsletterStatus.textContent = 'Please enter a valid email address.';
+          newsletterStatus.className = 'mt-3 text-sm text-red-400 font-mono';
+        }
+        return;
+      }
+
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = 'Subscribing…';
+      }
+      if (newsletterStatus) {
+        newsletterStatus.textContent = 'Adding you to the list…';
+        newsletterStatus.className = 'mt-3 text-sm text-slate-400 font-mono';
+      }
+
+      try {
+        const response = await fetch('/api/newsletter/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'We could not save your subscription.');
+
+        newsletterForm.reset();
+        if (newsletterStatus) {
+          newsletterStatus.textContent = '✨ You are subscribed! You will be the first to know when a new story or reflection drops.';
+          newsletterStatus.className = 'mt-3 text-sm text-[#E8C868] font-medium font-mono';
+        }
+      } catch (error) {
+        if (newsletterStatus) {
+          newsletterStatus.textContent = error instanceof Error ? error.message : 'We could not save your subscription.';
+          newsletterStatus.className = 'mt-3 text-sm text-red-400 font-mono';
+        }
+      } finally {
+        if (submit) {
+          submit.disabled = false;
+          submit.textContent = 'Subscribe →';
+        }
+      }
+    });
   });
 </script>
