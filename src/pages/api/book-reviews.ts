@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseServer } from '../../lib/supabase';
 
 const clean = (value: unknown, maxLength: number) =>
   String(value ?? '')
@@ -35,17 +35,26 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'Please enter a valid email address.' }, 400);
     }
 
-    const { data: book, error: bookError } = await supabase
+    let { data: book, error: bookError } = await supabaseServer
       .from('books')
       .select('id')
       .eq('id', bookId)
       .maybeSingle();
 
     if (bookError || !book) {
+      const publicBook = await supabase
+        .from('books')
+        .select('id')
+        .eq('id', bookId)
+        .maybeSingle();
+      book = publicBook.data;
+    }
+
+    if (!book) {
       return json({ error: 'That book could not be found.' }, 404);
     }
 
-    const { error } = await supabase.from('book_reviews').insert({
+    let { error } = await supabaseServer.from('book_reviews').insert({
       book_id: bookId,
       rating,
       review_title: reviewTitle || null,
@@ -55,15 +64,27 @@ export const POST: APIRoute = async ({ request }) => {
       status: 'PUBLISHED',
     });
 
+    if (error && supabaseServer !== supabase) {
+      const fallback = await supabase.from('book_reviews').insert({
+        book_id: bookId,
+        rating,
+        review_title: reviewTitle || null,
+        review_body: reviewBody,
+        reviewer_name: reviewerName,
+        reviewer_email: reviewerEmail || null,
+        status: 'PUBLISHED',
+      });
+      error = fallback.error;
+    }
+
     if (error) {
-      return json({ error: error.message }, 500);
+      console.error('Book review insertion error:', error);
+      return json({ error: error.message || 'Review could not be published.' }, 500);
     }
 
     return json({ success: true }, 201);
-  } catch {
-    return new Response(JSON.stringify({ error: 'Review could not be published.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  } catch (err) {
+    console.error('Book review exception:', err);
+    return json({ error: 'Review could not be published.' }, 500);
   }
 };

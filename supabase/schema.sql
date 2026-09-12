@@ -195,7 +195,11 @@ CREATE TABLE IF NOT EXISTS book_downloads (
 );
 
 ALTER TABLE book_downloads ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON book_downloads FROM anon, authenticated;
+DROP POLICY IF EXISTS "Anyone can record book downloads" ON book_downloads;
+CREATE POLICY "Anyone can record book downloads"
+  ON book_downloads FOR INSERT TO anon, authenticated
+  WITH CHECK (length(email) BETWEEN 5 AND 254);
+
 CREATE INDEX IF NOT EXISTS book_downloads_book_id_idx ON book_downloads(book_id);
 CREATE INDEX IF NOT EXISTS book_downloads_email_idx ON book_downloads(email);
 
@@ -266,5 +270,4 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION track_book_download(UUID, VARCHAR, VARCHAR, BOOLEAN) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION track_book_download(UUID, VARCHAR, VARCHAR, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION track_book_download(UUID, VARCHAR, VARCHAR, BOOLEAN) TO anon, authenticated, service_role;

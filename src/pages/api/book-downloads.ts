@@ -1,9 +1,6 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@supabase/supabase-js';
+import { supabase, supabaseServer } from '../../lib/supabase';
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://rlbrhpjljjgpqpqjrpkc.supabase.co';
-const serviceRoleKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
-const publicAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 const emailPattern = /^\S+@\S+\.\S+$/;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -18,7 +15,7 @@ const clean = (value: unknown, maxLength: number) =>
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const email = clean(body?.email, 254).toLowerCase();
     const bookId = clean(body?.bookId, 80);
     const fullName = clean(body?.name ?? body?.fullName, 120) || null;
@@ -32,35 +29,66 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'This book could not be identified.' }, 400);
     }
 
-    // Tracking is helpful but must never prevent a free book download.
-    // Vercel deployments may not have the private service-role key configured.
     let record: { download_count?: number | string; download_counter_started_at?: string } | null = null;
-    if (serviceRoleKey) {
-      const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-      const { data, error } = await supabaseAdmin.rpc('track_book_download', {
+
+    // 1. Primary attempt: track_book_download RPC via server client
+    const { data: rpcData, error: rpcError } = await supabaseServer.rpc('track_book_download', {
+      p_book_id: bookId,
+      p_email: email,
+      p_full_name: fullName,
+      p_marketing_opt_in: marketingOptIn,
+    });
+
+    if (!rpcError && rpcData) {
+      record = (Array.isArray(rpcData) ? rpcData[0] : rpcData) ?? null;
+    }
+
+    // 2. Secondary attempt: track_book_download RPC via anon client if server client differs
+    if (!record && supabaseServer !== supabase) {
+      const { data: publicData, error: publicError } = await supabase.rpc('track_book_download', {
         p_book_id: bookId,
         p_email: email,
         p_full_name: fullName,
         p_marketing_opt_in: marketingOptIn,
       });
-      if (error) console.error('Book download tracking failed:', error.message);
-      record = (Array.isArray(data) ? data[0] : data) ?? null;
+
+      if (!publicError && publicData) {
+        record = (Array.isArray(publicData) ? publicData[0] : publicData) ?? null;
+      }
     }
 
-    // The counter itself remains available even when optional email capture is
-    // not configured in Vercel. The RPC is security-definer and only receives
-    // a validated book UUID from this form.
-    if (!record?.download_count && publicAnonKey) {
-      const supabasePublic = createClient(supabaseUrl, publicAnonKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-      const { data: count, error } = await supabasePublic.rpc('increment_book_download', {
+    // 3. Fallback attempt: direct table inserts into newsletter_subscribers & book_downloads
+    if (!record) {
+      // Direct insert into newsletter_subscribers
+      await supabaseServer
+        .from('newsletter_subscribers')
+        .upsert(
+          {
+            email,
+            full_name: fullName,
+            source: 'book-download',
+            marketing_consent: marketingOptIn,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'email' }
+        );
+
+      // Direct insert into book_downloads
+      await supabaseServer
+        .from('book_downloads')
+        .insert({
+          book_id: bookId,
+          email,
+          full_name: fullName,
+          marketing_consent: marketingOptIn,
+        });
+
+      // Increment counter
+      const { data: count } = await supabaseServer.rpc('increment_book_download', {
         p_book_id: bookId,
       });
-      if (error) console.error('Book counter increment failed:', error.message);
-      if (!error && count != null) record = { download_count: count };
+
+      record = { download_count: count ?? null };
     }
 
     return json({

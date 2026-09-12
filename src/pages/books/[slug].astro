@@ -3,17 +3,29 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import DownloadGate from '../../components/DownloadGate.astro';
 import BookOrderLink from '../../components/BookOrderLink.astro';
 import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseServer } from '../../lib/supabase';
 
 export const prerender = false;
 
 const { slug } = Astro.params;
 
-const { data: book, error } = await supabase
+let { data: book, error } = await supabaseServer
   .from('books')
   .select('*')
   .eq('slug', slug)
   .maybeSingle();
+
+if ((error || !book) && supabaseServer !== supabase) {
+  const fallback = await supabase
+    .from('books')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!fallback.error && fallback.data) {
+    book = fallback.data;
+    error = null;
+  }
+}
 
 if (error || !book) {
   throw new Error(
@@ -21,12 +33,25 @@ if (error || !book) {
   );
 }
 
-const { data: reviews, error: reviewsError } = await supabase
+let { data: reviews, error: reviewsError } = await supabaseServer
   .from('book_reviews')
   .select('id, rating, review_title, review_body, reviewer_name, created_at')
   .eq('book_id', book.id)
-  .eq('status', 'PUBLISHED')
+  .or('status.eq.PUBLISHED,status.is.null')
   .order('created_at', { ascending: false });
+
+if (reviewsError && supabaseServer !== supabase) {
+  const fallback = await supabase
+    .from('book_reviews')
+    .select('id, rating, review_title, review_body, reviewer_name, created_at')
+    .eq('book_id', book.id)
+    .or('status.eq.PUBLISHED,status.is.null')
+    .order('created_at', { ascending: false });
+  if (!fallback.error) {
+    reviews = fallback.data;
+    reviewsError = null;
+  }
+}
 
 const publishedReviews = reviews ?? [];
 const averageRating = publishedReviews.length
