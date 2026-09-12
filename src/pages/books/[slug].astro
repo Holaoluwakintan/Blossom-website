@@ -28,9 +28,7 @@ if ((error || !book) && supabaseServer !== supabase) {
 }
 
 if (error || !book) {
-  throw new Error(
-    `Book not found. Slug: ${slug}. Supabase error: ${error?.message ?? 'No book returned'}`
-  );
+  return Astro.redirect('/books');
 }
 
 let { data: reviews, error: reviewsError } = await supabaseServer

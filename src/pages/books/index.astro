@@ -4,15 +4,26 @@ import DownloadGate from '../../components/DownloadGate.astro';
 import BookOrderLink from '../../components/BookOrderLink.astro';
 import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
 import { formatDownloadCount } from '../../lib/content';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseServer } from '../../lib/supabase';
 
 export const prerender = false;
 
-const { data: books, error } = await supabase
+let { data: books, error } = await supabaseServer
   .from('books')
-  .select('*');
+  .select('*')
+  .order('created_at', { ascending: false });
 
-const featuredBook = books?.find((book) => book.featured === true);
+if ((error || !books || books.length === 0) && supabaseServer !== supabase) {
+  const fallback = await supabase
+    .from('books')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (!fallback.error && fallback.data) {
+    books = fallback.data;
+  }
+}
+
+const featuredBook = books?.find((book) => book.featured === true) || books?.[0];
 
 // Keep the complete collection visible. Featured status controls the hero section,
 // but must never hide a book from the main grid.
