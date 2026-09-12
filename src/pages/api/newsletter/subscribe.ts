@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase, supabaseServer } from '../../../lib/supabase';
+import { generateWelcomeEmail } from '../../../lib/newsletter-templates';
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -20,7 +21,6 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'Please enter a valid email address.' }, 400);
     }
 
-    // Try inserting or upserting with supabaseServer (service role client if configured, else public)
     const subscriberRecord = {
       email,
       full_name: fullName,
@@ -29,14 +29,11 @@ export const POST: APIRoute = async ({ request }) => {
       updated_at: new Date().toISOString(),
     };
 
-    // Primary attempt using supabaseServer
     let { error } = await supabaseServer
       .from('newsletter_subscribers')
       .upsert(subscriberRecord, { onConflict: 'email' });
 
-    // If upsert threw RLS error and we have fallback
     if (error) {
-      // Try simple insert (which has an explicit INSERT policy on Postgres)
       const insertResult = await supabaseServer
         .from('newsletter_subscribers')
         .insert({
@@ -46,18 +43,11 @@ export const POST: APIRoute = async ({ request }) => {
           marketing_consent: true,
         });
 
-      // If Postgres unique violation (already subscribed), consider it a success!
-      if (insertResult.error?.code === '23505' || String(insertResult.error?.message).includes('duplicate')) {
-        return json({ ok: true, alreadySubscribed: true });
-      }
-
-      // If insert worked
       if (!insertResult.error) {
         error = null;
       }
     }
 
-    // Final fallback with public anon client insert if needed
     if (error && supabaseServer !== supabase) {
       const anonResult = await supabase
         .from('newsletter_subscribers')
@@ -69,11 +59,27 @@ export const POST: APIRoute = async ({ request }) => {
         });
 
       if (!anonResult.error || anonResult.error?.code === '23505') {
-        return json({ ok: true });
+        error = null;
       }
+    }
 
-      console.error('Newsletter subscription failed:', error.message);
-      return json({ error: 'Subscription is temporarily unavailable. Please try again soon.' }, 500);
+    // Send Welcome Email if Resend API Key is configured in Vercel
+    const resendApiKey = import.meta.env.RESEND_API_KEY;
+    if (resendApiKey) {
+      const welcome = generateWelcomeEmail(fullName);
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Olaoluwa Michael <newsletter@olaoluwamichael.vercel.app>',
+          to: email,
+          subject: welcome.emailSubject,
+          html: welcome.emailHtml,
+        }),
+      }).catch((err) => console.error('Welcome email dispatch error:', err));
     }
 
     return json({ ok: true });
