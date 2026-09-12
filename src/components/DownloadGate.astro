@@ -98,7 +98,8 @@ const gateId = `download-gate-${bookSlug}`;
         if (!response.ok) throw new Error(result.error || 'Download could not be prepared.');
 
         // Same-origin attachment route: this downloads the PDF on phones instead of opening a preview tab.
-        window.location.assign(`/api/book-download?bookId=${encodeURIComponent(bookId)}`);
+        const tokenParam = result.downloadToken ? `&token=${encodeURIComponent(result.downloadToken)}` : '';
+        window.location.assign(`/api/book-download?bookId=${encodeURIComponent(bookId)}${tokenParam}`);
         dialog.close();
         form.reset();
       } catch (error) {

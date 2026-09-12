@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createClient } from '@supabase/supabase-js';
 import { getBookDownloadUrl } from '../../lib/book-downloads';
+import { verifyDownloadToken } from '../../lib/download-token';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://rlbrhpjljjgpqpqjrpkc.supabase.co';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
@@ -8,23 +9,25 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
   });
 
 const safeFilename = (title: string) =>
   `${title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'blossom-book'}.pdf`;
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, redirect }) => {
   try {
     if (!supabaseAnonKey) return json({ error: 'Download service is not configured.' }, 503);
 
     const bookId = url.searchParams.get('bookId')?.trim() || '';
+    const token = url.searchParams.get('token')?.trim() || '';
+
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(bookId)) {
       return json({ error: 'This book could not be identified.' }, 400);
     }
 
     const supabasePublic = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const { data: book, error } = await supabasePublic
@@ -34,6 +37,12 @@ export const GET: APIRoute = async ({ url }) => {
       .maybeSingle();
 
     if (error || !book) return json({ error: 'Book not found.' }, 404);
+
+    // Enforce token verification: direct URL access without submitting email form redirects to book detail page
+    const isValidToken = verifyDownloadToken(book.id, token);
+    if (!isValidToken) {
+      return redirect(`/books/${book.slug || ''}`, 302);
+    }
 
     const downloadUrl = getBookDownloadUrl(book);
     if (!downloadUrl) return json({ error: 'This book is not available for download yet.' }, 404);
@@ -47,8 +56,8 @@ export const GET: APIRoute = async ({ url }) => {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${safeFilename(book.title)}"`,
         ...(pdf.headers.get('content-length') ? { 'Content-Length': pdf.headers.get('content-length') as string } : {}),
-        'Cache-Control': 'private, no-store'
-      }
+        'Cache-Control': 'private, no-store',
+      },
     });
   } catch {
     return json({ error: 'The download could not be completed. Please try again.' }, 500);
