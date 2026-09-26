@@ -21,6 +21,9 @@ CREATE TABLE books (
     publication_year INT NOT NULL,
     price_ngn NUMERIC(10, 2),
     format VARCHAR(100) DEFAULT 'Paperback & Digital E-Book',
+    collection VARCHAR(40) NOT NULL DEFAULT 'blossom',
+    access_type VARCHAR(30) NOT NULL DEFAULT 'free-download',
+    purchase_url TEXT,
     featured BOOLEAN DEFAULT false,
     availability_status VARCHAR(50) DEFAULT 'Available',
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -135,6 +138,9 @@ REVOKE ALL ON FUNCTION increment_article_click(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION increment_article_click(UUID) TO anon, authenticated;
 
 ALTER TABLE books ADD COLUMN IF NOT EXISTS download_path TEXT;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS collection VARCHAR(40) NOT NULL DEFAULT 'blossom';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS access_type VARCHAR(30) NOT NULL DEFAULT 'free-download';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS purchase_url TEXT;
 ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 CREATE TABLE IF NOT EXISTS newsletter_subscribers (

@@ -1,0 +1,138 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DownloadGate from '../../components/DownloadGate.astro';
+import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
+import { formatDownloadCount } from '../../lib/content';
+import { supabase, supabaseServer } from '../../lib/supabase';
+
+export const prerender = false;
+
+let { data: books, error } = await supabaseServer
+  .from('books')
+  .select('*')
+  .eq('collection', 'other-authors')
+  .order('created_at', { ascending: false });
+
+if ((error || !books) && supabaseServer !== supabase) {
+  const fallback = await supabase
+    .from('books')
+    .select('*')
+    .eq('collection', 'other-authors')
+    .order('created_at', { ascending: false });
+  if (!fallback.error && fallback.data) {
+    books = fallback.data;
+    error = null;
+  }
+}
+
+const otherAuthorBooks = books ?? [];
+const formatPrice = (price: number | string | null) =>
+  price == null || price === '' || Number(price) === 0 ? 'See seller' : `₦${Number(price).toLocaleString('en-NG')}`;
+---
+
+<BaseLayout
+  title="Books by Other Authors | BLOSSOM"
+  description="Discover selected books by other authors, including paid editions and books available through external sellers."
+>
+  <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
+    <section class="relative overflow-hidden border-b border-white/10">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(232,200,104,0.12),transparent_45%)]"></div>
+      <div class="relative max-w-7xl mx-auto px-6 pt-16 pb-16 lg:pt-24 lg:pb-20 text-center">
+        <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
+          <a href="/books" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.3em] text-slate-400 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors">
+            <span>←</span> My Books
+          </a>
+          <span class="rounded-full border border-[#E8C868]/30 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868]">Curated shelf</span>
+        </div>
+        <span class="block text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">BLOSSOM BOOKS</span>
+        <h1 class="font-cinzel text-4xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mt-5">
+          Books by
+          <br />
+          <span class="italic font-editorial font-normal text-[#E8C868]">Other Authors.</span>
+        </h1>
+        <p class="text-slate-400 max-w-2xl mx-auto mt-7 text-base sm:text-lg leading-relaxed">
+          A separate shelf for selected books from other writers. Some editions are free to download; others are paid and available through Selar or the seller's own checkout.
+        </p>
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-16 lg:py-24 reveal-on-scroll">
+      {error && (
+        <div class="rounded-2xl border border-red-500/20 bg-[#080D16] p-10 text-center shadow-xl">
+          <p class="text-red-400 font-mono text-sm">Unable to load other-author books.</p>
+          <p class="text-slate-500 text-xs mt-3">{error.message}</p>
+        </div>
+      )}
+
+      {!error && otherAuthorBooks.length === 0 && (
+        <div class="rounded-3xl border border-white/10 bg-[#080D16] p-12 text-center shadow-xl">
+          <p class="text-slate-500 font-mono text-sm">No other-author books have been added yet.</p>
+          <p class="text-slate-600 text-sm mt-3">Add a book in Supabase with collection set to <span class="text-[#E8C868]">other-authors</span>.</p>
+        </div>
+      )}
+
+      {!error && otherAuthorBooks.length > 0 && (
+        <div class="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+          {otherAuthorBooks.map((book, index) => {
+            const isPaid = book.access_type === 'paid' || Boolean(book.purchase_url);
+            const purchaseUrl = typeof book.purchase_url === 'string' ? book.purchase_url.trim() : '';
+            const downloadUrl = getBookDownloadUrl(book);
+            return (
+              <article
+                class="group flex flex-col rounded-3xl border border-white/10 bg-[#080D16] p-6 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]"
+                style={`transition-delay: ${index * 70}ms;`}
+              >
+                <a href={'/books/' + book.slug} class="block relative overflow-hidden rounded-2xl bg-[#0D1522] border border-white/10">
+                  <div class="aspect-[3/4] overflow-hidden">
+                    <img src={getBookCoverUrl(book) ?? ''} alt={`${book.title} book cover`} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                  </div>
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-end justify-center">
+                    <span class="mb-8 px-6 py-3 rounded-full bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500 shadow-xl">Explore Book →</span>
+                  </div>
+                </a>
+
+                <div class="pt-6 flex flex-1 flex-col">
+                  <p class="text-[10px] font-mono uppercase tracking-[0.2em] text-[#E8C868]">By {book.author || 'Guest Author'}</p>
+                  {book.genre && <p class="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500 mt-2">{book.genre}</p>}
+                  <h2 class="font-cinzel text-2xl sm:text-3xl font-bold mt-2 leading-tight group-hover:text-[#E8C868] transition-colors">{book.title}</h2>
+                  {book.subtitle && <p class="font-editorial italic text-[#E8C868] text-lg mt-2">{book.subtitle}</p>}
+                  {book.synopsis && <p class="text-slate-400 text-sm leading-7 mt-4 line-clamp-4">{book.synopsis}</p>}
+
+                  <div class="mt-auto pt-6">
+                    <div class="flex items-end justify-between gap-4 border-t border-white/10 pt-5">
+                      <div>
+                        <p class="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-500 mb-1">{isPaid ? 'Paid edition' : 'Free access'}</p>
+                        <p class="font-cinzel text-xl font-bold text-[#E8C868]">{isPaid ? formatPrice(book.price_ngn) : 'Free'}</p>
+                        {!isPaid && <p class="mt-2 text-[10px] font-mono uppercase tracking-widest text-slate-600">{formatDownloadCount(book.download_count)}</p>}
+                      </div>
+                      <a href={'/books/' + book.slug} class="shrink-0 rounded-full border border-white/15 px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-[#E8C868] hover:border-[#E8C868]/60 hover:bg-[#E8C868]/10 transition-colors">View Book →</a>
+                    </div>
+
+                    <div class="mt-4">
+                      {isPaid && purchaseUrl ? (
+                        <a href={purchaseUrl} target="_blank" rel="noopener noreferrer" class="inline-flex w-full items-center justify-center rounded-full bg-[#E8C868] px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC] transition-colors">Buy / Get Book →</a>
+                      ) : isPaid ? (
+                        <span class="block text-center text-[10px] font-mono uppercase tracking-widest text-slate-600">Seller link coming soon</span>
+                      ) : (
+                        <div class="flex justify-end"><DownloadGate bookId={book.id} bookSlug={book.slug} bookTitle={book.title} downloadUrl={downloadUrl} /></div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 pb-20">
+      <div class="rounded-3xl border border-white/10 bg-[#050A12] p-10 sm:p-16 text-center shadow-2xl">
+        <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">Separate shelf</p>
+        <h2 class="font-cinzel text-3xl sm:text-4xl font-bold mt-4">Looking for Olaoluwa's books?</h2>
+        <p class="text-slate-500 mt-5 max-w-xl mx-auto leading-relaxed">Return to the main BLOSSOM collection for his own books and their original access options.</p>
+        <a href="/books" class="inline-flex mt-8 items-center gap-2 rounded-full border border-white/15 px-7 py-3 text-xs font-mono uppercase tracking-widest text-slate-300 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors">View My Books →</a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

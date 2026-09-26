@@ -8,7 +8,8 @@ export const prerender = false;
 
 const { data: books } = await supabase
   .from('books')
-  .select('*');
+  .select('*')
+  .eq('collection', 'blossom');
 
 const featuredBook = books?.find((book) => book.featured === true);
 const collectionBooks = (books ?? []).filter((book) => book.id !== featuredBook?.id).slice(0, 4);
@@ -252,4 +253,3 @@ const featuredJournal = journalPosts?.[0];
     </section>
   </main>
 </BaseLayout>
-

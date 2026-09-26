@@ -11,23 +11,22 @@ export const prerender = false;
 let { data: books, error } = await supabaseServer
   .from('books')
   .select('*')
+  .eq('collection', 'blossom')
   .order('created_at', { ascending: false });
 
 if ((error || !books || books.length === 0) && supabaseServer !== supabase) {
   const fallback = await supabase
     .from('books')
     .select('*')
+    .eq('collection', 'blossom')
     .order('created_at', { ascending: false });
   if (!fallback.error && fallback.data) {
     books = fallback.data;
   }
 }
 
-const featuredBook = books?.find((book) => book.featured === true) || books?.[0];
-
-// Keep the complete collection visible. Featured status controls the hero section,
-// but must never hide a book from the main grid.
 const collectionBooks = books ?? [];
+const featuredBook = collectionBooks.find((book) => book.featured === true) || collectionBooks[0];
 
 const formatNaira = (_price: number | string | null) => 'Free';
 ---
@@ -50,6 +49,13 @@ const formatNaira = (_price: number | string | null) => 'Free';
           class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.3em] text-slate-400 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors mb-10"
         >
           <span>←</span> Back to Home
+        </a>
+
+        <a
+          href="/books/other-authors"
+          class="inline-flex items-center gap-2 rounded-full border border-[#E8C868]/40 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868] hover:bg-[#E8C868]/10 transition-colors mb-10 sm:ml-3"
+        >
+          Books by Other Authors →
         </a>
 
         <span class="block text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">
@@ -388,7 +394,6 @@ const formatNaira = (_price: number | string | null) => 'Free';
       </div>
 
     </section>
-
 
     <!-- CLOSING MESSAGE -->
     <section class="max-w-7xl mx-auto px-6 pb-20">

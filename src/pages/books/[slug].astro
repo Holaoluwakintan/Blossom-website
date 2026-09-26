@@ -60,10 +60,10 @@ const formatDate = (value: string) =>
   new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium' }).format(new Date(value));
 
 const downloadUrl = getBookDownloadUrl(book);
-
-// Balm of Gilead remains a free download when it has a download URL and no price.
-// BLOSSOM books are now free to access. Support is optional and shown below.
-const isFree = true;
+const isOtherAuthor = book.collection === 'other-authors';
+const isPaid = isOtherAuthor && (book.access_type === 'paid' || Boolean(book.purchase_url));
+const isFree = !isPaid;
+const purchaseUrl = typeof book.purchase_url === 'string' ? book.purchase_url.trim() : '';
 
 const formatNaira = (price: number | string | null) =>
   `₦${Number(price).toLocaleString('en-NG')}`;
@@ -105,11 +105,11 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
     <!-- TOP NAVIGATION -->
     <section class="max-w-7xl mx-auto px-6 pt-8 lg:pt-12">
       <a
-        href="/books"
+        href={isOtherAuthor ? '/books/other-authors' : '/books'}
         class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10 hover:text-[#E8C868] transition-colors"
       >
         <span class="text-sm">←</span>
-        Back to Books
+        {isOtherAuthor ? 'Back to Other Authors' : 'Back to Books'}
       </a>
     </section>
 
@@ -182,7 +182,20 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
           <!-- ACTION AREA -->
           <div class="flex flex-wrap gap-4 mb-8">
 
-            {book.slug === 'crack-the-algorithm' ? (
+            {isPaid && purchaseUrl ? (
+              <a
+                href={purchaseUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center rounded-full px-8 py-4 bg-[#E8C868] text-[#02050B] font-mono font-bold uppercase tracking-widest hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)] transition-all duration-300"
+              >
+                Buy / Get Book →
+              </a>
+            ) : isPaid ? (
+              <span class="inline-flex items-center justify-center rounded-full border border-white/15 px-8 py-4 text-slate-500 font-mono text-xs uppercase tracking-widest">
+                Seller link coming soon
+              </span>
+            ) : book.slug === 'crack-the-algorithm' ? (
               <BookOrderLink bookTitle={book.title} featured />
             ) : (
               <DownloadGate
@@ -194,7 +207,7 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
               />
             )}
 
-            {!isFree && (
+            {!isFree && !isOtherAuthor && (
               <>
                 <button
                   type="button"
@@ -224,7 +237,7 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
 
           </div>
 
-          {!isFree && (
+          {!isFree && !isOtherAuthor && (
             <div id="paystack-panel" class="hidden fixed inset-0 z-50 items-center justify-center bg-[#02050B]/85 px-6 backdrop-blur-sm">
               <div class="w-full max-w-md rounded-3xl border border-[#E8C868]/30 bg-[#080D16] p-7 sm:p-9 shadow-2xl">
                 <div class="flex items-start justify-between gap-6">
@@ -245,7 +258,11 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
             </div>
           )}
 
-          {book.slug === 'crack-the-algorithm' ? (
+          {isPaid ? (
+            <p class="text-xs text-slate-500 font-mono">
+              Paid edition • Purchase through the seller's checkout
+            </p>
+          ) : book.slug === 'crack-the-algorithm' ? (
             <p class="text-xs text-slate-500 font-mono">
               Digital edition unavailable • Order a copy by email
             </p>
@@ -260,7 +277,7 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
               Access
             </p>
             <p class="font-cinzel text-xl sm:text-2xl font-bold text-[#E8C868]">
-              Free digital edition
+              {isPaid ? 'Paid edition' : 'Free digital edition'}
             </p>
           </div>
 
