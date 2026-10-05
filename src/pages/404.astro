@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+Astro.response.status = 404;
+---
+
+<BaseLayout title="Page not found | BLOSSOM" description="This page could not be found." noindex>
+  <div class="wrap-narrow py-28 text-center sm:py-36">
+    <p class="eyebrow">Page not found</p>
+    <h1 class="display mt-6 text-[3rem] sm:text-[4.4rem]">This page has <em>wandered off.</em></h1>
+    <p class="lede mx-auto mt-6 max-w-md">The link may be old or mistyped. Every story is still here.</p>
+    <div class="mt-10 flex flex-wrap justify-center gap-3">
+      <a href="/" class="btn btn-primary">Go home</a>
+      <a href="/books" class="btn btn-ghost">Browse the books</a>
+    </div>
+  </div>
+</BaseLayout>

@@ -20,12 +20,11 @@ const main = optimizedImage(value, width);
 const srcset = optimizedSrcset(value, [320, 640, 960]);
 ---
 
-<div class:list={['mat', className]} style={`aspect-ratio: ${ratio}`}>
+<div class:list={['mat', fill && 'mat--fill', className]} style={`aspect-ratio: ${ratio}`} data-smart={fill ? undefined : ''}>
   {value && !fill && <img class="mat__bg" src={optimizedImage(value, 320)} alt="" aria-hidden="true" loading="lazy" decoding="async" />}
   {value && (
     <img
       class="mat__img"
-      style={fill ? 'object-fit: cover' : undefined}
       src={main}
       srcset={srcset}
       sizes={srcset ? sizes : undefined}

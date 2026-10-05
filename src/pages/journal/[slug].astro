@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArtFrame from '../../components/ArtFrame.astro';
 import { supabase, supabaseServer } from '../../lib/supabase';
 import ShareActions from '../../components/ShareActions.astro';
-import { formatDate, formatRelativeFreshness, getContentDate } from '../../lib/content';
+import { formatDate, formatRelativeFreshness, getContentDate, normalizeArtworkCategory } from '../../lib/content';
 
 export const prerender = false;
 
@@ -74,7 +74,7 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
         <article>
           <header class="wrap-narrow pt-8 text-center sm:pt-12">
             <a href="/journal" class="link-arrow text-muted"><span aria-hidden="true">←</span> The Journal</a>
-            {post.category && <p class="eyebrow rise mt-10">{post.category}</p>}
+            {post.category && <p class="eyebrow rise mt-10">{normalizeArtworkCategory(post.category)}</p>}
             <h1 class="display rise rise-1 mx-auto mt-5 max-w-3xl text-balance text-[2.6rem] sm:text-[3.8rem] lg:text-[4.3rem]">{post.title}</h1>
             <p class="meta rise rise-2 mt-6">
               {formatDate(post.published_at || post.created_at)}{post.reading_time_minutes || post.reading_time ? ` · ${post.reading_time_minutes || post.reading_time} min read` : ''} · {formatArticleCount(post.view_count, 'views')} · <span id="comments-count-stat">{comments.length}</span> {comments.length === 1 ? 'comment' : 'comments'}

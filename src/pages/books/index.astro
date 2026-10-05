@@ -117,7 +117,7 @@ const otherBooks = collectionBooks.filter((book) => book.id !== featuredBook?.id
                   <a href={'/books/' + book.slug} class="hover:text-accent">{book.title}</a>
                 </h3>
                 {book.subtitle && <p class="mt-1 font-display text-base italic text-ink-2 sm:text-lg">{book.subtitle}</p>}
-                {book.synopsis && <p class="mt-3 hidden font-serif leading-relaxed text-ink-2 line-clamp-3 sm:block">{book.synopsis}</p>}
+                {book.synopsis && <p class="mt-3 hidden font-serif leading-relaxed text-ink-2 sm:line-clamp-3">{book.synopsis}</p>}
                 <p class="meta mt-3">Free · {formatDownloadCount(book.download_count)}</p>
                 <div class="mt-auto flex flex-col items-start gap-2 pt-5">
                   <a href={'/books/' + book.slug} class="link-arrow">View book <span aria-hidden="true">→</span></a>

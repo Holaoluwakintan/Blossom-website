@@ -154,7 +154,7 @@ const journalImage = featuredJournal?.cover_image_url || featuredJournal?.featur
         {artworksError ? (
           <p class="mt-12 font-serif text-lg italic text-muted">The artwork preview is temporarily unavailable.</p>
         ) : previewArtworks.length > 0 ? (
-          <div class="-mx-5 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-8 sm:overflow-visible sm:px-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden">
+          <div class="-mx-5 mt-12 flex snap-x snap-mandatory scroll-px-5 gap-5 overflow-x-auto px-5 pb-4 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-8 sm:overflow-visible sm:px-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden">
             {previewArtworks.map((artwork) => (
               <a href={'/imagination/' + artwork.slug} class="mat-hover group block w-[74vw] flex-none snap-start sm:w-auto">
                 <ArtFrame src={artwork.image_url} alt={artwork.alt_text || artwork.title} sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 74vw" />

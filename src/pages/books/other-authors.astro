@@ -74,7 +74,7 @@ const formatPrice = (price: number | string | null) =>
                   <h2 class="mt-2 font-display text-[1.6rem] leading-tight sm:text-[1.9rem]"><a href={'/books/' + book.slug} class="hover:text-accent">{book.title}</a></h2>
                   {book.subtitle && <p class="mt-1 font-display text-lg italic text-ink-2">{book.subtitle}</p>}
                   {book.genre && <p class="eyebrow-muted mt-3">{book.genre}</p>}
-                  {book.synopsis && <p class="mt-3 hidden font-serif leading-relaxed text-ink-2 line-clamp-3 sm:block">{book.synopsis}</p>}
+                  {book.synopsis && <p class="mt-3 hidden font-serif leading-relaxed text-ink-2 sm:line-clamp-3">{book.synopsis}</p>}
                   <p class="mt-4 font-display text-xl text-ink">{isPaid ? formatPrice(book.price_ngn) : 'Free'} <span class="meta ml-1 align-middle">{isPaid ? 'Paid edition' : formatDownloadCount(book.download_count)}</span></p>
                   <div class="mt-5 flex flex-col items-start gap-3">
                     {isPaid && purchaseUrl ? (

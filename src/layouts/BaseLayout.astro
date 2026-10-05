@@ -195,6 +195,18 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
           if (href === path || (href !== '/' && path.startsWith(href + '/'))) a.setAttribute('aria-current', 'page');
         });
 
+        // Artwork that is close to its frame's shape fills the frame (crop under ~14%);
+        // anything else stays fully visible on its blurred mat.
+        document.querySelectorAll('.mat[data-smart] .mat__img').forEach((img) => {
+          const fit = () => {
+            const box = img.parentElement;
+            const r = img.naturalWidth / img.naturalHeight;
+            const fr = box.clientWidth / box.clientHeight;
+            if (r && fr && Math.abs(r - fr) / fr < 0.14) box.classList.add('mat--fill');
+          };
+          if (img.complete && img.naturalWidth) fit(); else img.addEventListener('load', fit, { once: true });
+        });
+
         const els = document.querySelectorAll('.reveal');
         if ('IntersectionObserver' in window) {
           const io = new IntersectionObserver((entries) => {

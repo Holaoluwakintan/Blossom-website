@@ -166,7 +166,7 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
 
         <p class="meta mt-4">
           {isPaid ? 'Paid edition · secure checkout with the seller'
-            : book.slug === 'crack-the-algorithm' ? 'Print edition · order a copy by email'
+            : book.slug === 'crack-the-algorithm' ? 'Order your copy by email; Olaoluwa replies with the price and payment details'
             : downloadUrl ? 'Free digital edition · PDF' : ''}
         </p>
 
@@ -285,7 +285,7 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
           These books are free to read and download. If you would like to support the stories,
           artwork and faith-based creative work behind BLOSSOM, you can give by bank transfer.
         </p>
-        <button type="button" id="support-project-button" aria-expanded="false" aria-controls="support-project-details" class="btn btn-gold mt-8">If you want to support my projects →</button>
+        <button type="button" id="support-project-button" aria-expanded="false" aria-controls="support-project-details" class="btn btn-gold mt-8">Support my work</button>
         <div id="support-project-details" hidden class="mx-auto mt-10 max-w-2xl border-t border-line pt-8 text-left">
           <p class="eyebrow-muted text-center">Bank transfer</p>
           <dl class="mt-6 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-3">
@@ -355,7 +355,7 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
       const opening = supportDetails.hidden;
       supportDetails.hidden = !opening;
       supportButton.setAttribute('aria-expanded', String(opening));
-      supportButton.textContent = opening ? 'Hide support details' : 'If you want to support my projects →';
+      supportButton.textContent = opening ? 'Hide support details' : 'Support my work';
     });
 
     copySupportAccount?.addEventListener('click', async () => {
