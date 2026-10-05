@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { optimizedImage } from '../../lib/image';
+import ArtFrame from '../../components/ArtFrame.astro';
 import { supabase, supabaseServer } from '../../lib/supabase';
 import { formatDate, formatRelativeFreshness, getContentDate, normalizeArtworkCategory } from '../../lib/content';
 
@@ -58,6 +58,8 @@ const featuredPost = publishedPosts.find((post) => post.featured) ?? publishedPo
 const collectionPosts = featuredPost
   ? publishedPosts.filter((post) => post.id !== featuredPost.id)
   : publishedPosts;
+const coverOf = (post: any) => post.cover_image_url || post.featured_image_url;
+const commentLabel = (n: number) => `${n} ${n === 1 ? 'comment' : 'comments'}`;
 const formatArticleCount = (value: number | string | null | undefined, label: string) => `${Number(value ?? 0).toLocaleString('en-NG')} ${label}`;
 
 ---
@@ -66,137 +68,77 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
   title="Faith Journal | BLOSSOM"
   description="Bible-based reflections, Christian stories, and encouragement from Olaoluwa Michael."
 >
-  <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
-    <section class="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_50%_0%,rgba(232,200,104,0.18),transparent_55%)]">
-      <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
-      <div class="relative mx-auto max-w-7xl px-6 pb-20 pt-20 text-center lg:pb-28 lg:pt-28">
-        <p class="font-mono text-xs uppercase tracking-[0.4em] text-[#E8C868]">Faith Journal</p>
-        <h1 class="mt-6 font-cinzel text-5xl font-bold leading-tight sm:text-7xl">
-          Reflections for
-          <br />
-          <span class="font-editorial font-normal italic text-[#E8C868]">the journey.</span>
-        </h1>
-        <p class="mx-auto mt-8 max-w-2xl text-base leading-8 text-slate-400 sm:text-lg">
-          Bible-based thoughts, stories, and encouragement for everyday faith and ordinary seasons.
-        </p>
-      </div>
+  <div>
+    <section class="wrap pb-12 pt-12 text-center sm:pb-16 sm:pt-20">
+      <p class="eyebrow rise">The Faith Journal</p>
+      <h1 class="display rise rise-1 mx-auto mt-6 max-w-4xl text-[3.2rem] sm:text-[4.8rem] lg:text-[5.6rem]">Reflections for <em>the journey.</em></h1>
+      <p class="lede rise rise-2 mx-auto mt-6 max-w-2xl">Bible-based thoughts, stories and encouragement for everyday faith and ordinary seasons.</p>
     </section>
 
-    <section class="mx-auto max-w-7xl px-6 py-16 lg:py-24">
+    <section class="wrap pb-20 sm:pb-28">
       {error && (
-        <div class="rounded-2xl border border-red-500/20 bg-[#080D16] p-10 text-center shadow-xl">
-          <p class="font-mono text-xs uppercase tracking-widest text-red-400">Journal could not be loaded</p>
-          <p class="mt-3 text-sm text-slate-500">{error.message}</p>
+        <div class="card p-8 text-center">
+          <p class="font-display text-2xl text-ink">The Journal couldn’t be loaded just now.</p>
+          <p class="meta mt-2">Please refresh in a moment.</p>
         </div>
       )}
 
       {!error && publishedPosts.length === 0 && (
-        <div class="rounded-3xl border border-white/10 bg-[#080D16] p-12 text-center shadow-2xl">
-          <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">The Journal is growing</p>
-          <h2 class="mt-5 font-cinzel text-3xl font-bold">New reflections are coming soon.</h2>
-          <p class="mx-auto mt-4 max-w-xl leading-8 text-slate-400">
-            Return soon for Bible-based stories, reflections, and encouragement from BLOSSOM.
-          </p>
+        <div class="card p-10 text-center">
+          <p class="eyebrow">The Journal is growing</p>
+          <h2 class="mt-4 font-display text-3xl">New reflections are coming soon.</h2>
         </div>
       )}
 
       {featuredPost && (
-        <a
-          href={`/journal/${featuredPost.slug.trim()}`}
-          data-article-click={featuredPost.id}
-          class="group grid gap-8 rounded-3xl border border-white/10 bg-[#080D16] p-6 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(232,200,104,0.1)] md:grid-cols-[0.85fr_1.15fr] md:p-10"
-        >
-          <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#0D1522]">
-            {(featuredPost.cover_image_url || featuredPost.featured_image_url) ? (
-              <img
-                src={optimizedImage(featuredPost.cover_image_url || featuredPost.featured_image_url, 960)}
-                alt={featuredPost.title}
-                class="aspect-[16/10] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-              />
-            ) : (
-              <div class="flex aspect-[16/10] items-center justify-center bg-[#0D1522] font-editorial text-4xl italic text-[#E8C868]">
-                BLOSSOM
-              </div>
-            )}
-          </div>
-          <div class="flex flex-col justify-center">
-            <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Featured reflection</p>
-            <p class="mt-4 font-mono text-xs uppercase tracking-widest text-slate-500">
-              {normalizeArtworkCategory(featuredPost.category)}{featuredPost.published_at && ` · ${formatDate(featuredPost.published_at)}`}<span class="text-[#E8C868]"> · {formatRelativeFreshness(getContentDate(featuredPost))}</span>
+        <a href={`/journal/${featuredPost.slug.trim()}`} data-article-click={featuredPost.id} class="mat-hover group grid items-center gap-8 border-y border-line py-10 md:grid-cols-[1.05fr_0.95fr] md:gap-14 md:py-14">
+          {coverOf(featuredPost) ? (
+            <ArtFrame src={coverOf(featuredPost)} alt={featuredPost.title} ratio="4 / 3" width={960} eager sizes="(min-width: 768px) 600px, 92vw" />
+          ) : (
+            <div class="mat flex aspect-[4/3] items-center justify-center font-display text-4xl italic text-accent">BLOSSOM</div>
+          )}
+          <div>
+            <p class="eyebrow">Featured reflection</p>
+            <p class="meta mt-4">
+              {normalizeArtworkCategory(featuredPost.category)}{featuredPost.published_at && ` · ${formatDate(featuredPost.published_at)}`}
             </p>
-            <h2 class="mt-4 font-cinzel text-3xl font-bold leading-tight transition-colors group-hover:text-[#E8C868] sm:text-5xl">{featuredPost.title}</h2>
-            {featuredPost.excerpt && <p class="mt-4 max-w-2xl leading-8 text-slate-400">{featuredPost.excerpt}</p>}
-            {featuredPost.bible_reference && <p class="mt-4 font-editorial text-xl italic text-[#E8C868]">{featuredPost.bible_reference}</p>}
-
-            <!-- Comments & metrics under featured journal -->
-            <div class="mt-6 flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">
-              <span>{formatArticleCount(featuredPost.view_count, 'views')}</span>
-              <span>·</span>
-              <span>{formatArticleCount(featuredPost.click_count, 'clicks')}</span>
-              <span>·</span>
-              <span class="inline-flex items-center gap-1.5 rounded-full bg-[#E8C868]/15 px-3 py-1 font-mono text-xs text-[#E8C868] border border-[#E8C868]/30" data-comment-count-for={featuredPost.id}>
-                💬 {getCommentsCount(featuredPost.id)} {getCommentsCount(featuredPost.id) === 1 ? 'comment' : 'comments'}
-              </span>
-            </div>
-
-            <div class="mt-8 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-[#E8C868]">
-              <span>Read reflection</span>
-              <span class="transition-transform group-hover:translate-x-1.5">→</span>
-            </div>
+            <h2 class="mt-3 font-display text-[2.4rem] leading-[1.05] transition-colors group-hover:text-accent sm:text-[3.4rem]">{featuredPost.title}</h2>
+            {featuredPost.excerpt && <p class="mt-5 font-serif text-[1.12rem] leading-relaxed text-ink-2 line-clamp-4">{featuredPost.excerpt}</p>}
+            {featuredPost.bible_reference && <p class="mt-4 font-display text-xl italic text-accent">{featuredPost.bible_reference}</p>}
+            <p class="meta mt-6">
+              {formatRelativeFreshness(getContentDate(featuredPost))} · {formatArticleCount(featuredPost.view_count, 'views')} · <span data-comment-count-for={featuredPost.id}>{commentLabel(getCommentsCount(featuredPost.id))}</span>
+            </p>
+            <span class="link-arrow mt-7">Read the reflection <span aria-hidden="true">→</span></span>
           </div>
         </a>
       )}
 
       {collectionPosts.length > 0 && (
         <div class="mt-20">
-          <div class="mb-10 flex items-end justify-between gap-6">
+          <div class="section-head">
             <div>
-              <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">From the Journal</p>
-              <h2 class="mt-3 font-cinzel text-3xl font-bold sm:text-4xl">More reflections.</h2>
+              <p class="eyebrow">From the Journal</p>
+              <h2 class="mt-3 font-display text-[2.3rem] leading-tight sm:text-[3rem]">More reflections.</h2>
             </div>
+            <p class="meta">{publishedPosts.length} reflections</p>
           </div>
-          <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {collectionPosts.map((post) => (
-              <a
-                href={`/journal/${post.slug.trim()}`}
-                data-article-click={post.id}
-                class="group flex flex-col justify-between rounded-2xl border border-white/10 bg-[#080D16] p-6 sm:p-7 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_14px_30px_rgba(232,200,104,0.1)]"
-              >
-                <div>
-                  {(post.cover_image_url || post.featured_image_url) && (
-                    <div class="mb-6 overflow-hidden rounded-xl border border-white/10">
-                      <img
-                        src={optimizedImage(post.cover_image_url || post.featured_image_url, 640)}
-                        alt={post.title}
-                        class="aspect-[16/10] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-[#E8C868]">{normalizeArtworkCategory(post.category)}</p>
-                  <h3 class="mt-3 font-cinzel text-2xl font-bold leading-tight transition-colors group-hover:text-[#E8C868]">{post.title}</h3>
-                  {post.excerpt && <p class="mt-3 line-clamp-3 leading-7 text-slate-400 text-sm">{post.excerpt}</p>}
-                </div>
-
-                <!-- Comments & metrics under each collection card -->
-                <div class="mt-6 pt-5 border-t border-white/10">
-                  <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-[#E8C868]/10 px-2.5 py-1 text-[#E8C868] border border-[#E8C868]/20" data-comment-count-for={post.id}>
-                      💬 {getCommentsCount(post.id)} {getCommentsCount(post.id) === 1 ? 'comment' : 'comments'}
-                    </span>
-                    <span class="text-[#E8C868] group-hover:translate-x-1 transition-transform font-bold">Read →</span>
-                  </div>
-                  <p class="mt-3 font-mono text-[9px] uppercase tracking-widest text-slate-600">
-                    {formatDate(post.published_at || post.created_at)} · {formatArticleCount(post.view_count, 'views')}
-                  </p>
-                </div>
+          <div class="mt-12 grid gap-x-10 gap-y-14 md:grid-cols-2 lg:grid-cols-3">
+            {collectionPosts.map((post, i) => (
+              <a href={`/journal/${post.slug.trim()}`} data-article-click={post.id} class={`mat-hover group flex flex-col reveal reveal-d${(i % 3) + 1}`}>
+                {coverOf(post) && <ArtFrame src={coverOf(post)} alt={post.title} ratio="4 / 3" sizes="(min-width: 1024px) 380px, (min-width: 768px) 45vw, 92vw" />}
+                <p class="eyebrow-muted mt-6">{normalizeArtworkCategory(post.category)}</p>
+                <h3 class="mt-2 font-display text-[1.75rem] leading-[1.12] transition-colors group-hover:text-accent">{post.title}</h3>
+                {post.excerpt && <p class="mt-3 font-serif leading-relaxed text-ink-2 line-clamp-3">{post.excerpt}</p>}
+                <p class="meta mt-4">
+                  {formatDate(post.published_at || post.created_at)} · {formatArticleCount(post.view_count, 'views')} · <span data-comment-count-for={post.id}>{commentLabel(getCommentsCount(post.id))}</span>
+                </p>
               </a>
             ))}
           </div>
         </div>
       )}
     </section>
-  </main>
+  </div>
 </BaseLayout>
 
 <script>
@@ -224,7 +166,7 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
         const id = el.dataset.commentCountFor;
         if (id) {
           const count = counts[id] || 0;
-          el.textContent = `💬 ${count} ${count === 1 ? 'comment' : 'comments'}`;
+          el.textContent = `${count} ${count === 1 ? 'comment' : 'comments'}`;
         }
       });
     } catch {}
@@ -232,6 +174,3 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
   hydrateCommentCounts();
 </script>
 
-<style>
-  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-</style>

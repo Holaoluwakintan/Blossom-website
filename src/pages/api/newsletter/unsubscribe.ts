@@ -7,7 +7,7 @@ export const prerender = false;
 const page = (title: string, body: string, status = 200) =>
   new Response(
     `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${title} | BLOSSOM</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#02050B;color:#F6F3EC;font-family:system-ui,sans-serif;padding:24px}main{max-width:460px;text-align:center}h1{font-family:Georgia,serif}p{color:#94a3b8;line-height:1.7}a{color:#E8C868}</style></head>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#F7F3EB;color:#1C1916;font-family:system-ui,sans-serif;padding:24px}main{max-width:460px;text-align:center}h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:2.4rem;letter-spacing:-.01em}p{color:#48413A;line-height:1.7}a{color:#8A6832}</style></head>
 <body><main><h1>${title}</h1><p>${body}</p><p><a href="${siteUrl()}">Back to BLOSSOM</a></p></main></body></html>`,
     { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } },
   );

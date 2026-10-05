@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { optimizedImage } from '../../lib/image';
+import ArtFrame from '../../components/ArtFrame.astro';
 import { supabase } from '../../lib/supabase';
 import ShareActions from '../../components/ShareActions.astro';
 
@@ -41,44 +41,40 @@ if (error || !artwork) {
     url: `https://olaoluwamichael.vercel.app/imagination/${artwork.slug}`,
   }}
 >
-  <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
-    <section class="max-w-7xl mx-auto px-6 pt-8 lg:pt-12">
-      <a href="/imagination" class="inline-flex items-center gap-3 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 hover:text-[#E8C868] transition-colors"><span class="text-lg">←</span> Back to Imagination World</a>
-    </section>
+  <div>
+    <nav class="wrap pt-6 sm:pt-10" aria-label="Breadcrumb">
+      <a href="/imagination" class="link-arrow text-muted"><span aria-hidden="true">←</span> Imagination World</a>
+    </nav>
 
-    <section class="max-w-7xl mx-auto px-6 py-12 lg:py-20">
-      <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-        <div class="relative max-w-2xl mx-auto lg:mx-0 w-full">
-          <div class="absolute -inset-6 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
-          <div class="relative overflow-hidden rounded-3xl border border-[#E8C868]/25 bg-[#080D16] shadow-2xl shadow-black/70"><img src={optimizedImage(artwork.image_url, 1280)} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-contain" /></div>
-        </div>
+    <section class="wrap grid items-start gap-12 pb-20 pt-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:pb-28">
+      <figure class="frame mx-auto w-full max-w-xl rise lg:sticky lg:top-28">
+        <ArtFrame src={artwork.image_url} alt={artwork.alt_text || artwork.title} width={1280} eager sizes="(min-width: 1024px) 560px, 92vw" />
+      </figure>
 
-        <div class="lg:pt-5">
-          {artwork.category && <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">{artwork.category}</p>}
-          <h1 class="font-cinzel text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mt-4">{artwork.title}</h1>
-          {artwork.caption && <p class="font-editorial italic text-xl sm:text-2xl text-[#E8C868] mt-4">{artwork.caption}</p>}
+      <div class="rise rise-1 lg:pt-4">
+        {artwork.category && <p class="eyebrow">{artwork.category}</p>}
+        <h1 class="display mt-4 text-[2.8rem] sm:text-[4rem]">{artwork.title}</h1>
+        {artwork.caption && <p class="mt-4 font-display text-[1.6rem] italic leading-snug text-accent sm:text-[1.9rem]">{artwork.caption}</p>}
 
-          {artwork.story && (
-            <div class="mt-9">
-              <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500 mb-3">The meaning</p>
-              <p class="text-slate-300 text-lg leading-relaxed whitespace-pre-line">{artwork.story}</p>
-            </div>
-          )}
-
-          {artwork.moral_quote && (
-            <blockquote class="rounded-2xl border-l-4 border-[#E8C868] bg-[#081021]/80 p-6 shadow-lg shadow-black/30 mt-9">
-              <p class="font-editorial italic text-2xl leading-relaxed text-[#F6F3EC]">“{artwork.moral_quote}”</p>
-            </blockquote>
-          )}
-
-          <div class="border-t border-white/10 mt-10 pt-7">
-            <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500 mb-4">Artwork access</p>
-            <a href={artwork.image_url} target="_blank" rel="noopener noreferrer" download class="inline-flex items-center justify-center rounded-full px-8 py-4 border border-white/20 text-[#F6F3EC] font-mono text-xs font-bold uppercase tracking-widest hover:border-[#E8C868] hover:text-[#E8C868] hover:bg-white/5 transition-all shadow-md">Open / Save Watermarked Artwork</a>
-            <p class="text-xs leading-6 text-slate-500 mt-5">This artwork is part of the BLOSSOM faith-based creative world. The public gallery version is watermarked and is displayed for reflection, not sale.</p>
-            <ShareActions title={artwork.title} url={shareUrl} label="Share this artwork" />
+        {artwork.story && (
+          <div class="mt-10">
+            <p class="eyebrow-muted">The meaning</p>
+            <p class="mt-4 whitespace-pre-line font-serif text-[1.15rem] leading-[1.8] text-ink">{artwork.story}</p>
           </div>
+        )}
+
+        {artwork.moral_quote && (
+          <blockquote class="mt-10 border-y border-line py-8 text-center">
+            <p class="font-display text-[1.7rem] italic leading-snug text-ink">“{artwork.moral_quote}”</p>
+          </blockquote>
+        )}
+
+        <div class="mt-10">
+          <a href={artwork.image_url} target="_blank" rel="noopener noreferrer" download class="btn btn-ghost">Open or save the artwork</a>
+          <p class="meta mt-4 max-w-md leading-relaxed">The public version is watermarked and shared for reflection, not for sale.</p>
+          <ShareActions title={artwork.title} url={shareUrl} label="Share this artwork" />
         </div>
       </div>
     </section>
-  </main>
+  </div>
 </BaseLayout>

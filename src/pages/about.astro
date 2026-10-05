@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { optimizedImage } from '../lib/image';
+import ArtFrame from '../components/ArtFrame.astro';
 
 const services = [
   {
@@ -58,306 +58,130 @@ const pillars = [
     text: 'Harnessing modern AI, design craft, and digital platforms to give ambitious ideas a visible, memorable form.',
   },
 ];
+
+const banner = 'https://rlbrhpjljjgpqpqjrpkc.supabase.co/storage/v1/object/public/artworks/stickmans/WhatsApp%20Image%202026-08-19%20at%204.50.48%20PM%20(2).jpeg';
+
+const channels = [
+  { title: 'WhatsApp Channel', text: 'Daily stories, stickman creativity and faith reflections, straight to your WhatsApp.', cta: 'Follow the channel', href: 'https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x', external: true },
+  { title: 'Facebook', text: 'Join the growing BLOSSOM community. Like, comment and share daily reflections.', cta: 'Follow on Facebook', href: 'https://www.facebook.com/share/1DTMt74HuT/', external: true },
+  { title: 'Direct WhatsApp', text: 'Have a project, book enquiry or creative idea? Message me directly.', cta: 'Message me', href: 'https://wa.me/2348148034092', external: true },
+  { title: 'Email', text: 'For speaking, formal collaborations and partnerships, write to my inbox.', cta: 'Send an email', href: 'mailto:michaelolaoluwagab@gmail.com', external: false },
+];
 ---
 
 <BaseLayout
   title="Olaoluwa Michael | Creator, Author & AI Creative Specialist"
   description="Olaoluwa Michael — writer, creative storyteller, AI creative specialist, and founder of BLOSSOM. Work with Olaoluwa on creative technology, design, writing, and web development."
 >
-  <main class="min-h-screen overflow-hidden bg-[#02050B] text-[#F6F3EC]">
-    <!-- =========================================================
-         PERSONAL BRAND HERO SECTION
-    ========================================================== -->
-    <section class="relative overflow-hidden border-b border-white/10">
-      <div class="pointer-events-none absolute inset-0">
-        <div class="absolute left-1/2 top-0 h-[600px] w-[950px] -translate-x-1/2 bg-[radial-gradient(circle,rgba(232,200,104,0.16),transparent_65%)] animate-gold-glow"></div>
-      </div>
-
-      <div class="relative mx-auto max-w-7xl px-6 pb-20 pt-20 lg:pb-28 lg:pt-28">
-        <div class="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20">
-          <div>
-            <div class="inline-flex items-center gap-2 rounded-full border border-[#E8C868]/30 bg-[#E8C868]/10 px-4 py-1.5 font-mono text-[10px] sm:text-xs uppercase tracking-[0.35em] text-[#E8C868] mb-6">
-              ✨ Personal Brand & Creative World
-            </div>
-
-            <h1 class="font-cinzel text-5xl font-extrabold leading-[1.02] sm:text-7xl lg:text-8xl">
-              Olaoluwa<br />
-              <span class="font-editorial font-normal italic text-[#E8C868]">Michael</span>
-            </h1>
-
-            <p class="mt-6 font-cinzel text-xl sm:text-2xl text-slate-300 font-medium">
-              Author · AI Creative Specialist · Storyteller · Digital Builder
-            </p>
-
-            <p class="mt-6 max-w-xl text-base leading-8 text-slate-400 sm:text-lg">
-              I build at the intersection of imagination, faith, and modern technology. Through books, stickman storytelling, and creative consultancy, I help bring ideas into something people can see, read, experience, and remember.
-            </p>
-
-            <div class="mt-9 flex flex-wrap gap-4">
-              <a
-                href="#work-with-me"
-                class="inline-flex items-center justify-center rounded-full bg-[#E8C868] px-8 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-all hover:bg-[#F6F3EC] hover:shadow-[0_0_25px_rgba(232,200,104,0.35)]"
-              >
-                Work With Me ↓
-              </a>
-              <a
-                href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center justify-center rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-6 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#25D366] transition-all hover:bg-[#25D366] hover:text-[#02050B] hover:shadow-[0_0_20px_rgba(37,211,102,0.3)]"
-              >
-                WhatsApp Channel 📱
-              </a>
-              <a
-                href="https://www.facebook.com/share/1DTMt74HuT/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center justify-center rounded-full border border-[#1877F2]/40 bg-[#1877F2]/10 px-6 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#1877F2] transition-all hover:bg-[#1877F2] hover:text-white hover:shadow-[0_0_20px_rgba(24,119,242,0.3)]"
-              >
-                Facebook 👥
-              </a>
-            </div>
-          </div>
-
-          <!-- Professional Photo Frame -->
-          <div class="relative mx-auto w-full max-w-md lg:ml-auto">
-            <div class="absolute -inset-6 rounded-3xl bg-[#E8C868]/15 blur-3xl"></div>
-            <div class="relative overflow-hidden rounded-3xl border border-[#E8C868]/40 bg-[#080D16] p-3.5 shadow-2xl transition-all duration-500 hover:border-[#E8C868]/80 hover:shadow-[0_20px_50px_rgba(232,200,104,0.2)]">
-              <div class="overflow-hidden rounded-2xl bg-[#0D1522]">
-                <img
-                  src="/olaoluwa-michael.jpg"
-                  alt="Olaoluwa Michael - Writer, Storyteller and AI Creative Specialist"
-                  class="w-full aspect-[3/4] object-cover object-top transition-transform duration-700 hover:scale-[1.03]"
-                  loading="eager"
-                />
-              </div>
-              <div class="flex items-center justify-between p-4 pt-4">
-                <div>
-                  <p class="font-cinzel text-lg font-bold text-[#F6F3EC]">Olaoluwa Michael</p>
-                  <p class="font-mono text-[10px] uppercase tracking-widest text-[#E8C868]">Founder, BLOSSOM</p>
-                </div>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-[#E8C868]/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-[#E8C868] border border-[#E8C868]/30">
-                  Available for Projects
-                </span>
-              </div>
-            </div>
-          </div>
+  <div class="overflow-hidden">
+    <!-- Portrait hero -->
+    <section class="wrap grid items-center gap-14 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:pb-28 lg:pt-24">
+      <div>
+        <p class="eyebrow rise">Founder of BLOSSOM</p>
+        <h1 class="display rise rise-1 mt-6 text-[3.8rem] sm:text-[5.4rem] lg:text-[6.4rem]">Olaoluwa <em>Michael</em></h1>
+        <p class="rise rise-1 mt-5 font-display text-[1.35rem] italic text-ink-2 sm:text-2xl">Author · AI creative specialist · Storyteller · Digital builder</p>
+        <p class="lede rise rise-2 mt-7 max-w-xl">
+          I build at the intersection of imagination, faith and modern technology. Through books, stickman storytelling and creative consultancy,
+          I help bring ideas into something people can see, read, experience and remember.
+        </p>
+        <div class="rise rise-3 mt-9 flex flex-wrap gap-3">
+          <a href="#work-with-me" class="btn btn-primary">Work with me</a>
+          <a href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">WhatsApp Channel</a>
         </div>
       </div>
-    </section>
 
-    <!-- =========================================================
-         WORK WITH ME SECTION
-    ========================================================== -->
-    <section id="work-with-me" class="scroll-mt-20 border-b border-white/10 bg-[#050A12] py-20 lg:py-32 reveal-on-scroll">
-      <div class="mx-auto max-w-7xl px-6">
-        <div class="max-w-3xl">
-          <p class="text-xs sm:text-sm font-mono uppercase tracking-[0.35em] text-[#E8C868]">WORK WITH ME</p>
-          <h2 class="mt-4 font-cinzel text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
-            Have an idea? Let's turn it into something people can see, read, experience or remember.
-          </h2>
-          <p class="mt-6 text-base sm:text-lg leading-8 text-slate-400">
-            Whether you are an author, creator, brand, ministry, or business, I combine creative craft with modern technology to deliver work that stands out with depth and distinction.
-          </p>
+      <figure class="rise rise-2 mx-auto w-full max-w-[22rem] lg:ml-auto">
+        <div class="frame">
+          <img src="/olaoluwa-michael.jpg" alt="Olaoluwa Michael - Writer, Storyteller and AI Creative Specialist" width="683" height="1024" class="aspect-[4/5] w-full object-cover object-top" loading="eager" fetchpriority="high" />
         </div>
-
-        <!-- 6 Structured Services -->
-        <div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
-            <article class="group rounded-3xl border border-white/10 bg-[#080D16] p-8 sm:p-9 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(232,200,104,0.12)] flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between">
-                  <span class="text-3xl p-3 rounded-2xl bg-white/5 border border-white/10 group-hover:border-[#E8C868]/40 transition-colors">
-                    {service.icon}
-                  </span>
-                  <span class="font-mono text-xs text-[#E8C868]">{service.number}</span>
-                </div>
-                <h3 class="mt-6 font-cinzel text-2xl font-bold text-[#F6F3EC] group-hover:text-[#E8C868] transition-colors leading-snug">
-                  {service.title}
-                </h3>
-                <p class="mt-4 text-sm leading-7 text-slate-400">
-                  {service.text}
-                </p>
-              </div>
-              <div class="mt-8 pt-5 border-t border-white/5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-slate-500 group-hover:text-[#E8C868] transition-colors">
-                <span>Inquire about this service</span>
-                <span class="transition-transform group-hover:translate-x-1">→</span>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <!-- Start a Project CTA Card -->
-        <div class="mt-16 rounded-3xl border border-[#E8C868]/40 bg-gradient-to-br from-[#0A1220] to-[#050A12] p-8 sm:p-14 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div class="max-w-2xl text-center lg:text-left">
-            <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Let's collaborate</p>
-            <h3 class="mt-3 font-cinzel text-3xl sm:text-4xl lg:text-5xl font-bold">Start a Project.</h3>
-            <p class="mt-4 text-base leading-8 text-slate-300">
-              Tell me about your vision, timeline, and goals. I will help map out the creative roadmap and bring it to life.
-            </p>
-          </div>
-          <div class="flex flex-wrap justify-center gap-4">
-            <a
-              href="mailto:michaelolaoluwagab@gmail.com?subject=Start%20a%20Project%20with%20Olaoluwa"
-              class="inline-flex items-center justify-center rounded-full bg-[#E8C868] px-9 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-all hover:bg-[#F6F3EC] hover:shadow-[0_0_25px_rgba(232,200,104,0.35)]"
-            >
-              Start a Project →
-            </a>
-            <a
-              href="https://wa.me/2348148034092?text=Hello%20Olaoluwa,%20I%20have%20an%20idea%20for%20a%20project%20I%20would%20like%20to%20discuss."
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-8 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#F6F3EC] transition-all hover:border-[#E8C868] hover:bg-[#E8C868]/10 hover:text-[#E8C868]"
-            >
-              Chat on WhatsApp 💬
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =========================================================
-         THE STORY BEHIND BLOSSOM
-    ========================================================== -->
-    <section class="mx-auto max-w-7xl px-6 py-20 lg:py-28 reveal-on-scroll">
-      <div class="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20 items-center">
-        <div>
-          <p class="text-xs sm:text-sm font-mono uppercase tracking-[0.35em] text-[#E8C868]">The Vision</p>
-          <h2 class="mt-5 font-cinzel text-3xl sm:text-5xl font-bold leading-tight">Stories that awaken courage and faith.</h2>
-          <div class="mt-7 space-y-6 text-base leading-8 text-slate-400">
-            <p>
-              I believe every human being carries an appetite for stories that mean something. At BLOSSOM, I craft narratives, reflections, and artwork built to outlast the noise of modern feeds.
-            </p>
-            <p>
-              From writing Christian books to developing stickman visual stories and conducting prompt engineering workshops, everything is designed to inspire genuine reflection and leave people closer to God.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid gap-6">
-          {pillars.map((pillar) => (
-            <article class="rounded-3xl border border-white/10 bg-[#080D16] p-7 sm:p-8 transition-all duration-300 hover:border-[#E8C868]/40 hover:-translate-y-1">
-              <p class="font-cinzel text-xl text-[#E8C868]">{pillar.number}</p>
-              <h3 class="mt-3 font-cinzel text-xl font-bold text-[#F6F3EC]">{pillar.title}</h3>
-              <p class="mt-3 text-sm leading-7 text-slate-400">{pillar.text}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-
-    <!-- Stickman Artwork Banner -->
-    <section class="mx-auto max-w-7xl px-6 pb-20 lg:pb-28 reveal-on-scroll">
-      <figure class="group relative overflow-hidden rounded-3xl border border-[#E8C868]/25 bg-[#050A12] shadow-2xl shadow-black/80">
-        <img
-          src={optimizedImage("https://rlbrhpjljjgpqpqjrpkc.supabase.co/storage/v1/object/public/artworks/stickmans/WhatsApp%20Image%202026-08-19%20at%204.50.48%20PM%20(2).jpeg", 1280)}
-          alt="The Invisible Step, a watermarked BLOSSOM stickman artwork"
-          class="h-64 w-full object-cover transition duration-700 group-hover:scale-[1.02] sm:h-80 lg:h-[28rem]"
-          loading="lazy"
-        />
-        <figcaption class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#02050B] via-[#02050B]/85 to-transparent px-8 pb-8 pt-20 font-mono text-xs uppercase tracking-[0.22em] text-[#E8C868]">
-          Imagination World · Stickman Creativity · Faith made visible
+        <figcaption class="mt-4 flex items-baseline justify-between gap-4">
+          <span class="font-display text-xl text-ink">Olaoluwa Michael</span>
+          <span class="chip chip-accent">Available for projects</span>
         </figcaption>
       </figure>
     </section>
 
-    <!-- =========================================================
-         JOIN THE COMMUNITY & FOLLOW CHANNELS
-    ========================================================== -->
-    <section class="border-t border-white/10 bg-[#081021]/60 py-20 lg:py-28 reveal-on-scroll">
-      <div class="mx-auto max-w-7xl px-6">
-        <div class="mx-auto max-w-3xl text-center">
-          <p class="text-xs font-mono uppercase tracking-[0.35em] text-[#E8C868]">Join The Community</p>
-          <h2 class="mt-4 font-cinzel text-3xl font-bold sm:text-5xl">Follow the stories & reflections.</h2>
-          <p class="mt-5 text-base leading-8 text-slate-400 sm:text-lg">
-            Stay connected for daily Christian stories, stickman visual reflections, AI creative experiments, and new book updates.
-          </p>
+    <!-- Vision -->
+    <section class="band hairline-t hairline-b">
+      <div class="wrap grid gap-14 py-20 sm:py-28 lg:grid-cols-[1fr_1fr] lg:gap-24">
+        <div class="reveal">
+          <p class="eyebrow">The vision</p>
+          <h2 class="mt-4 text-balance font-display text-[2.5rem] leading-[1.06] sm:text-[3.4rem]">Stories that awaken courage and faith.</h2>
+          <div class="prose-literary mt-8 text-[1.12rem]">
+            <p>I believe every human being carries an appetite for stories that mean something. At BLOSSOM, I craft narratives, reflections and artwork built to outlast the noise of modern feeds.</p>
+            <p>From writing Christian books to developing stickman visual stories and running prompt engineering workshops, everything is designed to inspire genuine reflection and leave people closer to God.</p>
+          </div>
         </div>
-
-        <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <!-- WhatsApp Channel -->
-          <a
-            href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="group flex flex-col justify-between rounded-3xl border border-[#25D366]/30 bg-[#080D16] p-7 transition-all duration-300 hover:-translate-y-2 hover:border-[#25D366] hover:shadow-[0_15px_30px_rgba(37,211,102,0.15)]"
-          >
-            <div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#25D366]/15 text-[#25D366] text-2xl font-bold">
-                📱
-              </div>
-              <h3 class="mt-5 font-cinzel text-xl font-bold text-[#F6F3EC] group-hover:text-[#25D366] transition-colors">WhatsApp Channel</h3>
-              <p class="mt-3 text-sm leading-6 text-slate-400">Daily stories, stickman creativity, and faith reflections delivered straight to your WhatsApp.</p>
-            </div>
-            <div class="mt-6 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-[#25D366]">
-              <span>Follow Channel</span>
-              <span class="transition-transform group-hover:translate-x-1">→</span>
-            </div>
-          </a>
-
-          <!-- Facebook -->
-          <a
-            href="https://www.facebook.com/share/1DTMt74HuT/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="group flex flex-col justify-between rounded-3xl border border-[#1877F2]/30 bg-[#080D16] p-7 transition-all duration-300 hover:-translate-y-2 hover:border-[#1877F2] hover:shadow-[0_15px_30px_rgba(24,119,242,0.15)]"
-          >
-            <div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1877F2]/15 text-[#1877F2] text-2xl font-bold">
-                👥
-              </div>
-              <h3 class="mt-5 font-cinzel text-xl font-bold text-[#F6F3EC] group-hover:text-[#1877F2] transition-colors">Facebook Page</h3>
-              <p class="mt-3 text-sm leading-6 text-slate-400">Join the growing BLOSSOM community on Facebook. Like, comment, and share daily reflections.</p>
-            </div>
-            <div class="mt-6 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-[#1877F2]">
-              <span>Follow on Facebook</span>
-              <span class="transition-transform group-hover:translate-x-1">→</span>
-            </div>
-          </a>
-
-          <!-- Direct WhatsApp Chat -->
-          <a
-            href="https://wa.me/2348148034092"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="group flex flex-col justify-between rounded-3xl border border-[#E8C868]/30 bg-[#080D16] p-7 transition-all duration-300 hover:-translate-y-2 hover:border-[#E8C868] hover:shadow-[0_15px_30px_rgba(232,200,104,0.15)]"
-          >
-            <div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8C868]/15 text-[#E8C868] text-2xl font-bold">
-                💬
-              </div>
-              <h3 class="mt-5 font-cinzel text-xl font-bold text-[#F6F3EC] group-hover:text-[#E8C868] transition-colors">Direct WhatsApp</h3>
-              <p class="mt-3 text-sm leading-6 text-slate-400">Have a project, book inquiry, or creative idea? Reach me directly on WhatsApp anytime.</p>
-            </div>
-            <div class="mt-6 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-[#E8C868]">
-              <span>Message Me</span>
-              <span class="transition-transform group-hover:translate-x-1">→</span>
-            </div>
-          </a>
-
-          <!-- Email -->
-          <a
-            href="mailto:michaelolaoluwagab@gmail.com"
-            class="group flex flex-col justify-between rounded-3xl border border-white/15 bg-[#080D16] p-7 transition-all duration-300 hover:-translate-y-2 hover:border-[#E8C868] hover:shadow-[0_15px_30px_rgba(232,200,104,0.1)]"
-          >
-            <div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 text-slate-200 text-2xl font-bold">
-                ✉️
-              </div>
-              <h3 class="mt-5 font-cinzel text-xl font-bold text-[#F6F3EC] group-hover:text-[#E8C868] transition-colors">Personal Email</h3>
-              <p class="mt-3 text-sm leading-6 text-slate-400">For speaking engagements, formal collaborations, and partnerships, write to my inbox.</p>
-            </div>
-            <div class="mt-6 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-slate-300 group-hover:text-[#E8C868]">
-              <span>Send an Email</span>
-              <span class="transition-transform group-hover:translate-x-1">→</span>
-            </div>
-          </a>
+        <div class="divide-y divide-line border-y border-line">
+          {pillars.map((pillar, i) => (
+            <article class={`py-8 reveal reveal-d${i + 1}`}>
+              <p class="font-display text-lg italic text-accent">{pillar.number}</p>
+              <h3 class="mt-2 font-display text-[1.9rem] leading-tight">{pillar.title}</h3>
+              <p class="mt-3 font-serif text-[1.05rem] leading-relaxed text-ink-2">{pillar.text}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
-  </main>
-</BaseLayout>
 
-<style>
-  article { min-width: 0; }
-</style>
+    <!-- Artwork -->
+    <section class="wrap py-20 sm:py-24">
+      <figure class="mx-auto max-w-md reveal">
+        <div class="frame"><ArtFrame src={banner} alt="The Invisible Step, a watermarked BLOSSOM stickman artwork" ratio="2 / 3" width={960} sizes="(min-width: 640px) 420px, 90vw" /></div>
+        <figcaption class="mt-5 text-center font-display text-lg italic text-ink-2">Imagination World · faith made visible</figcaption>
+      </figure>
+    </section>
+
+    <!-- Work with me -->
+    <section id="work-with-me" class="theme-night scroll-mt-20 bg-paper">
+      <div class="wrap py-20 sm:py-28">
+        <div class="max-w-3xl reveal">
+          <p class="eyebrow">Work with me</p>
+          <h2 class="mt-4 text-balance font-display text-[2.4rem] leading-[1.08] sm:text-[3.4rem]">Have an idea? Let’s turn it into something people can see, read, experience or remember.</h2>
+          <p class="lede mt-6">Whether you are an author, creator, brand, ministry or business, I combine creative craft with modern technology to deliver work that stands out with depth and distinction.</p>
+        </div>
+
+        <div class="mt-16 grid border-t border-line sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((service, i) => (
+            <a href={`mailto:michaelolaoluwagab@gmail.com?subject=${encodeURIComponent(`Enquiry: ${service.title}`)}`} class={`group flex flex-col border-b border-line py-9 sm:px-8 sm:[&:nth-child(odd)]:border-r lg:[&:nth-child(odd)]:border-r-0 lg:[&:not(:nth-child(3n))]:border-r lg:first:pl-0 lg:[&:nth-child(4)]:pl-0 sm:[&:nth-child(odd)]:pl-0 reveal reveal-d${(i % 3) + 1}`}>
+              <span class="font-display text-lg italic text-accent">{service.number}</span>
+              <h3 class="mt-3 font-display text-[1.75rem] leading-tight transition-colors group-hover:text-accent">{service.title}</h3>
+              <p class="mt-3 font-serif text-[1.05rem] leading-relaxed text-ink-2">{service.text}</p>
+              <span class="link-arrow mt-6 text-ink-2">Enquire <span aria-hidden="true">→</span></span>
+            </a>
+          ))}
+        </div>
+
+        <div class="mt-16 flex flex-col gap-8 border border-line p-8 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
+          <div class="max-w-xl">
+            <p class="eyebrow">Let’s collaborate</p>
+            <h3 class="mt-3 font-display text-[2.2rem] leading-tight">Start a project.</h3>
+            <p class="mt-3 font-serif text-[1.05rem] leading-relaxed text-ink-2">Tell me about your vision, timeline and goals. I’ll help map out the creative roadmap and bring it to life.</p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <a href="mailto:michaelolaoluwagab@gmail.com?subject=Start%20a%20Project%20with%20Olaoluwa" class="btn btn-gold">Start a project</a>
+            <a href="https://wa.me/2348148034092?text=Hello%20Olaoluwa,%20I%20have%20an%20idea%20for%20a%20project%20I%20would%20like%20to%20discuss." target="_blank" rel="noopener noreferrer" class="btn btn-ghost">Chat on WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Community -->
+    <section class="wrap py-20 sm:py-28">
+      <div class="mx-auto max-w-2xl text-center reveal">
+        <p class="eyebrow">Join the community</p>
+        <h2 class="mt-4 font-display text-[2.4rem] leading-tight sm:text-[3.2rem]">Follow the stories and reflections.</h2>
+        <p class="lede mx-auto mt-5">Daily Christian stories, stickman visual reflections, creative experiments and news of new books.</p>
+      </div>
+      <div class="mt-14 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+        {channels.map((c) => (
+          <a href={c.href} target={c.external ? '_blank' : undefined} rel={c.external ? 'noopener noreferrer' : undefined} class="group flex flex-col bg-surface p-7 transition-colors hover:bg-paper sm:p-8">
+            <h3 class="font-display text-[1.6rem] leading-tight transition-colors group-hover:text-accent">{c.title}</h3>
+            <p class="mt-3 flex-1 font-serif leading-relaxed text-ink-2">{c.text}</p>
+            <span class="link-arrow mt-6">{c.cta} <span aria-hidden="true">{c.external ? '↗' : '→'}</span></span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

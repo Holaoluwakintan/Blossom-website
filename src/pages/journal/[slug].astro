@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { optimizedImage } from '../../lib/image';
+import ArtFrame from '../../components/ArtFrame.astro';
 import { supabase, supabaseServer } from '../../lib/supabase';
 import ShareActions from '../../components/ShareActions.astro';
 import { formatDate, formatRelativeFreshness, getContentDate } from '../../lib/content';
@@ -50,119 +50,116 @@ const paragraphs = (post?.content_markdown || '')
   .split(/\n\s*\n/)
   .map((paragraph) => paragraph.trim())
   .filter(Boolean);
+const coverImage = post?.cover_image_url || post?.featured_image_url;
 const formatArticleCount = (value: number | string | null | undefined, label: string) => `${Number(value ?? 0).toLocaleString('en-NG')} ${label}`;
 ---
 
 <BaseLayout
   title={post ? `${post.title} | Faith Journal` : 'Journal Article | BLOSSOM'}
   description={post?.excerpt || 'A Bible-based reflection from the BLOSSOM Faith Journal.'}
+  image={coverImage || undefined}
 >
-  <main class="min-h-screen bg-[#02050B] text-[#F6F3EC]">
+  <div>
     {!post && (
-      <section class="mx-auto max-w-3xl px-6 py-32 text-center">
-        <p class="font-mono text-xs uppercase tracking-[0.3em] text-red-400">Article not found</p>
-        <h1 class="mt-5 font-cinzel text-4xl font-bold">This reflection is unavailable.</h1>
-        <a href="/journal" class="mt-8 inline-flex rounded-full bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-all hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)]">Back to Journal →</a>
+      <section class="wrap-narrow py-28 text-center sm:py-36">
+        <p class="eyebrow">Not found</p>
+        <h1 class="display mt-5 text-[2.8rem] sm:text-6xl">This reflection is <em>unavailable.</em></h1>
+        <p class="lede mx-auto mt-5 max-w-md">It may have moved or been unpublished. The rest of the Journal is waiting for you.</p>
+        <a href="/journal" class="btn btn-primary mt-9">Back to the Journal</a>
       </section>
     )}
 
     {post && (
       <>
-        <article class="mx-auto max-w-4xl px-6 pb-20 pt-16 lg:pb-28 lg:pt-24">
-          <a href="/journal" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 font-mono text-xs uppercase tracking-widest text-[#E8C868] transition-colors hover:border-[#E8C868]/50 hover:bg-[#E8C868]/10">← Back to Journal</a>
-          <p class="mt-10 font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">{post.category}</p>
-          <h1 class="mt-4 font-cinzel text-4xl font-bold leading-tight sm:text-6xl">{post.title}</h1>
-          <p class="mt-6 font-mono text-xs uppercase tracking-widest text-slate-500">
-            {formatDate(post.published_at || post.created_at)} · {formatRelativeFreshness(getContentDate(post))}{post.reading_time_minutes || post.reading_time ? ` · ${post.reading_time_minutes || post.reading_time} min read` : ''}
-          </p>
-          <p class="mt-3 flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">
-            <span>{formatArticleCount(post.view_count, 'views')}</span>
-            <span>·</span>
-            <span>{formatArticleCount(post.click_count, 'clicks')}</span>
-            <span>·</span>
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-[#E8C868]/10 px-2.5 py-0.5 text-[#E8C868] border border-[#E8C868]/20">
-              💬 <span id="comments-count-stat">{comments.length}</span> {comments.length === 1 ? 'comment' : 'comments'}
-            </span>
-          </p>
+        <article>
+          <header class="wrap-narrow pt-8 text-center sm:pt-12">
+            <a href="/journal" class="link-arrow text-muted"><span aria-hidden="true">←</span> The Journal</a>
+            {post.category && <p class="eyebrow rise mt-10">{post.category}</p>}
+            <h1 class="display rise rise-1 mx-auto mt-5 max-w-3xl text-balance text-[2.6rem] sm:text-[3.8rem] lg:text-[4.3rem]">{post.title}</h1>
+            <p class="meta rise rise-2 mt-6">
+              {formatDate(post.published_at || post.created_at)}{post.reading_time_minutes || post.reading_time ? ` · ${post.reading_time_minutes || post.reading_time} min read` : ''} · {formatArticleCount(post.view_count, 'views')} · <span id="comments-count-stat">{comments.length}</span> {comments.length === 1 ? 'comment' : 'comments'}
+            </p>
+            <p class="fleuron mt-8" aria-hidden="true"><span class="font-display text-xl">❦</span></p>
+          </header>
 
-          {(post.cover_image_url || post.featured_image_url) && (
-            <div class="mt-12 overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-              <img src={optimizedImage(post.cover_image_url || post.featured_image_url, 1280)} alt={post.title} class="max-h-[520px] w-full object-cover transition-transform duration-700 hover:scale-[1.02]" />
+          {coverImage && (
+            <figure class="wrap mt-10 max-w-5xl rise rise-2">
+              <ArtFrame src={coverImage} alt={post.title} ratio="16 / 10" width={1280} eager sizes="(min-width: 1024px) 960px, 100vw" class="shadow-[0_30px_60px_-40px_rgb(var(--shadow)/0.6)]" />
+            </figure>
+          )}
+
+          <div class="wrap-narrow pb-16 pt-12 sm:pt-16">
+            {(post.bible_reference || post.bible_verse) && (
+              <aside class="mb-12 border-y border-line py-8 text-center">
+                {post.bible_verse && <p class="font-display text-[1.6rem] italic leading-snug text-ink sm:text-[1.9rem]">“{post.bible_verse}”</p>}
+                {post.bible_reference && <p class="eyebrow mt-4">{post.bible_reference}</p>}
+              </aside>
+            )}
+
+            <div class="prose-literary drop-cap">
+              {paragraphs.map((paragraph) => {
+                const heading = paragraph.startsWith('# ');
+                const text = heading ? paragraph.slice(2) : paragraph;
+                return heading ? <h2>{text}</h2> : <p>{text}</p>;
+              })}
             </div>
-          )}
 
-          {(post.bible_reference || post.bible_verse) && (
-            <aside class="my-12 rounded-2xl border-l-4 border-[#E8C868] bg-[#080D16] p-7 sm:p-8 shadow-xl">
-              {post.bible_reference && <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{post.bible_reference}</p>}
-              {post.bible_verse && <p class="mt-3 font-editorial text-xl italic leading-8 text-slate-300 sm:text-2xl">“{post.bible_verse}”</p>}
-            </aside>
-          )}
+            <p class="mt-14 text-center font-display text-2xl italic text-accent">— {post.author_name || post.author || 'Olaoluwa Michael'}</p>
 
-          <div class="prose prose-invert mt-12 max-w-none prose-headings:font-cinzel prose-headings:text-[#F6F3EC] prose-p:leading-8 prose-p:text-slate-300 prose-strong:text-[#F6F3EC] prose-blockquote:border-[#E8C868] prose-blockquote:text-[#E8C868]">
-            {paragraphs.map((paragraph) => {
-              const heading = paragraph.startsWith('# ');
-              const text = heading ? paragraph.slice(2) : paragraph;
-              return heading ? <h2>{text}</h2> : <p>{text}</p>;
-            })}
+            <ShareActions title={post.title} url={shareUrl} label="Share this reflection" />
           </div>
-
-          <ShareActions title={post.title} url={shareUrl} label="Share this reflection" />
         </article>
 
-        <section class="border-t border-white/10 bg-[#050912]">
-          <div class="mx-auto grid max-w-7xl gap-16 px-6 py-20 lg:grid-cols-[1fr_0.85fr] lg:py-28">
+        <section class="band hairline-t">
+          <div class="wrap grid gap-16 py-20 sm:py-24 lg:grid-cols-[1fr_0.85fr]">
             <div>
-              <div class="flex items-center justify-between gap-4">
+              <div class="flex items-end justify-between gap-4 border-b border-line pb-6">
                 <div>
-                  <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Community response</p>
-                  <h2 class="mt-3 font-cinzel text-3xl font-bold">Thoughts from readers.</h2>
+                  <p class="eyebrow">Community response</p>
+                  <h2 class="mt-3 font-display text-[2.2rem] leading-tight sm:text-[2.7rem]">Thoughts from readers</h2>
                 </div>
-                <span class="rounded-full border border-[#E8C868]/30 bg-[#E8C868]/10 px-3.5 py-1.5 font-mono text-xs text-[#E8C868]">
-                  <span id="comments-badge-count">{comments.length}</span> responses
-                </span>
+                <span class="meta"><span id="comments-badge-count">{comments.length}</span> responses</span>
               </div>
 
-              {commentsError && <p class="mt-6 text-sm text-red-400">Approved comments could not be loaded.</p>}
-              <p id="no-comments-msg" class={`mt-6 leading-8 text-slate-400 ${comments && comments.length > 0 ? 'hidden' : ''}`}>
-                Be the first person to share a thoughtful response.
+              {commentsError && <p class="mt-6 text-sm text-wine">Responses could not be loaded right now.</p>}
+              <p id="no-comments-msg" class={`mt-6 font-serif text-lg italic text-muted ${comments && comments.length > 0 ? 'hidden' : ''}`}>
+                Be the first to share a thoughtful response.
               </p>
 
-              <div id="comments-list" class="mt-8 space-y-5">
+              <div id="comments-list">
                 {comments?.map((comment) => (
-                  <article class="rounded-2xl border border-white/10 bg-[#080D16] p-6 sm:p-7 transition-all duration-300 hover:border-[#E8C868]/40 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(232,200,104,0.08)]">
+                  <article class="border-b border-line py-7">
                     <div class="flex items-center justify-between gap-2">
-                      <p class="font-mono text-xs uppercase tracking-widest text-[#E8C868]">{comment.name}</p>
-                      <span class="font-mono text-[10px] uppercase tracking-widest text-slate-500">{formatDate(comment.created_at)}</span>
+                      <p class="font-display text-xl text-ink">{comment.name}</p>
+                      <span class="meta">{formatDate(comment.created_at)}</span>
                     </div>
-                    <p class="mt-3 leading-8 text-slate-300 whitespace-pre-line">{comment.body}</p>
+                    <p class="mt-2 whitespace-pre-line font-serif text-[1.08rem] leading-relaxed text-ink-2">{comment.body}</p>
                   </article>
                 ))}
               </div>
             </div>
 
             <div>
-              <div class="rounded-3xl border border-[#E8C868]/25 bg-[#080D16] p-7 sm:p-9 shadow-2xl">
-                <p class="font-mono text-xs uppercase tracking-[0.3em] text-[#E8C868]">Join the conversation</p>
-                <h2 class="mt-3 font-cinzel text-2xl sm:text-3xl font-bold">Leave a response.</h2>
-                <p class="mt-3 leading-7 text-slate-400 text-sm">Your response will appear immediately below. Please keep your contribution thoughtful and respectful.</p>
-                <form id="comment-form" class="mt-7 space-y-4">
+              <div class="card p-6 sm:p-9 lg:sticky lg:top-28">
+                <p class="eyebrow">Join the conversation</p>
+                <h2 class="mt-3 font-display text-[2rem] leading-tight">Leave a response</h2>
+                <p class="mt-3 font-serif text-[1.02rem] leading-relaxed text-ink-2">Your response appears straight away. Please keep it thoughtful and kind.</p>
+                <form id="comment-form" class="mt-7 space-y-5">
                   <input type="hidden" name="post_id" value={post.id} />
                   <div>
-                    <label for="comment-author-name" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Your Name</label>
-                    <input id="comment-author-name" name="name" required maxlength="80" placeholder="e.g. Mary Adams" class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868] focus:ring-2 focus:ring-[#E8C868]/20" />
+                    <label for="comment-author-name" class="label">Your name</label>
+                    <input id="comment-author-name" name="name" required maxlength="80" placeholder="e.g. Mary Adams" class="field" />
                   </div>
                   <div>
-                    <label for="comment-author-email" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Email (kept private)</label>
-                    <input id="comment-author-email" name="email" type="email" required maxlength="160" placeholder="you@example.com" class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868] focus:ring-2 focus:ring-[#E8C868]/20" />
+                    <label for="comment-author-email" class="label">Email <span class="font-normal normal-case tracking-normal text-muted">(kept private)</span></label>
+                    <input id="comment-author-email" name="email" type="email" required maxlength="160" placeholder="you@example.com" class="field" />
                   </div>
                   <div>
-                    <label for="comment-body" class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400 mb-1.5">Your Comment</label>
-                    <textarea id="comment-body" name="body" required maxlength="2000" rows="5" placeholder="Share your reflection or thoughts on this article..." class="w-full rounded-xl border border-white/15 bg-[#02050B] px-4 py-3.5 text-[#F6F3EC] outline-none transition-colors placeholder:text-slate-600 focus:border-[#E8C868] focus:ring-2 focus:ring-[#E8C868]/20"></textarea>
+                    <label for="comment-body" class="label">Your response</label>
+                    <textarea id="comment-body" name="body" required maxlength="2000" rows="5" placeholder="What stayed with you?" class="field"></textarea>
                   </div>
-                  <button type="submit" id="comment-submit-btn" class="w-full rounded-full bg-[#E8C868] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] transition-all hover:bg-[#F6F3EC] hover:shadow-[0_0_20px_rgba(232,200,104,0.3)] disabled:cursor-wait disabled:opacity-60">
-                    Publish response →
-                  </button>
-                  <p id="comment-status" class="min-h-5 text-sm text-slate-400" aria-live="polite"></p>
+                  <button type="submit" id="comment-submit-btn" class="btn btn-primary w-full">Publish response</button>
+                  <p id="comment-status" class="min-h-5 text-sm text-muted" aria-live="polite"></p>
                 </form>
               </div>
             </div>
@@ -170,7 +167,7 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
         </section>
       </>
     )}
-  </main>
+  </div>
 </BaseLayout>
 
 <script>
@@ -204,19 +201,19 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
           commentsList.innerHTML = '';
           data.comments.forEach((c: any) => {
             const card = document.createElement('article');
-            card.className = 'rounded-2xl border border-white/10 bg-[#080D16] p-6 sm:p-7 transition-all duration-300 hover:border-[#E8C868]/40 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(232,200,104,0.08)]';
+            card.className = 'border-b border-line py-7';
             const top = document.createElement('div');
             top.className = 'flex items-center justify-between gap-2';
             const author = document.createElement('p');
-            author.className = 'font-mono text-xs uppercase tracking-widest text-[#E8C868]';
+            author.className = 'font-display text-xl text-ink';
             author.textContent = c.name || 'Reader';
             const dateSpan = document.createElement('span');
-            dateSpan.className = 'font-mono text-[10px] uppercase tracking-widest text-slate-500';
+            dateSpan.className = 'meta';
             dateSpan.textContent = c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
             top.appendChild(author);
             top.appendChild(dateSpan);
             const body = document.createElement('p');
-            body.className = 'mt-3 leading-8 text-slate-300 whitespace-pre-line';
+            body.className = 'mt-2 whitespace-pre-line font-serif text-[1.08rem] leading-relaxed text-ink-2';
             body.textContent = c.body || '';
             card.appendChild(top);
             card.appendChild(body);
@@ -237,7 +234,7 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
       submitBtn.textContent = 'Publishing response…';
     }
     status.textContent = 'Submitting your response…';
-    status.className = 'min-h-5 text-sm text-slate-400';
+    status.className = 'min-h-5 text-sm text-muted';
 
     const formData = new FormData(form as HTMLFormElement);
     const payload = Object.fromEntries(formData.entries());
@@ -252,8 +249,8 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
       if (!response.ok) throw new Error(result.error || 'Comment could not be submitted.');
 
       (form as HTMLFormElement).reset();
-      status.textContent = '✨ Thank you! Your response is now live below.';
-      status.className = 'min-h-5 text-sm text-[#E8C868] font-medium';
+      status.textContent = 'Thank you. Your response is now live below.';
+      status.className = 'min-h-5 text-sm font-medium text-accent';
 
       // Instantly render the new comment into the DOM!
       if (noCommentsMsg) (noCommentsMsg as HTMLElement).classList.add('hidden');
@@ -266,24 +263,24 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
         };
 
         const newCard = document.createElement('article');
-        newCard.className = 'rounded-2xl border border-[#E8C868]/60 bg-[#080D16] p-6 sm:p-7 transition-all duration-500 shadow-[0_0_30px_rgba(232,200,104,0.18)] animate-[fade-in_0.6s_ease-out] ring-1 ring-[#E8C868]/30';
+        newCard.className = 'rise border-b border-line bg-accent/5 px-4 py-7';
 
         const topDiv = document.createElement('div');
         topDiv.className = 'flex items-center justify-between gap-2';
 
         const nameEl = document.createElement('p');
-        nameEl.className = 'font-mono text-xs uppercase tracking-widest text-[#E8C868] font-bold';
+        nameEl.className = 'font-display text-xl text-ink';
         nameEl.textContent = String(commentData.name || 'Reader');
 
         const nowBadge = document.createElement('span');
-        nowBadge.className = 'rounded-full bg-[#E8C868]/20 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#E8C868]';
+        nowBadge.className = 'chip chip-accent';
         nowBadge.textContent = 'Just now';
 
         topDiv.appendChild(nameEl);
         topDiv.appendChild(nowBadge);
 
         const bodyEl = document.createElement('p');
-        bodyEl.className = 'mt-3 leading-8 text-[#F6F3EC] whitespace-pre-line';
+        bodyEl.className = 'mt-2 whitespace-pre-line font-serif text-[1.08rem] leading-relaxed text-ink';
         bodyEl.textContent = String(commentData.body || '');
 
         newCard.appendChild(topDiv);
@@ -304,11 +301,11 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
       }
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : 'Comment could not be submitted.';
-      status.className = 'min-h-5 text-sm text-red-400';
+      status.className = 'min-h-5 text-sm text-wine';
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Publish response →';
+        submitBtn.textContent = 'Publish response';
       }
     }
   });
