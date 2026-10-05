@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { supabase, supabaseServer } from '../../../lib/supabase';
 import { generateWelcomeEmail } from '../../../lib/newsletter-templates';
+import { sendToSubscribers } from '../../../lib/newsletter';
+import { mailConfigProblem } from '../../../lib/mailer';
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -43,7 +45,7 @@ export const POST: APIRoute = async ({ request }) => {
           marketing_consent: true,
         });
 
-      if (!insertResult.error) {
+      if (!insertResult.error || insertResult.error?.code === '23505') {
         error = null;
       }
     }
@@ -63,23 +65,23 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    // Send Welcome Email if Resend API Key is configured in Vercel
-    const resendApiKey = import.meta.env.RESEND_API_KEY;
-    if (resendApiKey) {
+    if (error) {
+      console.error('Newsletter subscribe could not be saved:', error.message);
+      return json({ error: 'We could not save your subscription right now. Please try again in a moment.' }, 500);
+    }
+
+    // Welcome email. Awaited: on Vercel a request that has already returned is frozen,
+    // so a fire-and-forget fetch never reliably leaves the server.
+    if (!mailConfigProblem()) {
       const welcome = generateWelcomeEmail(fullName);
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Olaoluwa Michael <newsletter@olaoluwamichael.vercel.app>',
-          to: email,
-          subject: welcome.emailSubject,
-          html: welcome.emailHtml,
-        }),
-      }).catch((err) => console.error('Welcome email dispatch error:', err));
+      const sent = await Promise.race([
+        sendToSubscribers({ subject: welcome.emailSubject, html: welcome.emailHtml, text: welcome.emailPlainText }, email),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+      ]).catch((err) => {
+        console.error('Welcome email dispatch error:', err);
+        return null;
+      });
+      if (sent && sent.failed) console.error('Welcome email failed:', sent.errors.join(' | '));
     }
 
     return json({ ok: true });

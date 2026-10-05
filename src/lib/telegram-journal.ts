@@ -1,4 +1,5 @@
 import { supabaseServer } from './supabase';
+import { dispatchPending } from './newsletter';
 
 const botToken = () => String(import.meta.env.TELEGRAM_BOT_TOKEN || '');
 const telegramApi = (method: string) => `https://api.telegram.org/bot${botToken()}/${method}`;
@@ -147,9 +148,19 @@ export async function processUpdate(update: TelegramUpdate) {
   if (!isAllowedChat(id)) throw new Error('This Telegram account is not authorized.');
   if (action) {
     const post = action.action === 'approve' ? await publishDraft(action.id) : await rejectDraft(action.id);
+    // Approving a draft announces it to newsletter subscribers straight away.
+    let newsletterNote = '';
+    if (action.action === 'approve') {
+      try {
+        const sent = await dispatchPending();
+        newsletterNote = sent.ok && 'sent' in sent ? `\n\nNewsletter: sent to ${sent.sent} subscriber(s).` : `\n\nNewsletter: not sent (${'error' in sent ? sent.error : 'note' in sent ? sent.note : 'see logs'}).`;
+      } catch (error) {
+        newsletterNote = `\n\nNewsletter: failed (${safeError(error)}).`;
+      }
+    }
     if (update.callback_query) await telegram('answerCallbackQuery', { callback_query_id: update.callback_query.id, text: action.action === 'approve' ? 'Published' : 'Rejected' });
     if (update.callback_query?.message?.message_id) await telegram('editMessageReplyMarkup', { chat_id: id, message_id: update.callback_query.message.message_id, reply_markup: { inline_keyboard: [] } });
-    await sendMessage(id!, action.action === 'approve' ? `<b>Published</b>\n\n${text(post.title)}\nhttps://olaoluwamichael.vercel.app/journal/${encodeURIComponent(post.slug)}` : `<b>Draft rejected</b>\n\n${text(post.title)}`);
+    await sendMessage(id!, action.action === 'approve' ? `<b>Published</b>\n\n${text(post.title)}\nhttps://olaoluwamichael.vercel.app/journal/${encodeURIComponent(post.slug)}${newsletterNote.replace(/[<>&]/g, '')}` : `<b>Draft rejected</b>\n\n${text(post.title)}`);
     return;
   }
   if (update.message?.text === '/start' || update.message?.text === '/help') {

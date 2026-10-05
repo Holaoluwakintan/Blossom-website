@@ -1,89 +1,46 @@
 import type { APIRoute } from 'astro';
-import { supabaseServer } from '../../../lib/supabase';
 import { generateStoryAnnouncement } from '../../../lib/newsletter-templates';
+import { secretMatches, sendToSubscribers, siteUrl } from '../../../lib/newsletter';
 
+export const prerender = false;
+
+const json = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+
+const env = (key: string) => String((import.meta.env as Record<string, unknown>)[key] ?? '').trim();
+
+/**
+ * Manual announcement of one journal post (the automatic path is /api/newsletter/dispatch).
+ * Body: { title, slug, excerpt?, readingTimeMinutes?, testEmail? }
+ * Auth: header "x-newsletter-secret: <NEWSLETTER_SECRET>". Always required.
+ * With testEmail set, the email goes only to that one address (use it to preview).
+ */
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { title, slug, excerpt, readingTimeMinutes, secretKey } = await request.json().catch(() => ({}));
+    const newsletterSecret = env('NEWSLETTER_SECRET');
+    if (!newsletterSecret) return json({ error: 'NEWSLETTER_SECRET is not configured.' }, 503);
+    const body = await request.json().catch(() => ({}));
+    const given = request.headers.get('x-newsletter-secret') || body?.secretKey;
+    if (!secretMatches(given, newsletterSecret)) return json({ error: 'Unauthorized' }, 401);
 
-    // Simple safeguard: accept either the supabase service role or paystack key as admin authorization
-    const adminKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.PAYSTACK_SECRET_KEY || 'blossom-admin';
-    if (secretKey && secretKey !== adminKey) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
+    const { title, slug, excerpt, readingTimeMinutes, testEmail } = body ?? {};
+    if (!title || !slug) return json({ error: 'Title and slug are required' }, 400);
 
-    if (!title || !slug) {
-      return new Response(JSON.stringify({ error: 'Title and slug are required' }), { status: 400 });
-    }
-
-    // Generate announcement drafts
-    const announcement = generateStoryAnnouncement({
-      title,
-      slug,
-      excerpt,
-      readingTimeMinutes,
-    });
-
-    // Fetch active subscribers
-    const { data: subscribers, error: fetchError } = await supabaseServer
-      .from('newsletter_subscribers')
-      .select('email, full_name')
-      .eq('marketing_consent', true);
-
-    const recipientCount = subscribers?.length || 0;
-    const resendApiKey = import.meta.env.RESEND_API_KEY;
-
-    let emailsSent = 0;
-    let dispatchStatus = 'draft_prepared';
-
-    if (resendApiKey && subscribers && subscribers.length > 0) {
-      // Send via Resend API
-      try {
-        const batchEmails = subscribers.map((sub: any) => ({
-          from: 'Olaoluwa Michael <newsletter@olaoluwamichael.vercel.app>',
-          to: sub.email,
-          subject: announcement.emailSubject,
-          html: announcement.emailHtml,
-          text: announcement.emailPlainText,
-        }));
-
-        const resendResponse = await fetch('https://api.resend.com/emails/batch', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(batchEmails),
-        });
-
-        if (resendResponse.ok) {
-          emailsSent = subscribers.length;
-          dispatchStatus = 'sent';
-        } else {
-          dispatchStatus = 'resend_error';
-        }
-      } catch (e) {
-        dispatchStatus = 'resend_network_error';
-      }
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        dispatchStatus,
-        recipientCount,
-        emailsSent,
-        announcement,
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }
+    const announcement = generateStoryAnnouncement({ title, slug, excerpt, readingTimeMinutes }, siteUrl());
+    const only = typeof testEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail) ? testEmail.trim().toLowerCase() : undefined;
+    const result = await sendToSubscribers(
+      { subject: announcement.emailSubject, html: announcement.emailHtml, text: announcement.emailPlainText },
+      only,
     );
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || 'Notification generation failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+    return json({
+      success: result.failed === 0,
+      dispatchStatus: result.failed === 0 ? 'sent' : result.sent > 0 ? 'partial' : 'failed',
+      recipientCount: result.recipients,
+      emailsSent: result.sent,
+      errors: result.errors,
+      whatsAppBroadcastText: announcement.whatsAppBroadcastText,
     });
+  } catch (err: any) {
+    return json({ error: err?.message || 'Notification failed' }, 500);
   }
 };
