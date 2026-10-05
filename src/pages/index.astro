@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { optimizedImage } from '../lib/image';
 import { getBookCoverUrl } from '../lib/book-downloads';
 import { formatDownloadCount } from '../lib/content';
 import { supabase } from '../lib/supabase';
@@ -91,7 +92,7 @@ const featuredJournal = journalPosts?.[0];
               <div class="absolute -inset-8 bg-[#E8C868]/15 blur-3xl rounded-full transition-opacity group-hover:opacity-100"></div>
               <div class="relative rounded-3xl border border-[#E8C868]/30 bg-[#080D16] p-4 shadow-2xl transition-all duration-500 group-hover:border-[#E8C868]/70 group-hover:-translate-y-2 group-hover:shadow-[0_20px_45px_rgba(232,200,104,0.18)]">
                 <div class="overflow-hidden rounded-2xl">
-                  <img src={getBookCoverUrl(featuredBook) ?? ''} alt={`${featuredBook.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                  <img src={optimizedImage(getBookCoverUrl(featuredBook), 960)} alt={`${featuredBook.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                 </div>
                 <div class="flex justify-between items-end gap-4 pt-4 px-2 pb-1">
                   <div>
@@ -151,7 +152,7 @@ const featuredJournal = journalPosts?.[0];
           {collectionBooks.map((book) => (
             <a href={'/books/' + book.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block rounded-3xl border border-white/10 bg-[#080D16] p-5 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]">
               <div class="overflow-hidden rounded-2xl bg-[#0D1522] border border-white/10">
-                <img src={getBookCoverUrl(book) ?? ''} alt={`${book.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                <img src={optimizedImage(getBookCoverUrl(book), 640)} alt={`${book.title} book cover`} class="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
               </div>
               <div class="pt-5 px-1 pb-1">
                 {book.genre && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{book.genre}</p>}
@@ -184,7 +185,7 @@ const featuredJournal = journalPosts?.[0];
           <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {previewArtworks.map((artwork) => (
               <a href={'/imagination/' + artwork.slug} class="group flex-none w-[72vw] sm:w-auto snap-start block rounded-3xl border border-white/10 bg-[#080D16] p-4 transition-all duration-500 hover:border-[#E8C868]/60 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(232,200,104,0.12)]">
-                <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#0D1522]"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
+                <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#0D1522]"><img src={optimizedImage(artwork.image_url, 640)} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" /></div>
                 <div class="pt-4 px-1 pb-1">
                   {artwork.category && <p class="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-500">{artwork.category}</p>}
                   <h3 class="font-cinzel text-xl sm:text-2xl font-bold mt-2 group-hover:text-[#E8C868] transition-colors">{artwork.title}</h3>

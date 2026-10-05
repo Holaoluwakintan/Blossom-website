@@ -11,7 +11,11 @@ const escapeXml = (value: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
 
-const cleanSlug = (value: unknown) => String(value ?? '').trim();
+// Slugs are URL-encoded so a slug with a space (e.g. "hungryg Generation") stays a valid URL.
+const cleanSlug = (value: unknown) => {
+  const slug = String(value ?? '').trim();
+  return slug ? encodeURIComponent(slug) : '';
+};
 
 export const GET: APIRoute = async () => {
   const [{ data: books }, { data: artworks }, { data: posts }] = await Promise.all([

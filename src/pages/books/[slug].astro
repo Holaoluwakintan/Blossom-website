@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { optimizedImage } from '../../lib/image';
 import DownloadGate from '../../components/DownloadGate.astro';
 import BookOrderLink from '../../components/BookOrderLink.astro';
 import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
@@ -127,7 +128,7 @@ const emailOrderUrl = `mailto:michaelolaoluwagab@gmail.com?subject=${encodeURICo
             <div class="absolute -inset-6 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
 
             <img
-              src={getBookCoverUrl(book) ?? ''}
+              src={optimizedImage(getBookCoverUrl(book), 960)}
               alt={`${book.title} book cover`}
               class="relative w-full rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
             />

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { optimizedImage } from '../../lib/image';
 import DownloadGate from '../../components/DownloadGate.astro';
 import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
 import { formatDownloadCount } from '../../lib/content';
@@ -84,7 +85,7 @@ const formatPrice = (price: number | string | null) =>
               >
                 <a href={'/books/' + book.slug} class="block relative overflow-hidden rounded-2xl bg-[#0D1522] border border-white/10">
                   <div class="aspect-[3/4] overflow-hidden">
-                    <img src={getBookCoverUrl(book) ?? ''} alt={`${book.title} book cover`} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                    <img src={optimizedImage(getBookCoverUrl(book), 640)} alt={`${book.title} book cover`} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                   </div>
                   <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-end justify-center">
                     <span class="mb-8 px-6 py-3 rounded-full bg-[#E8C868] text-[#02050B] font-mono text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500 shadow-xl">Explore Book →</span>

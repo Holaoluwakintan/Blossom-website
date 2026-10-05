@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { optimizedImage } from '../lib/image';
 
 const services = [
   {
@@ -249,7 +250,7 @@ const pillars = [
     <section class="mx-auto max-w-7xl px-6 pb-20 lg:pb-28 reveal-on-scroll">
       <figure class="group relative overflow-hidden rounded-3xl border border-[#E8C868]/25 bg-[#050A12] shadow-2xl shadow-black/80">
         <img
-          src="https://rlbrhpjljjgpqpqjrpkc.supabase.co/storage/v1/object/public/artworks/stickmans/WhatsApp%20Image%202026-08-19%20at%204.50.48%20PM%20(2).jpeg"
+          src={optimizedImage("https://rlbrhpjljjgpqpqjrpkc.supabase.co/storage/v1/object/public/artworks/stickmans/WhatsApp%20Image%202026-08-19%20at%204.50.48%20PM%20(2).jpeg", 1280)}
           alt="The Invisible Step, a watermarked BLOSSOM stickman artwork"
           class="h-64 w-full object-cover transition duration-700 group-hover:scale-[1.02] sm:h-80 lg:h-[28rem]"
           loading="lazy"

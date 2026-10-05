@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 
 const SECRET =
+  import.meta.env.DOWNLOAD_TOKEN_SECRET ||
   import.meta.env.SUPABASE_SERVICE_ROLE_KEY ||
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY ||
   'blossom-download-secret-2026';

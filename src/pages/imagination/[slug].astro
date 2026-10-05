@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { optimizedImage } from '../../lib/image';
 import { supabase } from '../../lib/supabase';
 import ShareActions from '../../components/ShareActions.astro';
 
@@ -15,7 +16,9 @@ const { data: artwork, error } = await supabase
   .maybeSingle();
 
 if (error || !artwork) {
-  throw new Error(`Artwork not found. Slug: ${slug}. Supabase error: ${error?.message ?? 'No artwork returned'}`);
+  // Unknown artwork: send visitors back to the gallery instead of a 500 error page.
+  if (error) console.error('[imagination] lookup failed', slug, error.message);
+  return Astro.redirect('/imagination', 302);
 }
 
 
@@ -47,7 +50,7 @@ if (error || !artwork) {
       <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
         <div class="relative max-w-2xl mx-auto lg:mx-0 w-full">
           <div class="absolute -inset-6 bg-[#E8C868]/10 blur-3xl rounded-full"></div>
-          <div class="relative overflow-hidden rounded-3xl border border-[#E8C868]/25 bg-[#080D16] shadow-2xl shadow-black/70"><img src={artwork.image_url} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-contain" /></div>
+          <div class="relative overflow-hidden rounded-3xl border border-[#E8C868]/25 bg-[#080D16] shadow-2xl shadow-black/70"><img src={optimizedImage(artwork.image_url, 1280)} alt={artwork.alt_text || artwork.title} class="w-full aspect-square object-contain" /></div>
         </div>
 
         <div class="lg:pt-5">

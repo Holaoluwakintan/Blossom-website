@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { optimizedImage } from '../../lib/image';
 import { supabase, supabaseServer } from '../../lib/supabase';
 import ShareActions from '../../components/ShareActions.astro';
 import { formatDate, formatRelativeFreshness, getContentDate } from '../../lib/content';
@@ -30,6 +31,8 @@ const { data: commentRows, error: commentsError } = post
       .eq('article_id', post.id)
       .order('created_at', { ascending: false })
   : { data: [], error: null };
+
+if (!post) Astro.response.status = 404;
 
 const comments = (commentRows ?? [])
   .filter((comment) => {
@@ -84,7 +87,7 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
 
           {(post.cover_image_url || post.featured_image_url) && (
             <div class="mt-12 overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-              <img src={post.cover_image_url || post.featured_image_url} alt={post.title} class="max-h-[520px] w-full object-cover transition-transform duration-700 hover:scale-[1.02]" />
+              <img src={optimizedImage(post.cover_image_url || post.featured_image_url, 1280)} alt={post.title} class="max-h-[520px] w-full object-cover transition-transform duration-700 hover:scale-[1.02]" />
             </div>
           )}
 

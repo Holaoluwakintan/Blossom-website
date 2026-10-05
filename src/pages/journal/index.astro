@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { optimizedImage } from '../../lib/image';
 import { supabase, supabaseServer } from '../../lib/supabase';
 import { formatDate, formatRelativeFreshness, getContentDate, normalizeArtworkCategory } from '../../lib/content';
 
@@ -108,7 +109,7 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
           <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#0D1522]">
             {(featuredPost.cover_image_url || featuredPost.featured_image_url) ? (
               <img
-                src={featuredPost.cover_image_url || featuredPost.featured_image_url}
+                src={optimizedImage(featuredPost.cover_image_url || featuredPost.featured_image_url, 960)}
                 alt={featuredPost.title}
                 class="aspect-[16/10] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
               />
@@ -165,7 +166,7 @@ const formatArticleCount = (value: number | string | null | undefined, label: st
                   {(post.cover_image_url || post.featured_image_url) && (
                     <div class="mb-6 overflow-hidden rounded-xl border border-white/10">
                       <img
-                        src={post.cover_image_url || post.featured_image_url}
+                        src={optimizedImage(post.cover_image_url || post.featured_image_url, 640)}
                         alt={post.title}
                         class="aspect-[16/10] w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         loading="lazy"

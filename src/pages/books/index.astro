@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { optimizedImage } from '../../lib/image';
 import DownloadGate from '../../components/DownloadGate.astro';
 import BookOrderLink from '../../components/BookOrderLink.astro';
 import { getBookCoverUrl, getBookDownloadUrl } from '../../lib/book-downloads';
@@ -110,7 +111,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
               <div class="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
 
                 <img
-                  src={getBookCoverUrl(featuredBook) ?? ''}
+                  src={optimizedImage(getBookCoverUrl(featuredBook), 960)}
                   alt={`${featuredBook.title} book cover`}
                   class="w-full transition-transform duration-700 group-hover:scale-[1.02]"
                 />
@@ -281,7 +282,7 @@ const formatNaira = (_price: number | string | null) => 'Free';
                   <div class="aspect-[3/4] overflow-hidden">
 
                     <img
-                      src={getBookCoverUrl(book) ?? ''}
+                      src={optimizedImage(getBookCoverUrl(book), 640)}
                       alt={`${book.title} book cover`}
                       class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       loading="lazy"
