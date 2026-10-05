@@ -8,23 +8,25 @@ interface Props {
 const {
   compact = false,
   heading = 'Stay close to what comes next.',
-  description = 'Get new books, visual stories, and quiet reflections from BLOSSOM in your inbox.',
+  description = 'New books, visual stories and quiet reflections from Olaoluwa Michael, delivered to your inbox.',
 } = Astro.props;
 ---
 
-<section class={`border border-[#E8C868]/25 bg-[#080D16]/90 rounded-3xl shadow-xl shadow-black/40 backdrop-blur-sm ${compact ? 'p-6 sm:p-8' : 'p-8 sm:p-12'}`} aria-labelledby="newsletter-title">
+<section class={compact ? 'grid gap-8 md:grid-cols-[1fr_1.1fr] md:items-end md:gap-16' : 'card p-7 sm:p-12'} aria-labelledby="newsletter-title">
   <div class={compact ? '' : 'max-w-2xl'}>
-    <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#E8C868]">BLOSSOM LETTER</p>
-    <h2 id="newsletter-title" class="mt-4 font-cinzel text-2xl font-bold sm:text-3xl">{heading}</h2>
-    <p class="mt-4 leading-8 text-slate-400">{description}</p>
+    <p class="eyebrow">The Blossom Letter</p>
+    <h2 id="newsletter-title" class="mt-4 text-balance font-display text-[2.1rem] leading-[1.08] sm:text-[2.6rem]">{heading}</h2>
+    <p class="mt-4 max-w-md font-serif text-[1.08rem] leading-relaxed text-ink-2">{description}</p>
   </div>
-  <form id="newsletter-form" class="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]" novalidate>
-    <label class="sr-only" for="newsletter-email">Email address</label>
-    <input id="newsletter-email" name="email" type="email" required autocomplete="email" maxlength="160" placeholder="you@example.com" class="min-h-12 border border-white/15 bg-[#02050B] px-5 rounded-xl text-[#F6F3EC] outline-none transition-all placeholder:text-slate-600 focus:border-[#E8C868] focus:ring-2 focus:ring-[#E8C868]/30" />
-    <input name="website_url" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
-    <button type="submit" class="min-h-12 bg-[#E8C868] px-8 rounded-xl sm:rounded-full font-mono text-[10px] font-bold uppercase tracking-widest text-[#02050B] transition-all hover:bg-[#F6F3EC] hover:shadow-lg hover:shadow-[#E8C868]/20 disabled:cursor-wait disabled:opacity-60">Subscribe →</button>
-  </form>
-  <p id="newsletter-status" class="mt-3 text-sm text-slate-400" aria-live="polite"></p>
+  <div>
+    <form id="newsletter-form" class="grid gap-3 sm:grid-cols-[1fr_auto]" novalidate>
+      <label class="sr-only" for="newsletter-email">Email address</label>
+      <input id="newsletter-email" name="email" type="email" required autocomplete="email" maxlength="160" placeholder="Your email address" class="field" />
+      <input name="website_url" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+      <button type="submit" class="btn btn-primary">Subscribe</button>
+    </form>
+    <p id="newsletter-status" class="mt-3 min-h-5 text-sm text-muted" aria-live="polite">Free. One gentle email when something new is published. Unsubscribe anytime.</p>
+  </div>
 </section>
 
 <script is:inline>
@@ -40,7 +42,7 @@ const {
       if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
         if (newsletterStatus) {
           newsletterStatus.textContent = 'Please enter a valid email address.';
-          newsletterStatus.className = 'mt-3 text-sm text-red-400 font-mono';
+          newsletterStatus.className = 'mt-3 min-h-5 text-sm text-wine';
         }
         return;
       }
@@ -51,7 +53,7 @@ const {
       }
       if (newsletterStatus) {
         newsletterStatus.textContent = 'Adding you to the list…';
-        newsletterStatus.className = 'mt-3 text-sm text-slate-400 font-mono';
+        newsletterStatus.className = 'mt-3 min-h-5 text-sm text-muted';
       }
 
       try {
@@ -65,18 +67,18 @@ const {
 
         newsletterForm.reset();
         if (newsletterStatus) {
-          newsletterStatus.textContent = '✨ You are subscribed! You will be the first to know when a new story or reflection drops.';
-          newsletterStatus.className = 'mt-3 text-sm text-[#E8C868] font-medium font-mono';
+          newsletterStatus.textContent = 'You’re in. The next book, story or reflection will come straight to your inbox.';
+          newsletterStatus.className = 'mt-3 min-h-5 text-sm font-medium text-accent';
         }
       } catch (error) {
         if (newsletterStatus) {
           newsletterStatus.textContent = error instanceof Error ? error.message : 'We could not save your subscription.';
-          newsletterStatus.className = 'mt-3 text-sm text-red-400 font-mono';
+          newsletterStatus.className = 'mt-3 min-h-5 text-sm text-wine';
         }
       } finally {
         if (submit) {
           submit.disabled = false;
-          submit.textContent = 'Subscribe →';
+          submit.textContent = 'Subscribe';
         }
       }
     });

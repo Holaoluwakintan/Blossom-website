@@ -42,10 +42,10 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
 ---
 
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth bg-navy-980">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1282831461622449"
@@ -54,14 +54,14 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
     <meta name="author" content="Olaoluwa Michael" />
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'} />
     <link rel="canonical" href={canonicalUrl} />
-    <meta name="theme-color" content="#02050B" />
+    <meta name="theme-color" content="#F7F3EB" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script is:inline>
+      document.documentElement.classList.add('js');
       try {
-        const savedTheme = localStorage.getItem('blossom-theme');
-        if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+        if (localStorage.getItem('blossom-theme-v2') === 'night') document.documentElement.dataset.theme = 'night';
       } catch {}
     </script>
     <meta property="og:type" content="website" />
@@ -79,165 +79,145 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
     {schemaItems.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item).replace(/</g, '\\u003c')} />)}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <style is:global>
-      ::selection { background-color: #D4AF37; color: #02050B; }
-      .editorial-grid-lines {
-        background-size: 64px 64px;
-        background-image:
-          linear-gradient(to right, rgba(212, 175, 55, 0.03) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
-      }
-      main > * { animation: blossom-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-      @keyframes blossom-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-      @keyframes gold-glow {
-        0%, 100% { opacity: 0.3; transform: scale(1); }
-        50% { opacity: 0.65; transform: scale(1.06); }
-      }
-      .animate-gold-glow {
-        animation: gold-glow 9s ease-in-out infinite;
-      }
-      .reveal-on-scroll {
-        opacity: 0;
-        transform: translateY(22px);
-        transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-        will-change: opacity, transform;
-      }
-      .reveal-on-scroll.is-revealed {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          scroll-behavior: auto !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-      html[data-theme="light"] body { background-color: #f7f4ec !important; color: #27303a !important; background-image: none !important; }
-      html[data-theme="light"] [class*="bg-[#02050B]"], html[data-theme="light"] [class*="bg-[#050A12]"], html[data-theme="light"] [class*="bg-[#081021]"], html[data-theme="light"] [class*="bg-[#080D16]"] { background-color: #f7f4ec !important; }
-      html[data-theme="light"] [class*="text-[#F6F3EC]"] { color: #20252b !important; }
-      html[data-theme="light"] [class*="text-slate-300"], html[data-theme="light"] [class*="text-slate-400"], html[data-theme="light"] [class*="text-slate-500"] { color: #52606d !important; }
-      html[data-theme="light"] [class*="border-white/10"], html[data-theme="light"] [class*="border-white/\[0.1\]"], html[data-theme="light"] [class*="border-[#D4AF37]/10"] { border-color: rgba(111, 83, 18, 0.2) !important; }
-      html[data-theme="light"] nav { background-color: rgba(247, 244, 236, 0.92) !important; }
-      html[data-theme="light"] footer { background-color: #eee9dd !important; }
-      html[data-theme="light"] .editorial-grid-lines { background-image: linear-gradient(to right, rgba(111, 83, 18, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(111, 83, 18, 0.06) 1px, transparent 1px); }
-
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet" />
   </head>
-  <body class="bg-[#02050B] text-slate-300 font-sans antialiased overflow-x-hidden editorial-grid-lines min-h-screen flex flex-col justify-between">
-    <nav class="sticky top-0 z-40 bg-[#02050B]/90 backdrop-blur-xl border-b border-[#D4AF37]/10 transition-all duration-300">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <a href="/" class="flex items-center space-x-3.5 group">
-          <div class="w-11 h-11 rounded-2xl border border-[#D4AF37]/40 bg-[#081021] flex items-center justify-center font-cinzel text-xl font-black text-[#E8C868] shadow-md shadow-[#D4AF37]/10 group-hover:border-[#E8C868] group-hover:scale-105 transition-all duration-300">B</div>
-          <div class="flex flex-col">
-            <span class="font-cinzel tracking-[0.3em] text-lg font-bold text-[#F6F3EC]">BLOSSOM</span>
-            <span class="text-[9px] font-mono tracking-[0.25em] text-[#D4AF37]/80 uppercase">Olaoluwa Michael</span>
-          </div>
+  <body class="min-h-screen flex flex-col overflow-x-hidden">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:bg-ink focus:px-4 focus:py-2 focus:text-paper">Skip to content</a>
+
+    <header class="site-header sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md supports-[backdrop-filter]:bg-paper/75">
+      <div class="wrap flex h-16 items-center justify-between gap-4 sm:h-[4.5rem]">
+        <a href="/" class="group flex flex-col leading-none" aria-label="BLOSSOM, home">
+          <span class="font-display text-[1.45rem] font-semibold tracking-[0.32em] text-ink sm:text-[1.6rem]">BLOSSOM</span>
+          <span class="mt-1 font-display text-[0.8rem] italic tracking-[0.04em] text-muted transition-colors group-hover:text-accent">by Olaoluwa Michael</span>
         </a>
-        <div class="hidden xl:flex items-center space-x-7 text-[11px] uppercase tracking-[0.22em] font-mono text-slate-300">
-          <a href="/" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Home</a>
-          <a href="/books" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Books</a>
-          <a href="/imagination" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Imagination</a>
-          <a href="/about" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">About</a>
-          <a href="/journal" class="px-3 py-1.5 rounded-full hover:text-[#E8C868] hover:bg-white/5 transition-all">Journal</a>
-        </div>
-        <div class="flex items-center gap-3">
-          <button type="button" id="theme-toggle" class="rounded-full border border-[#D4AF37]/30 px-4 py-2 text-[10px] uppercase tracking-[0.14em] font-mono text-[#E8C868] transition-all hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/60 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60" aria-label="Switch to light mode" title="Switch theme">
-            <span id="theme-toggle-label">Light mode</span>
+
+        <nav class="hidden items-center gap-9 lg:flex" aria-label="Main">
+          <a href="/books" class="nav-link">Books</a>
+          <a href="/journal" class="nav-link">Journal</a>
+          <a href="/imagination" class="nav-link">Imagination</a>
+          <a href="/about" class="nav-link">About</a>
+        </nav>
+
+        <div class="flex items-center gap-1.5">
+          <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch to night reading" title="Day / Night">
+            <svg class="theme-icon-moon h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7Z" stroke-linejoin="round"/></svg>
+            <svg class="theme-icon-sun h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" stroke-linecap="round"/></svg>
           </button>
-          <button
-            type="button"
-            id="mobile-menu-button"
-            class="xl:hidden rounded-full border border-[#D4AF37]/30 px-4 py-2 text-[10px] uppercase tracking-[0.18em] font-mono text-[#E8C868] transition-all hover:bg-[#D4AF37]/10 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/60"
-            aria-expanded="false"
-            aria-controls="mobile-menu"
-          >
-            Menu
+          <a href="/books" class="btn btn-primary btn-sm hidden sm:inline-flex lg:ml-3">Shop books</a>
+          <button type="button" id="mobile-menu-button" class="icon-btn lg:hidden" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 8h16M4 16h16" stroke-linecap="round"/></svg>
           </button>
         </div>
       </div>
-      <div id="mobile-menu" class="hidden mx-4 mb-4 rounded-3xl border border-[#D4AF37]/20 bg-[#081021]/95 backdrop-blur-2xl p-6 shadow-2xl shadow-black/80 xl:hidden" aria-label="Mobile navigation">
-        <div class="flex flex-col gap-4 text-[11px] uppercase tracking-[0.22em] font-mono text-slate-300">
-          <a href="/" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Home</a>
-          <a href="/books" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Books</a>
-          <a href="/imagination" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Imagination</a>
-          <a href="/about" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">About</a>
-          <a href="/journal" class="hover:text-[#E8C868] p-2 rounded-xl hover:bg-white/5 transition-colors">Journal</a>
-          <div class="pt-3 border-t border-white/10 flex flex-col gap-2">
-            <a href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x" target="_blank" rel="noopener noreferrer" class="text-[#25D366] p-2 rounded-xl hover:bg-[#25D366]/10 transition-colors">📱 WhatsApp Channel →</a>
-            <a href="https://www.facebook.com/share/1DTMt74HuT/" target="_blank" rel="noopener noreferrer" class="text-[#1877F2] p-2 rounded-xl hover:bg-[#1877F2]/10 transition-colors">👥 Facebook Page →</a>
+
+      <div id="mobile-menu" class="hidden border-t border-line/70 bg-paper lg:hidden" aria-label="Mobile navigation">
+        <nav class="wrap flex flex-col py-4" aria-label="Mobile">
+          <a href="/" class="mobile-link">Home</a>
+          <a href="/books" class="mobile-link">Books</a>
+          <a href="/journal" class="mobile-link">Journal</a>
+          <a href="/imagination" class="mobile-link">Imagination</a>
+          <a href="/about" class="mobile-link">About</a>
+          <div class="mt-4 flex flex-wrap gap-2 pb-2">
+            <a href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x" target="_blank" rel="noopener noreferrer" class="chip">WhatsApp Channel ↗</a>
+            <a href="https://www.facebook.com/share/1DTMt74HuT/" target="_blank" rel="noopener noreferrer" class="chip">Facebook ↗</a>
           </div>
-        </div>
+        </nav>
       </div>
-    </nav>
-    <main class="flex-grow">
+    </header>
+
+    <main id="main" class="flex-grow">
       <slot />
     </main>
-    <div class="mx-auto w-full max-w-7xl px-6 pb-12 pt-16 reveal-on-scroll"><NewsletterForm compact /></div>
-    <footer class="border-t border-[#D4AF37]/15 bg-[#02050B] py-14 px-4 text-center">
-      <div class="flex flex-wrap justify-center items-center gap-3 text-xs mb-6">
-        <a href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] font-mono text-[10px] uppercase tracking-widest hover:bg-[#25D366] hover:text-[#02050B] transition-all">
-          <span>📱 Follow WhatsApp Channel</span>
-        </a>
-        <a href="https://www.facebook.com/share/1DTMt74HuT/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1877F2]/10 border border-[#1877F2]/30 text-[#1877F2] font-mono text-[10px] uppercase tracking-widest hover:bg-[#1877F2] hover:text-white transition-all">
-          <span>👥 Follow on Facebook</span>
-        </a>
+
+    <section class="band hairline-t" aria-label="Newsletter">
+      <div class="wrap py-16 sm:py-20 reveal"><NewsletterForm compact /></div>
+    </section>
+
+    <footer class="theme-night bg-paper text-ink-2">
+      <div class="wrap grid gap-12 py-16 sm:py-20 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div>
+          <p class="font-display text-3xl font-semibold tracking-[0.3em] text-ink">BLOSSOM</p>
+          <p class="mt-4 max-w-sm font-serif text-[1.05rem] leading-relaxed text-ink-2">Books, quiet reflections and visual stories by Olaoluwa Michael: written to help you grow in faith, in purpose and in becoming.</p>
+        </div>
+        <div>
+          <p class="eyebrow">Explore</p>
+          <ul class="mt-5 space-y-3 text-[0.95rem]">
+            <li><a href="/books" class="link text-ink-2">Books</a></li>
+            <li><a href="/journal" class="link text-ink-2">Journal</a></li>
+            <li><a href="/imagination" class="link text-ink-2">Imagination</a></li>
+            <li><a href="/about" class="link text-ink-2">About Olaoluwa</a></li>
+            <li><a href="/books/other-authors" class="link text-ink-2">Other authors</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="eyebrow">Follow along</p>
+          <ul class="mt-5 space-y-3 text-[0.95rem]">
+            <li><a href="https://whatsapp.com/channel/0029VaEtpDnJP21DVpo1Mi2x" target="_blank" rel="noopener noreferrer" class="link text-ink-2">WhatsApp Channel ↗</a></li>
+            <li><a href="https://www.facebook.com/share/1DTMt74HuT/" target="_blank" rel="noopener noreferrer" class="link text-ink-2">Facebook ↗</a></li>
+            <li><a href="mailto:michaelolaoluwagab@gmail.com" class="link text-ink-2">Write to Olaoluwa</a></li>
+          </ul>
+        </div>
       </div>
-      <div class="flex flex-wrap justify-center gap-x-6 gap-y-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-400">
-        <a href="/" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Home</a>
-        <a href="/books" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Find a book</a>
-        <a href="/imagination" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">See artwork</a>
-        <a href="/journal" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">Read Journal</a>
-        <a href="/about" class="px-3 py-1 rounded-full transition-colors hover:text-[#E8C868] hover:bg-white/5">About & Community</a>
+      <div class="wrap flex flex-col gap-2 border-t border-line py-7 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+        <p>© {new Date().getFullYear()} Olaoluwa Michael · BLOSSOM · Nigeria</p>
+        <p class="font-display text-sm italic">Written with faith, from Nigeria.</p>
       </div>
-      <p class="mt-6 text-xs font-mono text-slate-500">© {new Date().getFullYear()} Olaoluwa Michael • BLOSSOM Ecosystem • Nigeria</p>
     </footer>
+
+    <style is:global>
+      .nav-link { position: relative; font-size: .8125rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--ink-2)); transition: color .25s ease; }
+      .nav-link::after { content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px; background: rgb(var(--accent)); transform: scaleX(0); transform-origin: left; transition: transform .35s ease; }
+      .nav-link:hover, .nav-link[aria-current='page'] { color: rgb(var(--ink)); }
+      .nav-link:hover::after, .nav-link[aria-current='page']::after { transform: scaleX(1); }
+      .icon-btn { display: inline-flex; height: 2.75rem; width: 2.75rem; align-items: center; justify-content: center; border-radius: 999px; color: rgb(var(--ink)); transition: background-color .2s ease, color .2s ease; }
+      .icon-btn:hover { background: rgb(var(--ink) / .06); color: rgb(var(--accent)); }
+      .theme-icon-sun { display: none; }
+      html[data-theme='night'] .theme-icon-sun { display: block; }
+      html[data-theme='night'] .theme-icon-moon { display: none; }
+      .mobile-link { display: block; padding: .85rem 0; border-bottom: 1px solid rgb(var(--line) / .7); font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; font-weight: 500; color: rgb(var(--ink)); }
+      .mobile-link[aria-current='page'] { color: rgb(var(--accent)); }
+    </style>
+
     <script is:inline>
-      const mobileMenuButton = document.getElementById('mobile-menu-button');
-      const mobileMenu = document.getElementById('mobile-menu');
-      const themeToggle = document.getElementById('theme-toggle');
-      const themeToggleLabel = document.getElementById('theme-toggle-label');
-      const applyTheme = (theme) => {
-        document.documentElement.dataset.theme = theme;
-        try { localStorage.setItem('blossom-theme', theme); } catch {}
-        const nextTheme = theme === 'dark' ? 'light' : 'dark';
-        themeToggle?.setAttribute('aria-label', `Switch to ${nextTheme} mode`);
-        if (themeToggleLabel) themeToggleLabel.textContent = `${nextTheme} mode`;
-      };
-      applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
-      themeToggle?.addEventListener('click', () => {
-        applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
-      });
+      (() => {
+        const root = document.documentElement;
+        const toggle = document.getElementById('theme-toggle');
+        const meta = document.querySelector('meta[name="theme-color"]');
+        const apply = (theme, save) => {
+          if (theme === 'night') root.dataset.theme = 'night'; else delete root.dataset.theme;
+          if (save) { try { localStorage.setItem('blossom-theme-v2', theme); } catch {} }
+          toggle?.setAttribute('aria-label', theme === 'night' ? 'Switch to day reading' : 'Switch to night reading');
+          meta?.setAttribute('content', theme === 'night' ? '#141210' : '#F7F3EB');
+        };
+        apply(root.dataset.theme === 'night' ? 'night' : 'day', false);
+        toggle?.addEventListener('click', () => apply(root.dataset.theme === 'night' ? 'day' : 'night', true));
 
-      mobileMenuButton?.addEventListener('click', () => {
-        const isOpen = mobileMenuButton.getAttribute('aria-expanded') === 'true';
-        mobileMenuButton.setAttribute('aria-expanded', String(!isOpen));
-        mobileMenu?.classList.toggle('hidden', isOpen);
-      });
+        const button = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+        const setOpen = (open) => {
+          button?.setAttribute('aria-expanded', String(open));
+          button?.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+          menu?.classList.toggle('hidden', !open);
+        };
+        button?.addEventListener('click', () => setOpen(button.getAttribute('aria-expanded') !== 'true'));
+        menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
 
-      mobileMenu?.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', () => {
-          mobileMenuButton?.setAttribute('aria-expanded', 'false');
-          mobileMenu?.classList.add('hidden');
+        const path = location.pathname.replace(/\/$/, '') || '/';
+        document.querySelectorAll('.nav-link, .mobile-link').forEach((a) => {
+          const href = a.getAttribute('href');
+          if (href === path || (href !== '/' && path.startsWith(href + '/'))) a.setAttribute('aria-current', 'page');
         });
-      });
 
-      if ('IntersectionObserver' in window) {
-        const revealObserver = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-revealed');
-              revealObserver.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-        document.querySelectorAll('.reveal-on-scroll').forEach((el) => revealObserver.observe(el));
-      } else {
-        document.querySelectorAll('.reveal-on-scroll').forEach((el) => el.classList.add('is-revealed'));
-      }
-
+        const els = document.querySelectorAll('.reveal');
+        if ('IntersectionObserver' in window) {
+          const io = new IntersectionObserver((entries) => {
+            entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+          }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+          els.forEach((el) => io.observe(el));
+        } else {
+          els.forEach((el) => el.classList.add('is-in'));
+        }
+      })();
     </script>
   </body>
 </html>

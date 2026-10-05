@@ -1,0 +1,41 @@
+---
+import { optimizedImage, optimizedSrcset } from '../lib/image';
+
+interface Props {
+  src: string | null | undefined;
+  alt: string;
+  /** Rendered width hint in CSS px for `sizes` (defaults to a grid tile). */
+  sizes?: string;
+  eager?: boolean;
+  class?: string;
+  stage?: boolean;
+}
+
+const { src, alt, sizes = '(min-width: 1024px) 260px, 45vw', eager = false, class: className = '', stage = false } = Astro.props;
+const value = String(src ?? '').trim();
+const fallback = optimizedImage(value, 640);
+const srcset = optimizedSrcset(value, [320, 480, 640, 960]);
+---
+
+<div class:list={['book', stage && 'book-stage', className]}>
+  <div class="book__cover">
+    {value ? (
+      <img
+        src={fallback}
+        srcset={srcset}
+        sizes={srcset ? sizes : undefined}
+        alt={alt}
+        width="640"
+        height="960"
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchpriority={eager ? 'high' : undefined}
+      />
+    ) : (
+      <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-vellum p-6 text-center">
+        <span class="font-display text-2xl text-ink">{alt.replace(/ book cover$/i, '')}</span>
+        <span class="eyebrow-muted">Olaoluwa Michael</span>
+      </div>
+    )}
+  </div>
+</div>

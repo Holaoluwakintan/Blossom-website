@@ -8,7 +8,8 @@ interface Props {
 }
 
 const { bookId, bookSlug, bookTitle, downloadUrl, featured = false } = Astro.props;
-const gateId = `download-gate-${bookSlug}`;
+// A per-instance suffix keeps ids unique when the same book appears twice on a page.
+const gateId = `download-gate-${String(bookSlug).replace(/[^a-z0-9-]/gi, '-')}-${Math.random().toString(36).slice(2, 7)}`;
 ---
 
 {downloadUrl ? (
@@ -19,45 +20,48 @@ const gateId = `download-gate-${bookSlug}`;
       data-book-id={bookId}
       data-book-title={bookTitle}
       data-dialog-id={gateId}
-      class:list={[
-        'inline-flex items-center justify-center font-mono uppercase tracking-widest transition-colors',
-        featured
-          ? 'px-8 py-4 rounded-full border border-[#E8C868]/50 text-[#E8C868] text-xs font-bold hover:bg-[#E8C868] hover:text-[#02050B] shadow-lg shadow-[#E8C868]/10'
-          : 'shrink-0 text-[10px] text-slate-300 hover:text-[#E8C868]'
-      ]}
+      class:list={[featured ? 'btn btn-primary' : 'link-arrow shrink-0']}
     >
-      {featured ? 'Download Free' : 'Download →'}
+      {featured ? 'Download free' : <>Download free <span aria-hidden="true">→</span></>}
     </button>
 
-    <dialog id={gateId} class="w-[calc(100%-2rem)] max-w-md border border-[#E8C868]/30 bg-[#080D16] p-0 text-[#F6F3EC] shadow-2xl rounded-3xl overflow-hidden backdrop:bg-[#02050B]/85 backdrop:backdrop-blur-sm">
+    <dialog id={gateId} class="gate-dialog w-[calc(100%-2rem)] max-w-md overflow-hidden border border-line bg-surface p-0 text-ink-2 shadow-2xl">
       <div class="p-7 sm:p-9">
         <div class="flex items-start justify-between gap-6">
           <div>
-            <p class="text-[10px] font-mono uppercase tracking-[0.25em] text-[#E8C868]">Free book access</p>
-            <h2 class="mt-3 font-cinzel text-2xl font-bold">Get {bookTitle}</h2>
+            <p class="eyebrow">A free book</p>
+            <h2 class="mt-3 font-display text-[1.9rem] leading-tight">{bookTitle}</h2>
           </div>
-          <button type="button" data-dialog-close class="text-2xl leading-none text-slate-400 hover:text-[#E8C868]" aria-label="Close download form">×</button>
+          <button type="button" data-dialog-close class="-mr-2 -mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-muted hover:bg-ink/5 hover:text-ink" aria-label="Close download form">×</button>
         </div>
 
-        <p class="mt-5 text-sm leading-7 text-slate-400">Get this free and hear when new books drop. Your email helps BLOSSOM stay in touch with future stories.</p>
+        <p class="mt-4 font-serif text-[1.02rem] leading-relaxed text-ink-2">Tell us where to send news of the next book, and your download starts right away.</p>
 
         <form data-download-form class="mt-6 space-y-4">
-          <label for={`${gateId}-name`} class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400">Name <span class="normal-case tracking-normal text-slate-600">(optional)</span></label>
-          <input id={`${gateId}-name`} name="name" type="text" autocomplete="name" maxlength="120" placeholder="Your name" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 rounded-xl text-[#F6F3EC] outline-none focus:border-[#E8C868] focus:ring-1 focus:ring-[#E8C868]/40 transition-colors" />
-          <label for={`${gateId}-email`} class="block text-xs font-mono uppercase tracking-[0.18em] text-slate-400">Email address</label>
-          <input id={`${gateId}-email`} name="email" type="email" required autocomplete="email" maxlength="254" placeholder="you@example.com" class="w-full border border-white/15 bg-[#02050B] px-4 py-3 rounded-xl text-[#F6F3EC] outline-none focus:border-[#E8C868] focus:ring-1 focus:ring-[#E8C868]/40 transition-colors" />
-          <label class="flex items-start gap-3 text-xs leading-5 text-slate-500">
-            <input name="consent" type="checkbox" required class="mt-1 accent-[#E8C868]" />
-            <span>I agree to receive occasional updates about new BLOSSOM books. I can unsubscribe at any time.</span>
+          <div>
+            <label for={`${gateId}-name`} class="label">Name <span class="font-normal normal-case tracking-normal text-muted">(optional)</span></label>
+            <input id={`${gateId}-name`} name="name" type="text" autocomplete="name" maxlength="120" placeholder="Your name" class="field" />
+          </div>
+          <div>
+            <label for={`${gateId}-email`} class="label">Email address</label>
+            <input id={`${gateId}-email`} name="email" type="email" required autocomplete="email" maxlength="254" placeholder="you@example.com" class="field" />
+          </div>
+          <label class="flex items-start gap-3 text-sm leading-6 text-ink-2">
+            <input name="consent" type="checkbox" required class="mt-1 h-4 w-4 accent-accent" />
+            <span>Send me occasional news about new BLOSSOM books. I can unsubscribe at any time.</span>
           </label>
-          <button type="submit" class="w-full bg-[#E8C868] px-6 py-4 rounded-full font-mono text-xs font-bold uppercase tracking-widest text-[#02050B] hover:bg-[#F6F3EC] transition-colors shadow-lg shadow-[#E8C868]/20">Start download</button>
-          <p data-download-status class="min-h-5 text-sm text-slate-400" aria-live="polite"></p>
+          <button type="submit" class="btn btn-primary w-full">Start download</button>
+          <p data-download-status class="min-h-5 text-sm text-muted" aria-live="polite"></p>
         </form>
       </div>
     </dialog>
+    <style is:global>
+      .gate-dialog { border-radius: 4px; }
+      .gate-dialog::backdrop { background: rgb(20 18 16 / .6); backdrop-filter: blur(3px); }
+    </style>
   </>
 ) : (
-  <span class="text-[10px] font-mono uppercase tracking-widest text-slate-600">Digital edition coming soon</span>
+  <span class="eyebrow-muted">Digital edition coming soon</span>
 )}
 
 <script>

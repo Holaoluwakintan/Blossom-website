@@ -1,0 +1,38 @@
+---
+import { optimizedImage, optimizedSrcset } from '../lib/image';
+
+interface Props {
+  src: string | null | undefined;
+  alt: string;
+  /** CSS aspect-ratio of the frame, e.g. "4 / 5". */
+  ratio?: string;
+  sizes?: string;
+  width?: number;
+  eager?: boolean;
+  /** Fill the frame (crop) instead of matting the artwork. */
+  fill?: boolean;
+  class?: string;
+}
+
+const { src, alt, ratio = '4 / 5', sizes = '(min-width: 1024px) 380px, 50vw', width = 640, eager = false, fill = false, class: className = '' } = Astro.props;
+const value = String(src ?? '').trim();
+const main = optimizedImage(value, width);
+const srcset = optimizedSrcset(value, [320, 640, 960]);
+---
+
+<div class:list={['mat', className]} style={`aspect-ratio: ${ratio}`}>
+  {value && !fill && <img class="mat__bg" src={optimizedImage(value, 320)} alt="" aria-hidden="true" loading="lazy" decoding="async" />}
+  {value && (
+    <img
+      class="mat__img"
+      style={fill ? 'object-fit: cover' : undefined}
+      src={main}
+      srcset={srcset}
+      sizes={srcset ? sizes : undefined}
+      alt={alt}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      fetchpriority={eager ? 'high' : undefined}
+    />
+  )}
+</div>

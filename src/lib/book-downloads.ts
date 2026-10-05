@@ -21,8 +21,22 @@ const toPublicDigitalBookUrl = (value: string) => {
     .join('/')}`;
 };
 
+// Display-ready covers cut from the uploaded artwork (see public/covers/README.md):
+// the uploads for these titles are a full wraparound, a photographed mockup or a
+// cover on a coloured mat, so the front panel alone is served instead.
+const displayCoverOverrides: Record<string, string> = {
+  'crack-the-algorithm': '/covers/crack-the-algorithm.webp',
+  'the-power-of-choices': '/covers/the-power-of-choices.webp',
+  'hungry-generation': '/covers/hungry-generation.webp',
+  'hungryg Generation': '/covers/hungry-generation.webp',
+  similoluwa: '/covers/similoluwa.webp',
+};
+
 export function getBookCoverUrl(book: Record<string, unknown> | null | undefined) {
   if (!book) return null;
+  if (typeof book.slug === 'string' && displayCoverOverrides[book.slug]) {
+    return displayCoverOverrides[book.slug];
+  }
   if (typeof book.slug === 'string' && fallbackCoverUrls[book.slug]) {
     return fallbackCoverUrls[book.slug];
   }

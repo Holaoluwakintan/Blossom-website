@@ -12,12 +12,7 @@ const href = `mailto:michaelolaoluwagab@gmail.com?subject=${subject}&body=${body
 
 <a
   href={href}
-  class:list={[
-    'inline-flex items-center justify-center font-mono uppercase tracking-widest transition-colors',
-    featured
-      ? 'px-8 py-4 rounded-full border border-[#E8C868]/50 text-[#E8C868] text-xs font-bold hover:bg-[#E8C868] hover:text-[#02050B] shadow-lg shadow-[#E8C868]/10'
-      : 'shrink-0 text-[10px] text-slate-300 hover:text-[#E8C868]'
-  ]}
+  class:list={[featured ? 'btn btn-ghost' : 'link-arrow shrink-0']}
 >
-  {featured ? 'Order This Book' : 'Order →'}
+  {featured ? 'Order by email' : <>Order <span aria-hidden="true">→</span></>}
 </a>
