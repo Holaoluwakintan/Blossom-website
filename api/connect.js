@@ -9,7 +9,7 @@ import { fbStatus, fbPost, ytStatus, ytConfigured, ytUpload, xStatus, xPost } fr
 export default async function handler(req, res) {
   const user = await requireOwner(req, res); if (!user) return;
   if (req.method === 'GET') {
-    return json(res, 200, { fb_page: await fbStatus(), youtube: await ytStatus(), x: xStatus(), site: { connected: true }, ai: { connected: !!process.env.GEMINI_API_KEY } });
+    return json(res, 200, { fb_page: await fbStatus(), youtube: await ytStatus(), x: xStatus(), ai: { connected: !!process.env.GEMINI_API_KEY } });
   }
   const b = await readBody(req);
   try {

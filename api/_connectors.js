@@ -58,7 +58,7 @@ export async function ytUpload(post, privacy = process.env.YT_PRIVACY || 'public
   return { id: j.id, url: 'https://youtube.com/shorts/' + j.id, privacy: j.status?.privacyStatus };
 }
 
-// ---------- X (API v2, OAuth 1.0a user context; text + link, the link's card shows the image) ----------
+// ---------- X (API v2, OAuth 1.0a user context; text only, plus a link only if the post carries one) ----------
 export function xStatus() { return { connected: !!(process.env.X_API_KEY && process.env.X_API_SECRET && process.env.X_ACCESS_TOKEN && process.env.X_ACCESS_SECRET) }; }
 function pct(s) { return encodeURIComponent(s).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()); }
 export async function xPost(post) {

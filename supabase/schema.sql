@@ -24,7 +24,7 @@ create table if not exists public.sp_posts (
   video_url text,
   og_url text,
   link_url text,
-  platforms text[] not null default array['facebook','fb_groups','whatsapp','x','youtube','site','fb_page'],
+  platforms text[] not null default array['facebook','fb_groups','whatsapp','x','youtube','fb_page'],
   captions jsonb not null default '{}'::jsonb,
   status text not null default 'queued' check (status in ('queued','posted','skipped')),
   posted jsonb not null default '{}'::jsonb,
@@ -58,17 +58,15 @@ create policy sp_owners_self on public.sp_owners for select to authenticated usi
 drop policy if exists sp_posts_owner_all on public.sp_posts;
 create policy sp_posts_owner_all on public.sp_posts for all to authenticated
   using (public.sp_is_owner()) with check (public.sp_is_owner());
+-- No public read: Michael said no site integration (Oct 6, 2026); only owners read the bank.
 drop policy if exists sp_posts_public_read on public.sp_posts;
-create policy sp_posts_public_read on public.sp_posts for select to anon, authenticated
-  using ('site' = any(platforms) and status <> 'skipped'
-         and (post_date + post_time) <= (now() at time zone 'Africa/Lagos'));
 drop policy if exists sp_log_owner_read on public.sp_log;
 create policy sp_log_owner_read on public.sp_log for select to authenticated using (public.sp_is_owner());
 -- sp_config, sp_secrets: no policies (service role / security definer only)
 
 revoke all on public.sp_config, public.sp_secrets from anon, authenticated;
 revoke all on public.sp_owners, public.sp_log from anon;
-grant select on public.sp_posts to anon;
+revoke all on public.sp_posts from anon;
 grant select, insert, update, delete on public.sp_posts to authenticated;
 grant select on public.sp_owners, public.sp_log to authenticated;
 
@@ -102,7 +100,7 @@ grant execute on function public.sp_claim_owner(text) to authenticated;
 
 -- 2) later additions
 alter table public.sp_posts add column if not exists thumb_url text;
-alter table public.sp_posts alter column platforms set default array['facebook','fb_groups','whatsapp','wa_channel','x','youtube','site','fb_page'];
+alter table public.sp_posts alter column platforms set default array['facebook','fb_groups','whatsapp','wa_channel','x','youtube','fb_page'];
 -- Storage: public bucket sow-media (posts/, og/, thumbs/, videos/, uploads/). Owner uploads go to uploads/:
 create policy sow_media_owner_insert on storage.objects for insert to authenticated
   with check (bucket_id = 'sow-media' and (storage.foldername(name))[1] = 'uploads' and public.sp_is_owner());

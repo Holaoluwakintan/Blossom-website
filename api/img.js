@@ -1,6 +1,6 @@
 // GET /api/img?u=<image or video url>  -> same bytes with CORS, so the phone can attach them to the share sheet.
 // Only known media hosts (Drive, Google user content, Supabase, Cloudinary, imgur); 15 MB cap.
-const OK = /^(drive\.google\.com|[a-z0-9-]+\.googleusercontent\.com|rlbrhpjljjgpqpqjrpkc\.supabase\.co|res\.cloudinary\.com|i\.imgur\.com|olaoluwamichael\.vercel\.app)$/;
+const OK = /^(drive\.google\.com|[a-z0-9-]+\.googleusercontent\.com|rlbrhpjljjgpqpqjrpkc\.supabase\.co|res\.cloudinary\.com|i\.imgur\.com)$/;
 export default async function handler(req, res) {
   let u; try { u = new URL(String((req.query || {}).u || '')); } catch { res.statusCode = 400; return res.end('bad url'); }
   if (u.protocol !== 'https:' || !OK.test(u.hostname)) { res.statusCode = 400; return res.end('host not allowed'); }

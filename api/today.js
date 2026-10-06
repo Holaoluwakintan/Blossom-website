@@ -2,14 +2,14 @@
 //   auth: header "x-sow-key: <SOW_API_KEY>" (or ?key=)
 //   ?which=today (default) | next | date=YYYY-MM-DD
 // POST /api/today?action=mark  {post_id, platform}  -> marks a platform posted (same key)
-import { json, readBody, db, safeEq, watDate, watTime, captionFor, markPosted, SITE, APP } from './_lib.js';
+import { json, readBody, db, safeEq, watDate, watTime, captionFor, markPosted, APP } from './_lib.js';
 
 function shape(p, label) {
   if (!p) return null;
   return {
     label, id: p.id, date: p.post_date, time: p.post_time?.slice(0, 5), title: p.title, verse: p.verse, reference: p.reference,
     caption: p.caption, hashtags: p.hashtags, image_url: p.media_url, video_url: p.video_url,
-    link: p.link_url || SITE + '/daily-verse/' + p.post_date, status: p.status, posted: p.posted || {},
+    link: p.link_url || null, status: p.status, posted: p.posted || {},
     text: { whatsapp: captionFor(p, 'whatsapp'), facebook: captionFor(p, 'facebook'), x: captionFor(p, 'x') },
     app_url: APP + '/#today',
   };

@@ -1,11 +1,10 @@
 // Shared helpers for Sow's server functions. No dependencies: plain fetch.
 // Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SECRET_KEY, GEMINI_API_KEY, SOW_API_KEY, CRON_SECRET,
-//      SITE_URL, APP_URL, (later) FB_PAGE_ID, FB_PAGE_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+//      APP_URL, (later) FB_PAGE_ID, FB_PAGE_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
 //      X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET
 import crypto from 'node:crypto';
 
 export const SB = process.env.SUPABASE_URL || 'https://rlbrhpjljjgpqpqjrpkc.supabase.co';
-export const SITE = process.env.SITE_URL || 'https://olaoluwamichael.vercel.app';
 export const APP = process.env.APP_URL || 'https://sow-ng.vercel.app';
 const SECRET = () => process.env.SUPABASE_SECRET_KEY;
 
@@ -93,17 +92,17 @@ export function captionFor(post, platform) {
   const c = (post.captions || {})[platform];
   if (c) return c;
   const verse = post.verse ? '“' + post.verse + '”\n— ' + post.reference + ' (KJV)' : '';
-  const link = post.link_url || (SITE + '/daily-verse/' + post.post_date);
+  const link = post.link_url || '';   // only a link the post itself carries (e.g. from his sheet)
   if (platform === 'x') {
     // X counts any link as 23 characters.
-    const room = 280 - 24;
+    const room = link ? 280 - 24 : 280;
     let t = post.caption + (post.reference ? ' (' + post.reference + ')' : '');
     if (t.length > room) t = t.slice(0, room - 1) + '…';
     for (const tag of (post.hashtags || '').split(/\s+/).filter(Boolean)) { if ((t + ' ' + tag).length <= room) t += ' ' + tag; }
-    return t + '\n' + link;
+    return link ? t + '\n' + link : t;
   }
   if (platform === 'youtube_title') return (post.title + ' | ' + (post.reference || 'Daily Verse') + ' #shorts').slice(0, 100);
-  if (platform === 'youtube_desc') return [post.caption, verse, 'Daily verse from Olaoluwa Michael: ' + link, post.hashtags + ' #shorts'].filter(Boolean).join('\n\n');
+  if (platform === 'youtube_desc') return [post.caption, verse, link, (post.hashtags || '') + ' #shorts'].filter(Boolean).join('\n\n');
   if (platform === 'whatsapp') return ['*' + post.title + '*', post.caption, verse].filter(Boolean).join('\n\n');
   return [post.caption, verse, post.hashtags].filter(Boolean).join('\n\n');
 }

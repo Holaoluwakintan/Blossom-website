@@ -16,7 +16,6 @@ var PLAT = [
   { k: 'x',          ic: '𝕏',  nm: 'X (Twitter)',      mode: 'intent', cap: 'x' },
   { k: 'youtube',    ic: '▶️', nm: 'YouTube Shorts',   mode: 'video', cap: 'youtube_desc' },
   { k: 'fb_page',    ic: '🏳️', nm: 'Facebook Page',    mode: 'auto' },
-  { k: 'site',       ic: '🌐', nm: 'Your website',     mode: 'auto' },
 ];
 var PNAME = {}; PLAT.forEach(function (p) { PNAME[p.k] = p.nm; });
 
@@ -29,7 +28,7 @@ function addDays(d, n) { var x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getU
 function niceDate(d) { var x = new Date(d + 'T12:00:00Z'); return x.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); }
 function rel(d) { var t = today(); return d === t ? 'Today' : d === addDays(t, 1) ? 'Tomorrow' : d === addDays(t, -1) ? 'Yesterday' : niceDate(d); }
 function toast(msg, ms) { var t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(function () { t.hidden = true; }, ms || 2600); }
-function siteLink(p) { return p.link_url || (CFG.site + '/daily-verse/' + p.post_date); }
+function postLink(p) { return p.link_url || ''; }   // only a link the post itself carries (e.g. from the sheet)
 function mediaSrc(u) { return !u ? '' : /supabase\.co\//.test(u) ? u : '/api/img?u=' + encodeURIComponent(u); }
 function thumb(p) { return p.thumb_url || mediaSrc(p.media_url); }
 
@@ -37,14 +36,14 @@ function capFor(p, k) {
   var c = (p.captions || {})[k]; if (c) return c;
   var verse = p.verse ? '“' + p.verse + '”\n— ' + p.reference + ' (KJV)' : '';
   if (k === 'x') {
-    var room = 256, t = p.caption + (p.reference ? ' (' + p.reference + ')' : '');
+    var lk = postLink(p), room = lk ? 256 : 280, t = p.caption + (p.reference ? ' (' + p.reference + ')' : '');
     if (t.length > room) t = t.slice(0, room - 1) + '…';
     (p.hashtags || '').split(/\s+/).filter(Boolean).forEach(function (tag) { if ((t + ' ' + tag).length <= room) t += ' ' + tag; });
-    return t + '\n' + siteLink(p);
+    return lk ? t + '\n' + lk : t;
   }
   if (k === 'whatsapp') return ['*' + p.title + '*', p.caption, verse].filter(Boolean).join('\n\n');
   if (k === 'youtube_title') return (p.title + ' | ' + (p.reference || 'Daily Verse') + ' #shorts').slice(0, 100);
-  if (k === 'youtube_desc') return [p.caption, verse, 'Daily verse: ' + siteLink(p), (p.hashtags || '') + ' #shorts'].filter(Boolean).join('\n\n');
+  if (k === 'youtube_desc') return [p.caption, verse, postLink(p), (p.hashtags || '') + ' #shorts'].filter(Boolean).join('\n\n');
   return [p.caption, verse, p.hashtags].filter(Boolean).join('\n\n');
 }
 
@@ -75,7 +74,7 @@ function focusPost() {
   var last = live.filter(function (p) { return p.post_date < t; }).pop();
   return last ? { p: last, label: rel(last.post_date) } : null;
 }
-function manualKeys(posted) { return Object.keys(posted || {}).filter(function (k) { return k !== 'site'; }); }
+function manualKeys(posted) { return Object.keys(posted || {}); }
 function streak() {
   var byDay = {}; S.posts.forEach(function (p) { if (manualKeys(p.posted).length) byDay[p.post_date] = true; });
   var d = today(), n = 0; if (!byDay[d]) d = addDays(d, -1);
@@ -142,7 +141,7 @@ function platCard(p, pl) {
     st = st || pl.hint;
     acts = '<button class="btn sm" data-share="' + pl.k + '">Share</button>';
   } else if (pl.k === 'x') {
-    st = st || (mode === 'auto' ? 'Posts itself at ' + p.post_time.slice(0, 5) : 'Opens X with the caption + your site link');
+    st = st || (mode === 'auto' ? 'Posts itself at ' + p.post_time.slice(0, 5) : 'Opens X with the caption ready');
     acts = '<a class="btn sm" data-x="1" target="_blank" rel="noopener" href="https://x.com/intent/post?text=' + encodeURIComponent(capFor(p, 'x')) + '">Post to X</a>';
   } else if (pl.k === 'youtube') {
     if (!p.video_url) { st = st || 'No video for this post yet'; }
@@ -154,12 +153,9 @@ function platCard(p, pl) {
     var on = conn.fb_page && conn.fb_page.connected;
     st = st || (on ? 'Posts itself at ' + p.post_time.slice(0, 5) : 'Not connected yet');
     if (!on) { pill = '<span class="pill off">soon</span>'; acts = '<a class="btn sm ghost" href="#connect">Why?</a>'; }
-  } else if (pl.k === 'site') {
-    st = st || ('Goes live by itself at ' + p.post_time.slice(0, 5));
-    acts = '<a class="btn sm ghost" target="_blank" rel="noopener" href="' + esc(siteLink(p)) + '">View</a>';
   }
   return '<div class="plat' + (posted ? ' done' : '') + '" data-k="' + pl.k + '"><div class="ic">' + pl.ic + '</div><div class="grow"><div class="nm">' + esc(pl.nm) + ' ' + pill + '</div><div class="st">' + esc(st) + '</div></div><div class="acts">' + acts +
-    (pl.k !== 'site' ? '<button class="chk" data-mark="' + pl.k + '" aria-label="Mark ' + esc(pl.nm) + ' posted">' + (posted ? '✓' : '') + '</button>' : '') + '</div></div>';
+    '<button class="chk" data-mark="' + pl.k + '" aria-label="Mark ' + esc(pl.nm) + ' posted">' + (posted ? '✓' : '') + '</button>' + '</div></div>';
 }
 
 function renderToday() {
@@ -178,7 +174,7 @@ function renderToday() {
     '<p class="small muted center" style="margin:8px 0 0">Copies the caption, then opens your phone\'s share menu with the picture. Pick Facebook, WhatsApp, anywhere.</p>' +
     '<div class="row" style="margin-top:10px"><button class="btn sm soft grow" id="aiBtn">✨ Rewrite for each platform</button><button class="btn sm ghost" id="editBtn">Edit</button></div></div></div>' +
     '<h3>Where it goes</h3><div class="plats">' + plats.map(function (pl) { return platCard(p, pl); }).join('') + '</div>' +
-    '<details class="card"><summary>How Sow works</summary><ol class="steps small"><li><b>Share picture + caption</b> copies the caption and opens the share menu with the picture attached.</li><li>Pick Facebook or WhatsApp. If the caption box is empty, long-press and <b>Paste</b>.</li><li>Tap <b>✓</b> on each place you posted. Your 🔥 streak grows each day.</li><li>Your website updates by itself every morning. Facebook Page, YouTube and X go automatic once connected.</li></ol></details>';
+    '<details class="card"><summary>How Sow works</summary><ol class="steps small"><li><b>Share picture + caption</b> copies the caption and opens the share menu with the picture attached.</li><li>Pick Facebook or WhatsApp. If the caption box is empty, long-press and <b>Paste</b>.</li><li>Tap <b>✓</b> on each place you posted. Your 🔥 streak grows each day.</li><li>Facebook Page, YouTube and X go automatic once connected.</li></ol></details>';
   view.querySelector('#shareAll').onclick = function () { shareFlow(p, 'facebook', null); };
   view.querySelector('#editBtn').onclick = function () { openEdit(p); };
   view.querySelector('#aiBtn').onclick = function () { openEdit(p, true); };
@@ -238,8 +234,8 @@ function openEdit(p, aiFirst) {
     '<label>Picture</label><div class="row">' + (p.media_url ? '<img src="' + esc(thumb(p)) + '" style="width:54px;height:96px;object-fit:cover;border-radius:8px">' : '') + '<input class="grow" id="fMedia" placeholder="Image link (Drive or web)" value="' + esc(p.media_url || '') + '"></div>' +
     '<label class="btn sm ghost" style="display:inline-flex;margin-top:6px">📷 Upload picture<input type="file" id="fFile" accept="image/*" hidden></label>' +
     '<label>Post to</label><div class="row wrap">' + PLAT.map(function (pl) { return '<label style="display:inline-flex;gap:6px;align-items:center;margin:2px 8px 2px 0;font-weight:500;color:var(--ink)"><input type="checkbox" style="width:auto" value="' + pl.k + '"' + ((p.platforms || []).indexOf(pl.k) >= 0 ? ' checked' : '') + '> ' + pl.nm + '</label>'; }).join('') + '</div>' +
-    '<div class="ai-box" id="aiBox"><div class="row"><b class="grow">✨ Captions per platform</b><button class="btn sm soft" id="aiGo">' + (Object.keys(caps).length ? 'Rewrite again' : 'Write them') + '</button></div><p class="small muted">AI writes a long Facebook post, a short X post, a YouTube title and description, a WhatsApp version and a website note. Edit anything.</p>' +
-    [['facebook', 'Facebook'], ['whatsapp', 'WhatsApp'], ['x', 'X (≤280)'], ['youtube_title', 'YouTube title'], ['youtube_desc', 'YouTube description'], ['site', 'Website note']].map(function (c) { return '<label>' + c[1] + '</label><textarea data-cap="' + c[0] + '" style="min-height:' + (c[0] === 'youtube_title' ? 50 : 80) + 'px">' + esc(caps[c[0]] || '') + '</textarea>'; }).join('') + '<div class="small muted" id="xCount"></div></div>' +
+    '<div class="ai-box" id="aiBox"><div class="row"><b class="grow">✨ Captions per platform</b><button class="btn sm soft" id="aiGo">' + (Object.keys(caps).length ? 'Rewrite again' : 'Write them') + '</button></div><p class="small muted">AI writes a long Facebook post, a short X post, a YouTube title and description and a WhatsApp version. Edit anything.</p>' +
+    [['facebook', 'Facebook'], ['whatsapp', 'WhatsApp'], ['x', 'X (≤280)'], ['youtube_title', 'YouTube title'], ['youtube_desc', 'YouTube description']].map(function (c) { return '<label>' + c[1] + '</label><textarea data-cap="' + c[0] + '" style="min-height:' + (c[0] === 'youtube_title' ? 50 : 80) + 'px">' + esc(caps[c[0]] || '') + '</textarea>'; }).join('') + '<div class="small muted" id="xCount"></div></div>' +
     '<div class="row" style="margin-top:14px"><button class="btn grow" id="mSave">Save</button>' + (isNew ? '' : '<button class="btn ghost" id="mSkip">' + (p.status === 'skipped' ? 'Unskip' : 'Skip') + '</button><button class="btn ghost" id="mDel" aria-label="Delete">🗑</button>') + '</div></div>';
   m.hidden = false;
   var xc = function () { var v = m.querySelector('[data-cap="x"]').value; m.querySelector('#xCount').textContent = v ? 'X post: ' + xLen(v) + '/280' : ''; };
@@ -256,7 +252,7 @@ function openEdit(p, aiFirst) {
     var d = m.querySelector('#fDate').value || today(), media = m.querySelector('#fMedia').value.trim() || null;
     var o = { post_date: d, post_time: m.querySelector('#fTime').value || '06:00', title: m.querySelector('#fTitle').value.trim(), caption: m.querySelector('#fCap').value.trim(),
       verse: m.querySelector('#fVerse').value.trim() || null, reference: m.querySelector('#fRef').value.trim() || null, hashtags: m.querySelector('#fTags').value.trim(),
-      media_url: normMedia(media), platforms: plats, captions: captions, slug: d, link_url: CFG.site + '/daily-verse/' + d };
+      media_url: normMedia(media), platforms: plats, captions: captions, slug: d, link_url: p.link_url || null };
     if (media !== p.media_url) o.thumb_url = null;
     return o;
   }
@@ -313,7 +309,7 @@ async function uploadImage(file) {
 var FIELDS = [
   ['post_date', 'Date', /^(date|day|post ?date|publish|schedule)/i], ['post_time', 'Time', /^(time|hour)/i], ['title', 'Title', /^(title|headline|topic|name)/i],
   ['caption', 'Caption', /^(caption|text|post|content|body|message|copy)/i], ['verse', 'Bible verse', /^(verse|scripture|bible)/i], ['reference', 'Reference', /^(ref|reference|book|chapter)/i],
-  ['hashtags', 'Hashtags', /^(hash|tags?)/i], ['media_url', 'Image link', /^(image|media|picture|photo|pic|img|url|link)/i], ['video_url', 'Video link', /^(video|reel|short)/i],
+  ['hashtags', 'Hashtags', /^(hash|tags?)/i], ['media_url', 'Image link', /^(image|media|picture|photo|pic|img)/i], ['video_url', 'Video link', /^(video|reel|short)/i], ['link_url', 'Link (optional)', /^(link|url|website)/i],
   ['platforms', 'Platforms', /^(platform|channel|where|network)/i],
 ];
 var IMP = { rows: null, head: null, map: {} };
@@ -376,7 +372,7 @@ function cellTime(v, def) {
   return String(h).padStart(2, '0') + ':' + (m[2] || '00');
 }
 var PLAT_ALIAS = { facebook: 'facebook', fb: 'facebook', 'fb profile': 'facebook', profile: 'facebook', groups: 'fb_groups', 'fb groups': 'fb_groups', group: 'fb_groups', 'fb page': 'fb_page', page: 'fb_page',
-  whatsapp: 'whatsapp', status: 'whatsapp', 'wa status': 'whatsapp', channel: 'wa_channel', 'wa channel': 'wa_channel', 'whatsapp channel': 'wa_channel', x: 'x', twitter: 'x', youtube: 'youtube', yt: 'youtube', shorts: 'youtube', site: 'site', website: 'site', web: 'site', blog: 'site' };
+  whatsapp: 'whatsapp', status: 'whatsapp', 'wa status': 'whatsapp', channel: 'wa_channel', 'wa channel': 'wa_channel', 'whatsapp channel': 'wa_channel', x: 'x', twitter: 'x', youtube: 'youtube', yt: 'youtube', shorts: 'youtube' };
 function buildRows() {
   var start = $('#iStart').value || addDays(lastDate(), 1), defT = $('#iTime').value || '06:00', next = start, out = [];
   var g = function (r, f) { return IMP.map[f] === undefined ? '' : r[IMP.map[f]]; };
@@ -390,7 +386,7 @@ function buildRows() {
     var tags = String(g(r, 'hashtags') || '').trim(); if (tags && tags.indexOf('#') < 0) tags = tags.split(/[\s,]+/).filter(Boolean).map(function (t) { return '#' + t; }).join(' ');
     out.push({ post_date: d, post_time: cellTime(g(r, 'post_time'), defT), title: title || cap.slice(0, 40), caption: cap, verse: String(g(r, 'verse') || '').trim() || null,
       reference: String(g(r, 'reference') || '').trim() || null, hashtags: tags, media_url: normMedia(String(g(r, 'media_url') || '').trim()), video_url: String(g(r, 'video_url') || '').trim() || null,
-      platforms: pl.length ? pl : PLAT.map(function (x) { return x.k; }), source: 'import', slug: d, link_url: CFG.site + '/daily-verse/' + d });
+      platforms: pl.length ? pl : PLAT.map(function (x) { return x.k; }), source: 'import', slug: d, link_url: String(g(r, 'link_url') || '').trim() || null });
   });
   return out;
 }
@@ -416,7 +412,6 @@ async function renderConnect() {
   var ytOn = c.youtube && c.youtube.connected, ytCfg = c.youtube && c.youtube.configured, xOn = c.x && c.x.connected, fbOn = c.fb_page && c.fb_page.connected;
   view.innerHTML = '<h2>Connect</h2><p class="small muted"><b>Auto</b> = posts by itself on time. <b>1-tap</b> = Sow gets it ready, you tap Share once. Facebook does not allow any app to post to a personal profile, groups or WhatsApp Status, so those stay 1-tap. That keeps your 248K account safe.</p>' +
     (/youtube=connected/.test(q) ? '<div class="card">✅ YouTube connected.</div>' : '') + (/youtube_error=/.test(q) ? '<div class="card err">YouTube: ' + esc(decodeURIComponent(q.split('youtube_error=')[1] || '')) + '</div>' : '') +
-    card('🌐', 'Your website', '<span class="pill auto">auto · on</span>', 'Every morning your site\'s Daily Verse page shows the day\'s post by itself, with a preview picture when the link is shared.', '<a class="btn sm ghost" target="_blank" rel="noopener" href="' + CFG.site + '/daily-verse">Open Daily Verse page</a>') +
     card('📘', 'Facebook profile, groups', '<span class="pill tap">1-tap</span>', 'Share → Facebook. No robot logins, so no ban risk.', '') +
     card('🟢', 'WhatsApp Status, Channel', '<span class="pill tap">1-tap</span>', 'Share → WhatsApp → My status or your Channel.', '') +
     card('🏳️', 'Facebook Page', fbOn ? '<span class="pill auto">auto · on</span>' : '<span class="pill off">coming soon</span>',
@@ -427,8 +422,8 @@ async function renderConnect() {
       'Every verse already has a 12-second Short. Today: tap Share video → YouTube. For auto upload, add your Google app keys (Tab will help), then tap Connect.',
       '<button class="btn sm" id="ytConn" ' + (ytCfg && !ytOn ? '' : 'disabled') + '>' + (ytOn ? 'Connected ✓' : 'Connect YouTube') + '</button>') +
     card('𝕏', 'X (Twitter)', xOn ? '<span class="pill auto">auto · on</span>' : '<span class="pill tap">1-tap</span>',
-      xOn ? 'Connected. Posts the caption + your site link (the link shows the picture).' : 'Post to X opens X with the caption and your site link ready. Auto posting needs a free X developer account (Tab will help).', '') +
-    card('✨', 'AI captions', c.ai && c.ai.connected ? '<span class="pill auto">on</span>' : '<span class="pill off">off</span>', 'Rewrites each post for Facebook, X, YouTube, WhatsApp and your site, on your free Google AI key.', '') +
+      xOn ? 'Connected. Posts the caption by itself.' : 'Post to X opens X with the caption ready. Auto posting needs a free X developer account (Tab will help).', '') +
+    card('✨', 'AI captions', c.ai && c.ai.connected ? '<span class="pill auto">on</span>' : '<span class="pill off">off</span>', 'Rewrites each post for Facebook, X, YouTube and WhatsApp, on your free Google AI key.', '') +
     card('💬', 'Your WhatsApp bot', '<span class="pill tap">next</span>', 'Soon: text your Michael AI bot “today\'s post” and it sends the picture and caption back.', '') +
     '<div class="card small"><button class="btn sm ghost" id="signOut">Sign out of Sow on this phone</button></div>';
   var yb = $('#ytConn'); if (yb && ytCfg && !ytOn) yb.onclick = async function () { try { var r = await api('/api/connect', { body: { action: 'youtube_link' } }); location.href = r.url; } catch (e) { toast(e.message, 4000); } };

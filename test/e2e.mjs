@@ -57,7 +57,7 @@ try {
   await shot('04-today-shared');
   // X intent link
   const xh = await page.$eval('[data-x]', (a) => a.href);
-  check('X intent link has caption + site link', xh.startsWith('https://x.com/intent/post?text=') && decodeURIComponent(xh).includes('olaoluwamichael.vercel.app/daily-verse/2026-10-07'), decodeURIComponent(xh).slice(0, 160));
+  check('X intent link has caption and no link', xh.startsWith('https://x.com/intent/post?text=') && !/https?:\/\//.test(decodeURIComponent(xh.split('text=')[1])), decodeURIComponent(xh).slice(0, 160));
   out.xlen = decodeURIComponent(xh.split('text=')[1]).replace(/https?:\/\/\S+/g, 'x'.repeat(23)).length;
   check('X text within 280', out.xlen <= 280, String(out.xlen));
   // Video share
