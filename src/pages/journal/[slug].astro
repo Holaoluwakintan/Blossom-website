@@ -46,7 +46,14 @@ const comments = (commentRows ?? [])
     created_at: comment.created_at,
   }));
 
-const paragraphs = (post?.content_markdown || '')
+// Many posts repeat their title as the first line of the text; the page already shows it.
+const stripRepeatedTitle = (text: string, title: string) => {
+  const lines = text.replace(/\r\n/g, '\n').replace(/^\s+/, '').split('\n');
+  const norm = (v: string) => v.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().toLowerCase();
+  if (lines.length > 1 && title && norm(lines[0]) === norm(title)) lines.shift();
+  return lines.join('\n');
+};
+const paragraphs = stripRepeatedTitle(post?.content_markdown || '', post?.title || '')
   .split(/\n\s*\n/)
   .map((paragraph) => paragraph.trim())
   .filter(Boolean);

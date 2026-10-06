@@ -60,7 +60,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // 3. Fallback attempt: direct table inserts into newsletter_subscribers & book_downloads
     if (!record) {
-      // Direct insert into newsletter_subscribers
+      // Add to newsletter_subscribers without overwriting an existing row's source
       await supabaseServer
         .from('newsletter_subscribers')
         .upsert(
@@ -69,9 +69,8 @@ export const POST: APIRoute = async ({ request }) => {
             full_name: fullName,
             source: 'book-download',
             marketing_consent: marketingOptIn,
-            updated_at: new Date().toISOString(),
           },
-          { onConflict: 'email' }
+          { onConflict: 'email', ignoreDuplicates: true }
         );
 
       // Direct insert into book_downloads

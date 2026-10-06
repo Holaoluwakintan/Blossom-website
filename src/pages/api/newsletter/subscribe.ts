@@ -23,31 +23,24 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'Please enter a valid email address.' }, 400);
     }
 
-    const subscriberRecord = {
-      email,
-      full_name: fullName,
-      source: 'website',
-      marketing_consent: true,
-      updated_at: new Date().toISOString(),
-    };
-
-    let { error } = await supabaseServer
+    // An existing subscriber (e.g. a Selar reader or a book downloader) keeps their
+    // original source and signup date; signing up again only renews consent.
+    let error: { message: string; code?: string } | null = null;
+    const existing = await supabaseServer
       .from('newsletter_subscribers')
-      .upsert(subscriberRecord, { onConflict: 'email' });
+      .select('id, full_name')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (error) {
+    if (!existing.error && existing.data) {
+      const update: Record<string, unknown> = { marketing_consent: true, updated_at: new Date().toISOString() };
+      if (fullName && !existing.data.full_name) update.full_name = fullName;
+      ({ error } = await supabaseServer.from('newsletter_subscribers').update(update).eq('id', existing.data.id));
+    } else {
       const insertResult = await supabaseServer
         .from('newsletter_subscribers')
-        .insert({
-          email,
-          full_name: fullName,
-          source: 'website',
-          marketing_consent: true,
-        });
-
-      if (!insertResult.error || insertResult.error?.code === '23505') {
-        error = null;
-      }
+        .insert({ email, full_name: fullName, source: 'website', marketing_consent: true });
+      error = insertResult.error && insertResult.error.code !== '23505' ? insertResult.error : null;
     }
 
     if (error && supabaseServer !== supabase) {

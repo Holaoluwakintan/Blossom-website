@@ -11,11 +11,28 @@ export const prerender = false;
 
 const { slug } = Astro.params;
 
+// Old and new slugs for books that were renamed, in both directions, so shared
+// links keep working before and after the rename in Supabase.
+const slugAliases: Record<string, string> = {
+  'hungryg Generation': 'hungry-generation',
+  'hungry-generation': 'hungryg Generation',
+};
+
 let { data: book, error } = await supabaseServer
   .from('books')
   .select('*')
   .eq('slug', slug)
   .maybeSingle();
+
+if (!book && slug && slugAliases[slug]) {
+  const alias = await supabaseServer.from('books').select('*').eq('slug', slugAliases[slug]).maybeSingle();
+  if (!alias.error && alias.data) {
+    // Send old links to the clean address once the clean slug is the real one.
+    if (!/\s/.test(alias.data.slug)) return Astro.redirect(`/books/${encodeURIComponent(alias.data.slug)}`, 301);
+    book = alias.data;
+    error = null;
+  }
+}
 
 if ((error || !book) && supabaseServer !== supabase) {
   const fallback = await supabase
