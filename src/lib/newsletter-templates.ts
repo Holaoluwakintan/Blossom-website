@@ -5,6 +5,8 @@
  */
 
 export const UNSUBSCRIBE_PLACEHOLDER = '%%UNSUBSCRIBE_URL%%';
+/** Replaced per recipient with their first name (or "friend"). */
+export const FIRST_NAME_PLACEHOLDER = '%%FIRST_NAME%%';
 export const DEFAULT_SITE_URL = 'https://olaoluwamichael.vercel.app';
 
 export interface StoryNotificationData {

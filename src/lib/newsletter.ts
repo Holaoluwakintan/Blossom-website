@@ -5,6 +5,8 @@ import { sendEmails, mailConfigProblem, type SendResult } from './mailer';
 import {
   DEFAULT_SITE_URL,
   UNSUBSCRIBE_PLACEHOLDER,
+  FIRST_NAME_PLACEHOLDER,
+  escapeHtml,
   generateBookAnnouncement,
   generateDigest,
   generateStoryAnnouncement,
@@ -82,17 +84,56 @@ export async function getSubscribers(): Promise<Subscriber[]> {
   });
 }
 
-export async function sendToSubscribers(message: { subject: string; html: string; text?: string }, onlyEmail?: string) {
-  const subscribers = onlyEmail ? [{ email: onlyEmail, full_name: null }] : await getSubscribers();
+/** "ADEOLA" / "adeola" / "Adeola Grace" -> "Adeola". Anything that does not look like a name -> null. */
+export function firstNameOf(fullName: string | null | undefined) {
+  const word = String(fullName ?? '').trim().split(/\s+/)[0] ?? '';
+  if (!word || word.length < 2 || word.length > 24 || /[@\d_<>&"]/.test(word)) return null;
+  const clean = word.replace(/[.,;:!]+$/, '');
+  if (!clean) return null;
+  const mixed = clean !== clean.toLowerCase() && clean !== clean.toUpperCase();
+  return mixed ? clean : clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+}
+
+export type SendOptions = {
+  /** Send only to these addresses, and only if they are consenting subscribers (a batch of a broadcast). */
+  emails?: string[];
+  /** Word used where FIRST_NAME_PLACEHOLDER appears and the subscriber has no usable name. */
+  nameFallback?: string;
+};
+
+export async function sendToSubscribers(
+  message: { subject: string; html: string; text?: string },
+  onlyEmail?: string,
+  options: SendOptions = {},
+) {
+  let subscribers: Subscriber[];
+  if (onlyEmail) {
+    const e = onlyEmail.trim().toLowerCase();
+    const { data } = await supabaseServer.from('newsletter_subscribers').select('email, full_name').ilike('email', e).limit(1);
+    subscribers = [{ email: e, full_name: (data?.[0] as Subscriber | undefined)?.full_name ?? null }];
+  } else {
+    subscribers = await getSubscribers();
+    if (options.emails) {
+      const wanted = new Set(options.emails.map((e) => String(e).trim().toLowerCase()));
+      subscribers = subscribers.filter((s) => wanted.has(s.email.trim().toLowerCase()));
+    }
+  }
+  const fallback = options.nameFallback ?? 'friend';
+  const fill = (value: string, link: string, name: string, htmlSafe: boolean) =>
+    value
+      .split(UNSUBSCRIBE_PLACEHOLDER).join(link)
+      .split(FIRST_NAME_PLACEHOLDER).join(htmlSafe ? escapeHtml(name) : name);
   const result = await sendEmails(
     subscribers.map((s) => {
-      const link = unsubscribeUrl(s.email);
+      const to = s.email.trim().toLowerCase();
+      const link = unsubscribeUrl(to);
+      const name = firstNameOf(s.full_name) ?? fallback;
       return {
-        to: s.email,
+        to,
         name: s.full_name,
-        subject: message.subject,
-        html: message.html.split(UNSUBSCRIBE_PLACEHOLDER).join(link),
-        text: message.text?.split(UNSUBSCRIBE_PLACEHOLDER).join(link),
+        subject: message.subject.split(FIRST_NAME_PLACEHOLDER).join(name),
+        html: fill(message.html, link, name, true),
+        text: message.text === undefined ? undefined : fill(message.text, link, name, false),
         unsubscribeUrl: link,
       };
     }),

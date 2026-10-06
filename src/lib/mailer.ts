@@ -25,7 +25,15 @@ export type OutgoingEmail = {
   unsubscribeUrl?: string;
 };
 
-export type SendResult = { provider: string; sent: number; failed: number; errors: string[] };
+export type SendResult = {
+  provider: string;
+  sent: number;
+  failed: number;
+  errors: string[];
+  /** Addresses the provider accepted / refused, so a caller can track exactly who got a message. */
+  sentTo?: string[];
+  failedTo?: string[];
+};
 
 const env = (key: string) => String((import.meta.env as Record<string, unknown>)[key] ?? '').trim();
 
@@ -76,7 +84,7 @@ async function readError(response: Response) {
 }
 
 async function sendBrevo(emails: OutgoingEmail[]): Promise<SendResult> {
-  const result: SendResult = { provider: 'brevo', sent: 0, failed: 0, errors: [] };
+  const result: SendResult = { provider: 'brevo', sent: 0, failed: 0, errors: [], sentTo: [], failedTo: [] };
   const replyTo = env('NEWSLETTER_REPLY_TO');
   // One API call per recipient keeps every unsubscribe link personal and never
   // exposes one subscriber's address to another. Calls run 5 at a time.
@@ -99,13 +107,17 @@ async function sendBrevo(emails: OutgoingEmail[]): Promise<SendResult> {
                 : {}),
             }),
           });
-          if (response.ok) result.sent += 1;
-          else {
+          if (response.ok) {
+            result.sent += 1;
+            result.sentTo!.push(email.to);
+          } else {
             result.failed += 1;
+            result.failedTo!.push(email.to);
             if (result.errors.length < 5) result.errors.push(await readError(response));
           }
         } catch (error) {
           result.failed += 1;
+          result.failedTo!.push(email.to);
           if (result.errors.length < 5) result.errors.push(error instanceof Error ? error.message : 'network error');
         }
       }),
@@ -115,7 +127,7 @@ async function sendBrevo(emails: OutgoingEmail[]): Promise<SendResult> {
 }
 
 async function sendSmtp(emails: OutgoingEmail[]): Promise<SendResult> {
-  const result: SendResult = { provider: 'smtp', sent: 0, failed: 0, errors: [] };
+  const result: SendResult = { provider: 'smtp', sent: 0, failed: 0, errors: [], sentTo: [], failedTo: [] };
   const config = smtpConfig()!;
   const { email: fromEmail, name } = sender();
   const replyTo = env('NEWSLETTER_REPLY_TO');
@@ -149,8 +161,10 @@ async function sendSmtp(emails: OutgoingEmail[]): Promise<SendResult> {
               : {}),
           });
           result.sent += 1;
+          result.sentTo!.push(email.to);
         } catch (error) {
           result.failed += 1;
+          result.failedTo!.push(email.to);
           if (result.errors.length < 5) result.errors.push(error instanceof Error ? error.message.slice(0, 300) : 'SMTP send failed');
         }
       }),
@@ -161,7 +175,7 @@ async function sendSmtp(emails: OutgoingEmail[]): Promise<SendResult> {
 }
 
 async function sendResend(emails: OutgoingEmail[]): Promise<SendResult> {
-  const result: SendResult = { provider: 'resend', sent: 0, failed: 0, errors: [] };
+  const result: SendResult = { provider: 'resend', sent: 0, failed: 0, errors: [], sentTo: [], failedTo: [] };
   const { email: fromEmail, name } = sender();
   const replyTo = env('NEWSLETTER_REPLY_TO');
   // Resend's batch endpoint takes at most 100 emails per call.
@@ -184,13 +198,17 @@ async function sendResend(emails: OutgoingEmail[]): Promise<SendResult> {
           })),
         ),
       });
-      if (response.ok) result.sent += group.length;
-      else {
+      if (response.ok) {
+        result.sent += group.length;
+        result.sentTo!.push(...group.map((e) => e.to));
+      } else {
         result.failed += group.length;
+        result.failedTo!.push(...group.map((e) => e.to));
         if (result.errors.length < 5) result.errors.push(await readError(response));
       }
     } catch (error) {
       result.failed += group.length;
+      result.failedTo!.push(...group.map((e) => e.to));
       if (result.errors.length < 5) result.errors.push(error instanceof Error ? error.message : 'network error');
     }
   }
