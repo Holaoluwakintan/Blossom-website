@@ -1,0 +1,28 @@
+{
+ "name": "Sow \u00b7 Olaoluwa Michael",
+ "short_name": "Sow",
+ "description": "Michael's daily posting app: one content bank, every platform.",
+ "start_url": "/#today",
+ "scope": "/",
+ "display": "standalone",
+ "background_color": "#FBF6EE",
+ "theme_color": "#FBF6EE",
+ "icons": [
+  {
+   "src": "/icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "/icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "/icons/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

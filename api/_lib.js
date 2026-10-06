@@ -1,0 +1,109 @@
+// Shared helpers for Sow's server functions. No dependencies: plain fetch.
+// Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SECRET_KEY, GEMINI_API_KEY, SOW_API_KEY, CRON_SECRET,
+//      SITE_URL, APP_URL, (later) FB_PAGE_ID, FB_PAGE_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+//      X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET
+import crypto from 'node:crypto';
+
+export const SB = process.env.SUPABASE_URL || 'https://rlbrhpjljjgpqpqjrpkc.supabase.co';
+export const SITE = process.env.SITE_URL || 'https://olaoluwamichael.vercel.app';
+export const APP = process.env.APP_URL || 'https://sow-ng.vercel.app';
+const SECRET = () => process.env.SUPABASE_SECRET_KEY;
+
+export function json(res, code, body) {
+  res.statusCode = code;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.end(JSON.stringify(body));
+}
+
+export async function readBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string') { try { return JSON.parse(req.body); } catch { return {}; } }
+  const chunks = []; for await (const c of req) chunks.push(c);
+  try { return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { return {}; }
+}
+
+// Service-role REST call (bypasses RLS; server only).
+export async function db(path, { method = 'GET', body, prefer } = {}) {
+  const h = { apikey: SECRET(), Authorization: 'Bearer ' + SECRET(), 'Content-Type': 'application/json' };
+  if (prefer) h.Prefer = prefer;
+  const r = await fetch(SB + '/rest/v1/' + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
+  const t = await r.text();
+  if (!r.ok) throw new Error('db ' + r.status + ': ' + t.slice(0, 300));
+  return t ? JSON.parse(t) : null;
+}
+
+// Verify the caller's Supabase session and that they are the owner (sp_owners).
+export async function requireOwner(req, res) {
+  const auth = req.headers.authorization || '';
+  const tok = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!tok) { json(res, 401, { error: 'sign in first' }); return null; }
+  const r = await fetch(SB + '/auth/v1/user', { headers: { apikey: process.env.SUPABASE_ANON_KEY || SECRET(), Authorization: 'Bearer ' + tok } });
+  if (!r.ok) { json(res, 401, { error: 'session expired, sign in again' }); return null; }
+  const u = await r.json();
+  const rows = await db('sp_owners?select=uid&uid=eq.' + encodeURIComponent(u.id));
+  if (!rows.length) { json(res, 403, { error: 'not the owner' }); return null; }
+  return u;
+}
+
+export function safeEq(a, b) {
+  const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || ''));
+  return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
+}
+
+// Africa/Lagos (WAT, UTC+1, no DST) date/time helpers.
+export function watNow() { return new Date(Date.now() + 3600e3); }
+export function watDate(d = watNow()) { return d.toISOString().slice(0, 10); }
+export function watTime(d = watNow()) { return d.toISOString().slice(11, 16); }
+
+export async function getSecret(name) {
+  const r = await db('sp_secrets?select=value&name=eq.' + encodeURIComponent(name));
+  return r[0] ? r[0].value : (process.env[name.toUpperCase()] || null);
+}
+export async function setSecret(name, value) {
+  await db('sp_secrets?on_conflict=name', { method: 'POST', body: { name, value, updated_at: new Date().toISOString() }, prefer: 'resolution=merge-duplicates' });
+}
+export async function log(post_id, platform, ok, detail) {
+  try { await db('sp_log', { method: 'POST', body: { post_id, platform, ok, detail: String(detail || '').slice(0, 500) } }); } catch {}
+}
+export async function markPosted(post, platform) {
+  const posted = Object.assign({}, post.posted || {}, { [platform]: new Date().toISOString() });
+  await db('sp_posts?id=eq.' + post.id, { method: 'PATCH', body: { posted } });
+  post.posted = posted;
+}
+
+// HMAC-signed short-lived state for OAuth round trips.
+export function sign(payload) {
+  const b = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const s = crypto.createHmac('sha256', process.env.CRON_SECRET || 'x').update(b).digest('base64url');
+  return b + '.' + s;
+}
+export function unsign(tok) {
+  const [b, s] = String(tok || '').split('.');
+  if (!b || !s) return null;
+  const want = crypto.createHmac('sha256', process.env.CRON_SECRET || 'x').update(b).digest('base64url');
+  if (!safeEq(s, want)) return null;
+  const p = JSON.parse(Buffer.from(b, 'base64url').toString());
+  if (p.exp && Date.now() > p.exp) return null;
+  return p;
+}
+
+// Default caption per platform (used when no AI rewrite is saved).
+export function captionFor(post, platform) {
+  const c = (post.captions || {})[platform];
+  if (c) return c;
+  const verse = post.verse ? '“' + post.verse + '”\n— ' + post.reference + ' (KJV)' : '';
+  const link = post.link_url || (SITE + '/daily-verse/' + post.post_date);
+  if (platform === 'x') {
+    // X counts any link as 23 characters.
+    const room = 280 - 24;
+    let t = post.caption + (post.reference ? ' (' + post.reference + ')' : '');
+    if (t.length > room) t = t.slice(0, room - 1) + '…';
+    for (const tag of (post.hashtags || '').split(/\s+/).filter(Boolean)) { if ((t + ' ' + tag).length <= room) t += ' ' + tag; }
+    return t + '\n' + link;
+  }
+  if (platform === 'youtube_title') return (post.title + ' | ' + (post.reference || 'Daily Verse') + ' #shorts').slice(0, 100);
+  if (platform === 'youtube_desc') return [post.caption, verse, 'Daily verse from Olaoluwa Michael: ' + link, post.hashtags + ' #shorts'].filter(Boolean).join('\n\n');
+  if (platform === 'whatsapp') return ['*' + post.title + '*', post.caption, verse].filter(Boolean).join('\n\n');
+  return [post.caption, verse, post.hashtags].filter(Boolean).join('\n\n');
+}
