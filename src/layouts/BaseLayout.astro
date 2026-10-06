@@ -10,6 +10,10 @@ interface Props {
   canonical?: string;
   noindex?: boolean;
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
+  /** Use the image URL as-is for social previews (already a small JPEG card). */
+  rawImage?: boolean;
+  imageWidth?: number;
+  imageHeight?: number;
 }
 
 const {
@@ -19,12 +23,15 @@ const {
   canonical,
   noindex = false,
   structuredData,
+  rawImage = false,
+  imageWidth,
+  imageHeight,
 } = Astro.props;
 
 const siteUrl = 'https://olaoluwamichael.vercel.app';
 const canonicalUrl = canonical || new URL(Astro.url.pathname, siteUrl).toString();
 // Social previews (WhatsApp, Facebook, X) need a PNG/JPEG under ~600 KB; SVG is never shown.
-const shareImage = optimizedImage(image, 960);
+const shareImage = rawImage ? image : optimizedImage(image, 960);
 const imageUrl = shareImage.startsWith('http') ? shareImage : new URL(shareImage, siteUrl).toString();
 const defaultStructuredData = {
   '@context': 'https://schema.org',
@@ -70,6 +77,8 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={imageUrl} />
+    {imageWidth && <meta property="og:image:width" content={String(imageWidth)} />}
+    {imageHeight && <meta property="og:image:height" content={String(imageHeight)} />}
     <meta property="og:image:alt" content={title} />
     <meta property="og:locale" content="en_NG" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -94,6 +103,7 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
         <nav class="hidden items-center gap-9 lg:flex" aria-label="Main">
           <a href="/books" class="nav-link">Books</a>
           <a href="/journal" class="nav-link">Journal</a>
+          <a href="/daily-verse" class="nav-link">Daily Verse</a>
           <a href="/imagination" class="nav-link">Imagination</a>
           <a href="/about" class="nav-link">About</a>
         </nav>
@@ -115,6 +125,7 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
           <a href="/" class="mobile-link">Home</a>
           <a href="/books" class="mobile-link">Books</a>
           <a href="/journal" class="mobile-link">Journal</a>
+          <a href="/daily-verse" class="mobile-link">Daily Verse</a>
           <a href="/imagination" class="mobile-link">Imagination</a>
           <a href="/about" class="mobile-link">About</a>
           <div class="mt-4 flex flex-wrap gap-2 pb-2">
@@ -144,6 +155,7 @@ const schemaItems = structuredData ? (Array.isArray(structuredData) ? structured
           <ul class="mt-5 space-y-3 text-[0.95rem]">
             <li><a href="/books" class="link text-ink-2">Books</a></li>
             <li><a href="/journal" class="link text-ink-2">Journal</a></li>
+            <li><a href="/daily-verse" class="link text-ink-2">Daily Verse</a></li>
             <li><a href="/imagination" class="link text-ink-2">Imagination</a></li>
             <li><a href="/about" class="link text-ink-2">About Olaoluwa</a></li>
             <li><a href="/books/other-authors" class="link text-ink-2">Other authors</a></li>

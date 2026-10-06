@@ -34,6 +34,7 @@ export const GET: APIRoute = async () => {
     { path: '/imagination', priority: '0.8', changefreq: 'weekly' },
     { path: '/about', priority: '0.7', changefreq: 'monthly' },
     { path: '/journal', priority: '0.9', changefreq: 'weekly' },
+    { path: '/daily-verse', priority: '0.8', changefreq: 'daily' },
     ...(books ?? [])
       .map((book) => ({
         path: `/books/${cleanSlug(book.slug)}`,
