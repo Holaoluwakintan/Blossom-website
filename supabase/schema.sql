@@ -117,3 +117,24 @@ select cron.schedule('sow-autopost', '5,35 * * * *', $$
     headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'sow_cron_secret'), 'Content-Type', 'application/json'),
     body := '{}'::jsonb, timeout_milliseconds := 55000)
 $$);
+
+
+-- ===== v2 (Oct 6, 2026): sheet live sync, drafts, first comment, analytics, settings =====
+alter table public.sp_posts alter column post_date drop not null;            -- drafts in the bank may have no date
+alter table public.sp_posts add column if not exists first_comment text;
+alter table public.sp_posts add column if not exists sheet_key text;         -- stable key of a row synced from his Google Sheet
+alter table public.sp_posts add column if not exists remote jsonb not null default '{}'::jsonb;   -- platform -> id of the post there
+alter table public.sp_posts add column if not exists metrics jsonb not null default '{}'::jsonb;  -- platform -> {likes, comments, reach, at}
+alter table public.sp_posts drop constraint if exists sp_posts_status_check;
+alter table public.sp_posts add constraint sp_posts_status_check check (status in ('queued','posted','skipped','draft'));
+create unique index if not exists sp_posts_sheet_key_idx on public.sp_posts (sheet_key) where sheet_key is not null;
+alter table public.sp_posts alter column platforms set default array['facebook','fb_groups','whatsapp','wa_channel','instagram','tiktok','x','threads','linkedin','pinterest','youtube','fb_page'];
+-- owner settings: channels (places shown on Today), slots (per-platform times + default), auto (per-platform on/off),
+-- hashtag_sets, sheet (live-sync config + last result), metrics_at
+create table if not exists public.sp_prefs (key text primary key, value jsonb not null default 'null'::jsonb, updated_at timestamptz not null default now());
+alter table public.sp_prefs enable row level security;
+drop policy if exists sp_prefs_owner_all on public.sp_prefs;
+create policy sp_prefs_owner_all on public.sp_prefs for all to authenticated using (public.sp_is_owner()) with check (public.sp_is_owner());
+revoke all on public.sp_prefs from anon;
+revoke truncate, references, trigger on public.sp_prefs from authenticated;
+grant select, insert, update, delete on public.sp_prefs to authenticated;

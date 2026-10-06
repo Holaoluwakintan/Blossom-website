@@ -88,14 +88,17 @@ export function unsign(tok) {
 }
 
 // Default caption per platform (used when no AI rewrite is saved).
+export const LIMITS = { x: 280, threads: 500, instagram: 2200, tiktok: 2200, linkedin: 3000, pinterest: 500, youtube_title: 100, youtube_desc: 5000, facebook: 63206, whatsapp: 700 };
+function clip(t, n) { return t.length > n ? t.slice(0, n - 1) + '…' : t; }
 export function captionFor(post, platform) {
   const c = (post.captions || {})[platform];
   if (c) return c;
   const verse = post.verse ? '“' + post.verse + '”\n— ' + post.reference + ' (KJV)' : '';
   const link = post.link_url || '';   // only a link the post itself carries (e.g. from his sheet)
-  if (platform === 'x') {
+  if (platform === 'x' || platform === 'threads') {
     // X counts any link as 23 characters.
-    const room = link ? 280 - 24 : 280;
+    const max = platform === 'x' ? 280 : 500;
+    const room = link ? max - 24 : max;
     let t = post.caption + (post.reference ? ' (' + post.reference + ')' : '');
     if (t.length > room) t = t.slice(0, room - 1) + '…';
     for (const tag of (post.hashtags || '').split(/\s+/).filter(Boolean)) { if ((t + ' ' + tag).length <= room) t += ' ' + tag; }
@@ -104,5 +107,27 @@ export function captionFor(post, platform) {
   if (platform === 'youtube_title') return (post.title + ' | ' + (post.reference || 'Daily Verse') + ' #shorts').slice(0, 100);
   if (platform === 'youtube_desc') return [post.caption, verse, link, (post.hashtags || '') + ' #shorts'].filter(Boolean).join('\n\n');
   if (platform === 'whatsapp') return ['*' + post.title + '*', post.caption, verse].filter(Boolean).join('\n\n');
-  return [post.caption, verse, post.hashtags].filter(Boolean).join('\n\n');
+  if (platform === 'pinterest') return clip([post.title, post.caption, post.hashtags].filter(Boolean).join(' · '), 500);
+  if (platform === 'tiktok') return clip([post.caption, post.reference, post.hashtags].filter(Boolean).join('\n\n'), 2200);
+  if (platform === 'instagram') return clip([post.caption, verse, link ? 'Link: ' + link : '', post.hashtags].filter(Boolean).join('\n\n'), 2200);
+  if (platform === 'linkedin') return clip([post.caption, verse, link, post.hashtags].filter(Boolean).join('\n\n'), 3000);
+  return [post.caption, verse, link, post.hashtags].filter(Boolean).join('\n\n');
 }
+
+// Owner settings (sp_prefs: channels, slots, auto, hashtag_sets, sheet). Service role on the server.
+export async function getPref(key, def = null) {
+  const r = await db('sp_prefs?select=value&key=eq.' + encodeURIComponent(key));
+  return r[0] && r[0].value != null ? r[0].value : def;
+}
+export async function setPref(key, value) {
+  await db('sp_prefs?on_conflict=key', { method: 'POST', body: { key, value, updated_at: new Date().toISOString() }, prefer: 'resolution=merge-duplicates' });
+}
+export async function delSecret(name) { await db('sp_secrets?name=eq.' + encodeURIComponent(name), { method: 'DELETE' }); }
+export async function saveRemote(post, platform, id) {
+  if (!id) return;
+  const remote = Object.assign({}, post.remote || {}, { [platform]: String(id) });
+  await db('sp_posts?id=eq.' + post.id, { method: 'PATCH', body: { remote } });
+  post.remote = remote;
+}
+// Effective auto-post time for one platform: the platform's time slot if set, else the post's own time.
+export function effTime(post, platform, slots) { return ((slots || {})[platform] || (post.post_time || '06:00')).slice(0, 5); }

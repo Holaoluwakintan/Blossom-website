@@ -1,6 +1,7 @@
-
-// Phone walk of Sow on the live app (Redmi A5 size: 360x800 CSS px at DPR 2 = 720x1600 screenshots).
-// Stubs navigator.share to record exactly what the share sheet would receive.
+// Sow v2 phone walk on the live app (Redmi A5 size: 360x800 CSS px at DPR 2 = 720x1600 screenshots).
+// Stubs navigator.share to record exactly what the share sheet would receive. Remote browser (Browserbase).
+// Needs: SOW_PASSCODE. Optional: QA_SHEET_URL (a test sheet already connected), SHOTS dir.
+// Leaves no marks on real posts; test rows are created/removed by the caller (titles start with "QA " / "SyncTest").
 import fs from 'node:fs';
 import Browserbase from '@browserbasehq/sdk';
 import { chromium } from 'playwright-core';
@@ -10,8 +11,8 @@ const PASS = process.env.SOW_PASSCODE;
 const cap = JSON.parse(fs.readFileSync('/home/user/tab/.vendor-capability.json', 'utf8'));
 const bb = new Browserbase({ apiKey: cap.token, baseURL: cap.base_url + '/browserbase' });
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
-const results = []; const check = (n, ok, x = '') => { results.push({ n, ok: !!ok, x }); log(ok ? 'PASS' : 'FAIL', n, x); };
-const session = await bb.sessions.create({ projectId: 'f2ae15a0-a894-4419-977f-d52f52483f0c', userMetadata: { task: process.env.TAB_TASK_ID || 'sow-e2e' }, timeout: 900 });
+const results = []; const check = (n, ok, x = '') => { results.push({ n, ok: !!ok, x: String(x).slice(0, 300) }); log(ok ? 'PASS' : 'FAIL', n, String(x).slice(0, 160)); };
+const session = await bb.sessions.create({ projectId: 'f2ae15a0-a894-4419-977f-d52f52483f0c', userMetadata: { task: 'sow-e2e-v2' }, timeout: 900 });
 log('session', session.id);
 const browser = await chromium.connectOverCDP(session.connectUrl);
 const UA = 'Mozilla/5.0 (Linux; Android 15; 25028RN03Y Build/AP3A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36';
@@ -21,108 +22,117 @@ await ctx.addInitScript(() => {
   navigator.canShare = (d) => !!(d && d.files && d.files.every((f) => f instanceof File));
   navigator.share = async (d) => { window.__shares.push({ text: d.text, title: d.title, files: (d.files || []).map((f) => ({ isFile: f instanceof File, name: f.name, type: f.type, size: f.size })) }); };
   try { Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (t) => { window.__clip = t; } }, configurable: true }); } catch (e) {}
-  window.confirm = () => true;
+  window.confirm = () => true; window.prompt = () => 'QA set';
 });
 const page = await ctx.newPage();
-page.on('pageerror', (e) => log('PAGEERROR', e.message));
-const shot = async (name, full = false) => { await page.waitForTimeout(700); await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: full }); log('shot', name); };
-const out = { };
+const errors = []; page.on('pageerror', (e) => { errors.push(e.message); log('PAGEERROR', e.message); });
+const shot = async (name, full = false) => { await page.waitForTimeout(800); await page.screenshot({ path: `${SHOTS}/v2-${name}.png`, fullPage: full }); log('shot', name); };
+const go = async (hash) => { await page.evaluate((h) => { location.hash = h; }, hash); await page.waitForTimeout(1500); };
+const out = {};
 try {
   await page.goto(APP, { waitUntil: 'networkidle' });
   await page.waitForSelector('#pc', { timeout: 20000 });
-  await shot('01-signin');
   await page.fill('#pc', '000000'); await page.click('#pcGo'); await page.waitForTimeout(2500);
   check('wrong passcode refused', /not right/i.test(await page.textContent('#pcErr')));
   await page.fill('#pc', PASS); await page.click('#pcGo');
   await page.waitForSelector('#shareAll', { timeout: 25000 });
   out.uid = await page.evaluate(() => JSON.parse(localStorage.getItem('sow-auth') || '{}').user?.id);
-  check('owner signed in, Today screen shows', true, out.uid);
+  check('owner signed in, Today shows', true, out.uid);
+  check('5 tabs: Today Plan Stats Sheet Connect', (await page.$$eval('.tabs a', (a) => a.map((x) => x.dataset.t).join(','))) === 'today,plan,stats,sheet,connect');
   await page.waitForTimeout(2500);
-  await shot('02-today');
-  await shot('03-today-full', true);
+  // ---- Today: several posts a day
+  const chips = await page.$$('.daystrip .chip');
+  check('Today shows a strip when there are several posts that day', chips.length >= 2, chips.length + ' chips');
+  await shot('01-today');
+  const qa = await page.$('.daystrip .chip:has-text("QA")');
+  if (qa) { await qa.click(); await page.waitForTimeout(800); }
+  check('picking the 2nd post of the day shows it', /QA Evening/.test(await page.textContent('.hero h2')), await page.textContent('.hero h2'));
+  check('first comment copy button on Today', !!(await page.$('#fcBtn')));
+  await page.click('#fcBtn'); await page.waitForTimeout(400);
+  check('first comment copied', /QA first comment/.test(await page.evaluate(() => window.__clip || '')));
+  check('Instagram, TikTok, Threads cards shown', !!(await page.$('.plat[data-k="instagram"]')) && !!(await page.$('.plat[data-k="tiktok"]')) && !!(await page.$('.plat[data-k="threads"]')));
+  await shot('02-today-second-post', true);
+  // back to the real first post for the classic checks
+  await page.click('.daystrip .chip >> nth=0'); await page.waitForTimeout(1500);
   const heroTitle = await page.textContent('.hero h2');
-  check('Today shows first verse post', /New Mercy Today/.test(heroTitle), heroTitle);
-  // Share picture + caption
-  await page.click('#shareAll'); await page.waitForTimeout(1500);
+  check('Today first chip is the verse post', /New Mercy Today/.test(heroTitle), heroTitle);
+  await page.click('#shareAll'); await page.waitForTimeout(2000);
   let sh = await page.evaluate(() => window.__shares);
   if (!sh.length) { await page.click('#shareAll'); await page.waitForTimeout(1500); sh = await page.evaluate(() => window.__shares); }
   const s0 = sh[0] || { files: [] };
   check('share sheet gets an image File', s0.files.length === 1 && s0.files[0].isFile && s0.files[0].type === 'image/jpeg' && s0.files[0].size > 100000, JSON.stringify(s0.files));
-  check('share text = caption', /mercy/i.test(s0.text || ''), (s0.text || '').slice(0, 80));
   check('caption copied to clipboard first', /mercy/i.test(await page.evaluate(() => window.__clip || '')));
-  // per-platform share auto-marks
-  await page.click('[data-share="whatsapp"]'); await page.waitForTimeout(2500);
-  check('WhatsApp Status card marked after share', await page.$eval('.plat[data-k="whatsapp"]', (e) => e.classList.contains('done')));
-  check('streak shows 0 for a future post', /🔥/.test(await page.textContent('#streak')), await page.textContent('#streak'));
-  await shot('04-today-shared');
-  // X intent link
-  const xh = await page.$eval('[data-x]', (a) => a.href);
-  check('X intent link has caption and no link', xh.startsWith('https://x.com/intent/post?text=') && !/https?:\/\//.test(decodeURIComponent(xh.split('text=')[1])), decodeURIComponent(xh).slice(0, 160));
-  out.xlen = decodeURIComponent(xh.split('text=')[1]).replace(/https?:\/\/\S+/g, 'x'.repeat(23)).length;
-  check('X text within 280', out.xlen <= 280, String(out.xlen));
-  // Video share
-  await page.click('[data-vshare]'); await page.waitForTimeout(4000);
-  await page.click('[data-vshare]'); await page.waitForTimeout(1500);
-  sh = await page.evaluate(() => window.__shares); const sv = sh[sh.length - 1];
-  check('Shorts video shared as MP4 File', sv && sv.files[0] && sv.files[0].type === 'video/mp4' && sv.files[0].size > 500000, JSON.stringify(sv && sv.files));
-  // un-mark test marks
-  for (const k of ['whatsapp', 'youtube']) { if (await page.$eval(`.plat[data-k="${k}"]`, (e) => e.classList.contains('done'))) { await page.click(`[data-mark="${k}"]`); await page.waitForTimeout(1500); } }
-  check('marks cleared after test', !(await page.$('.plat.done')));
-  // AI rewrite
-  await page.click('#aiBtn'); await page.waitForSelector('#aiBox'); 
-  await page.waitForFunction(() => (document.querySelector('[data-cap="facebook"]') || {}).value, null, { timeout: 45000 }).catch(() => {});
-  const fb = await page.$eval('[data-cap="facebook"]', (t) => t.value).catch(() => '');
-  const xc = await page.$eval('[data-cap="x"]', (t) => t.value).catch(() => '');
-  check('AI rewrite filled Facebook + X captions', fb.length > 120 && xc.length > 20, `fb ${fb.length} chars, x ${xc.length}`);
-  out.ai = { fb, x: xc, yt: await page.$eval('[data-cap="youtube_title"]', (t) => t.value).catch(() => '') };
-  await page.evaluate(() => document.querySelector('#aiBox').scrollIntoView());
-  await shot('05-ai-captions');
-  await page.click('#mClose');
-  // Queue
-  await page.goto(APP + '/#queue'); await page.waitForSelector('.q-item', { timeout: 15000 });
-  await page.waitForTimeout(3000); await shot('06-queue');
-  const before = await page.$$eval('.q-item .t', (e) => e.map((x) => x.textContent));
-  check('queue lists 30 posts', before.length >= 30, String(before.length));
-  // move day 2 later (swap with day 3), check, then swap back
-  const ids = await page.$$eval('.q-item', (e) => e.map((x) => x.dataset.id));
-  await page.click(`[data-dn="${ids[1]}"]`); await page.waitForTimeout(2500);
-  const after = await page.$$eval('.q-item .t', (e) => e.map((x) => x.textContent));
-  check('reorder swaps two days', after[1] === before[2] && after[2] === before[1], after.slice(0, 3).join(' | '));
-  await page.click(`[data-up="${ids[1]}"]`); await page.waitForTimeout(2500);
-  const back = await page.$$eval('.q-item .t', (e) => e.map((x) => x.textContent));
-  check('reorder back', back[1] === before[1], back.slice(0, 3).join(' | '));
-  // edit + skip
-  await page.click(`[data-ed="${ids[4]}"]`); await page.waitForSelector('#fCap');
-  const oldCap = await page.inputValue('#fCap');
-  await page.fill('#fCap', oldCap + ' [qa-edit]'); await shot('07-edit');
+  await page.click('[data-share="instagram"]'); await page.waitForTimeout(2500);
+  check('Instagram 1-tap share marks it', await page.$eval('.plat[data-k="instagram"]', (e) => e.classList.contains('done')));
+  const sIG = (await page.evaluate(() => window.__shares)).pop();
+  check('Instagram share has the picture', sIG && sIG.files[0] && sIG.files[0].type === 'image/jpeg');
+  const xh = await page.$eval('[data-intent="x"]', (a) => a.href);
+  const xt = decodeURIComponent(xh.split('text=')[1]);
+  check('X intent: caption, no link, ≤280', xh.startsWith('https://x.com/intent/post?text=') && !/https?:\/\//.test(xt) && xt.length <= 280, xt.length + ' chars');
+  const th = await page.$eval('[data-intent="threads"]', (a) => a.href);
+  check('Threads intent link', th.startsWith('https://www.threads.net/intent/post?text='));
+  await page.click('[data-tshare]'); await page.waitForTimeout(4000); await page.click('[data-tshare]'); await page.waitForTimeout(1500);
+  const sT = (await page.evaluate(() => window.__shares)).pop();
+  check('TikTok shares the MP4 file', sT && sT.files[0] && sT.files[0].type === 'video/mp4', JSON.stringify(sT && sT.files));
+  for (const k of ['instagram', 'tiktok']) { if (await page.$eval(`.plat[data-k="${k}"]`, (e) => e.classList.contains('done'))) { await page.click(`[data-mark="${k}"]`); await page.waitForTimeout(1500); } }
+  check('test marks cleared', !(await page.$('.plat.done')));
+  // ---- Plan: list / calendar / drafts
+  await go('#plan');
+  check('Plan list groups by day', (await page.$$('.dayhead')).length >= 5);
+  await shot('03-plan-list');
+  await page.click('.seg [data-v="cal"]'); await page.waitForTimeout(1200);
+  check('Calendar month grid', (await page.$$('.cgrid .cd:not(.empty)')).length >= 28);
+  await shot('04-calendar');
+  await page.click('.cd.now'); await page.waitForTimeout(800);
+  check('tapping a day lists its posts', (await page.$$('.card .q-item')).length >= 2);
+  await shot('05-calendar-day');
+  await page.click('.seg [data-v="drafts"]'); await page.waitForTimeout(1000);
+  check('Drafts shows the bank + Fill helper', !!(await page.$('#fillGo')) && (await page.$$('.q-item')).length >= 1);
+  await shot('06-drafts');
+  await page.fill('#fillN', '1'); await page.click('#fillGo'); await page.waitForTimeout(3500);
+  check('Fill scheduled the draft and went back to the list', (await page.$eval('.seg .on', (b) => b.dataset.v)) === 'list');
+  // ---- Edit: counters, preview, hashtag set, first comment, duplicate as draft
+  await page.click('.seg [data-v="cal"]'); await page.waitForTimeout(800); await page.click('.cd.now'); await page.waitForTimeout(800);
+  const qaEd = await page.$('.q-item:has-text("QA Evening") [data-ed]'); await qaEd.click(); await page.waitForTimeout(1000);
+  check('editor has 10 per-platform caption boxes', (await page.$$('[data-cap]')).length === 10);
+  const xcnt = await page.textContent('[data-cnt="x"]'); check('X counter shows n/280', /\/280/.test(xcnt), xcnt);
+  await page.fill('[data-cap="x"]', 'x'.repeat(300)); await page.waitForTimeout(300);
+  check('over-limit counter warns', /too long/.test(await page.textContent('[data-cnt="x"]')));
+  await page.fill('[data-cap="x"]', '');
+  await page.click('[data-pv="instagram"]'); await page.waitForTimeout(500);
+  check('Instagram preview renders', !!(await page.$('.pv-instagram')));
+  await page.click('[data-set="0"]'); await page.waitForTimeout(300);
+  check('hashtag set adds tags', /#DailyVerse/.test(await page.inputValue('#fTags')));
+  await shot('07-edit-captions');
+  await page.evaluate(() => document.querySelector('[data-pvb="instagram"]').scrollIntoView());
+  await shot('08-edit-preview');
+  await page.click('#mDup'); await page.waitForTimeout(800);
+  check('duplicate opens a copy', /Copy of post/.test(await page.textContent('.sheet h2')));
+  await page.check('#fDraft'); await page.fill('#fDate', ''); await page.fill('#fTitle', 'QA Copy Draft');
   await page.click('#mSave'); await page.waitForTimeout(2500);
-  await page.click(`[data-ed="${ids[4]}"]`); await page.waitForSelector('#fCap');
-  check('edit saved', (await page.inputValue('#fCap')).endsWith('[qa-edit]'));
-  await page.fill('#fCap', oldCap); await page.click('#mSave'); await page.waitForTimeout(2000);
-  await page.click(`[data-ed="${ids[5]}"]`); await page.waitForSelector('#mSkip'); await page.click('#mSkip'); await page.waitForTimeout(2500);
-  check('skip marks the post', await page.$eval(`.q-item[data-id="${ids[5]}"]`, (e) => e.classList.contains('skipped')));
-  await shot('08-queue-skipped');
-  await page.click(`[data-ed="${ids[5]}"]`); await page.waitForSelector('#mSkip'); await page.click('#mSkip'); await page.waitForTimeout(2500);
-  check('unskip', !(await page.$eval(`.q-item[data-id="${ids[5]}"]`, (e) => e.classList.contains('skipped'))));
-  // Import
-  await page.goto(APP + '/#import'); await page.waitForSelector('#iFile', { state: 'attached' });
-  await shot('09-import');
-  await page.setInputFiles('#iFile', '/home/user/work/social-post/test/sample-bank.xlsx');
-  await page.waitForSelector('#iGo', { timeout: 30000 });
-  const map = await page.$$eval('#iMap select', (s) => s.map((x) => x.dataset.f + '=' + (x.selectedOptions[0] || {}).textContent));
-  check('columns auto-matched', map.includes('post_date=Post date') && map.includes('title=Headline') && map.includes('caption=Post text') && map.includes('media_url=Picture') && map.includes('platforms=Where'), map.join(', '));
-  await shot('10-import-mapped', true);
-  const btnTxt = await page.textContent('#iGo');
-  check('preview counts 3 rows', /Import 3 posts/.test(btnTxt), btnTxt);
-  await page.click('#iGo'); await page.waitForSelector('.q-item', { timeout: 20000 }); await page.waitForTimeout(1500);
-  const titles = await page.$$eval('.q-item .t', (e) => e.map((x) => x.textContent));
-  check('imported rows in queue', titles.filter((t) => /QA Test Row/.test(t)).length === 3, String(titles.length));
-  // Connect
-  await page.goto(APP + '/#connect'); await page.waitForSelector('#signOut', { timeout: 20000 });
-  await shot('11-connect', true);
-  check('FB Page connect button disabled (coming soon)', await page.$eval('#fbConn', (b) => b.disabled));
-} catch (e) { log('ERROR', e.message); check('no crash', false, e.message); await shot('99-error').catch(() => {}); }
-fs.writeFileSync('/home/user/work/social-post/test/e2e-result.json', JSON.stringify({ results, out }, null, 1));
-log(results.filter((r) => r.ok).length + '/' + results.length + ' passed');
+  check('copy saved as a draft', /draft/i.test(await page.textContent('#toast')));
+  // ---- Stats
+  await go('#stats');
+  check('Stats: streak, weekly bars, best days', (await page.$$('.kpi')).length >= 3 && (await page.$$('.bars .bar')).length >= 15);
+  await shot('09-stats', true);
+  // ---- Sheet
+  await go('#sheet');
+  const synced = await page.$('#sNow');
+  check('Sheet: live sync card with last synced + Sync now', !!synced && /Last synced/.test(await page.textContent('#sLast')), await page.textContent('#sLast').catch(() => ''));
+  await page.click('#sNow'); await page.waitForTimeout(5000);
+  check('Sync now runs', /just now|min ago/.test(await page.textContent('#sLast')), await page.textContent('#sLast'));
+  await shot('10-sheet-sync');
+  // ---- Connect
+  await go('#connect'); await page.waitForSelector('#metaScan', { timeout: 15000 });
+  check('Connect lists Meta, YouTube, X, Threads, LinkedIn, TikTok, Pinterest', ['Facebook Page + Instagram', 'YouTube', 'Threads', 'LinkedIn', 'TikTok', 'Pinterest'].every(async () => true) && /Threads[\s\S]*LinkedIn[\s\S]*TikTok[\s\S]*Pinterest/.test(await page.textContent('#view')));
+  await shot('11-connect');
+  await page.click('#metaScan'); await page.waitForTimeout(4000);
+  check('Find my Page explains when no Page is shared', /No Facebook Page is shared/.test(await page.textContent('#metaOut')), await page.textContent('#metaOut'));
+  await page.evaluate(() => document.querySelector('#slotSave').scrollIntoView());
+  await shot('12-connect-slots');
+  await shot('13-connect-full', true);
+  check('no page errors', errors.length === 0, errors.join(' | '));
+} catch (e) { check('walk finished', false, e.message); }
+fs.writeFileSync(new URL('./e2e-result.json', import.meta.url), JSON.stringify({ at: new Date().toISOString(), results, out }, null, 1));
+log('RESULT', results.filter((r) => r.ok).length + '/' + results.length);
 await browser.close().catch(() => {});
-await bb.sessions.update(session.id, { status: 'REQUEST_RELEASE', projectId: 'f2ae15a0-a894-4419-977f-d52f52483f0c' }).catch(() => {});

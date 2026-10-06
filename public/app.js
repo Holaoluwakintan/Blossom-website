@@ -1,23 +1,33 @@
-/* Sow: daily posting app for Olaoluwa Michael. Plain JS, no build step. */
+/* Sow: daily posting app for Olaoluwa Michael. Plain JS, no build step. v6 */
 'use strict';
 var CFG = window.SOW_CFG;
 var sb = window.supabase.createClient(CFG.url, CFG.anon, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sow-auth' } });
-var S = { posts: [], files: {}, vfiles: {}, conn: null, session: null };
+var S = { posts: [], files: {}, vfiles: {}, conn: null, session: null, prefs: {}, sel: null, planView: 'list', calMonth: null, calDay: null };
 var $ = function (s, el) { return (el || document).querySelector(s); };
 var view = $('#view');
 
 // One card per platform. mode: tap = share sheet (Meta has no API for profiles/groups/Status/Channel),
-// intent = opens X composer, video = Shorts file, auto = posts by itself once connected.
+// intent = opens the app's composer, video = video file, auto = posts by itself once connected (auto: true = can be auto).
 var PLAT = [
-  { k: 'facebook',   ic: '📘', nm: 'Facebook profile', mode: 'tap',   cap: 'facebook', hint: 'Pick Facebook, then long-press → Paste for the caption' },
-  { k: 'fb_groups',  ic: '👥', nm: 'Facebook groups',  mode: 'tap',   cap: 'facebook', hint: 'Pick Facebook → Share to a group → Paste' },
-  { k: 'whatsapp',   ic: '🟢', nm: 'WhatsApp Status',  mode: 'tap',   cap: 'whatsapp', hint: 'Pick WhatsApp → My status' },
-  { k: 'wa_channel', ic: '📣', nm: 'WhatsApp Channel', mode: 'tap',   cap: 'whatsapp', hint: 'Pick WhatsApp → your Channel' },
-  { k: 'x',          ic: '𝕏',  nm: 'X (Twitter)',      mode: 'intent', cap: 'x' },
-  { k: 'youtube',    ic: '▶️', nm: 'YouTube Shorts',   mode: 'video', cap: 'youtube_desc' },
-  { k: 'fb_page',    ic: '🏳️', nm: 'Facebook Page',    mode: 'auto' },
+  { k: 'facebook',   ic: '📘', nm: 'Facebook profile', mode: 'tap',    cap: 'facebook', hint: 'Pick Facebook, then long-press → Paste for the caption' },
+  { k: 'fb_groups',  ic: '👥', nm: 'Facebook groups',  mode: 'tap',    cap: 'facebook', hint: 'Pick Facebook → Share to a group → Paste' },
+  { k: 'whatsapp',   ic: '🟢', nm: 'WhatsApp Status',  mode: 'tap',    cap: 'whatsapp', hint: 'Pick WhatsApp → My status' },
+  { k: 'wa_channel', ic: '📣', nm: 'WhatsApp Channel', mode: 'tap',    cap: 'whatsapp', hint: 'Pick WhatsApp → your Channel' },
+  { k: 'instagram',  ic: '📸', nm: 'Instagram',        mode: 'tap',    cap: 'instagram', hint: 'Pick Instagram → Feed, then Paste the caption', auto: true },
+  { k: 'tiktok',     ic: '🎵', nm: 'TikTok',           mode: 'tvideo', cap: 'tiktok', hint: 'Share the video → TikTok, then Paste the caption' },
+  { k: 'x',          ic: '𝕏',  nm: 'X (Twitter)',      mode: 'intent', cap: 'x', auto: true },
+  { k: 'threads',    ic: '🧵', nm: 'Threads',          mode: 'intent', cap: 'threads', auto: true },
+  { k: 'linkedin',   ic: '💼', nm: 'LinkedIn',         mode: 'tap',    cap: 'linkedin', hint: 'Pick LinkedIn, then Paste the caption', auto: true },
+  { k: 'pinterest',  ic: '📌', nm: 'Pinterest',        mode: 'intent', cap: 'pinterest' },
+  { k: 'youtube',    ic: '▶️', nm: 'YouTube Shorts',   mode: 'video',  cap: 'youtube_desc', auto: true },
+  { k: 'fb_page',    ic: '🏳️', nm: 'Facebook Page',    mode: 'auto',   cap: 'facebook', auto: true },
 ];
 var PNAME = {}; PLAT.forEach(function (p) { PNAME[p.k] = p.nm; });
+var ALLK = PLAT.map(function (p) { return p.k; });
+var DEF_CHANNELS = ['facebook', 'fb_groups', 'whatsapp', 'wa_channel', 'instagram', 'tiktok', 'x', 'threads', 'youtube', 'fb_page'];
+// Caption boxes in the editor, with each platform's own limit.
+var CAPS = [['facebook', 'Facebook', 63206], ['instagram', 'Instagram', 2200], ['whatsapp', 'WhatsApp', 700], ['x', 'X', 280], ['threads', 'Threads', 500], ['linkedin', 'LinkedIn', 3000],
+  ['tiktok', 'TikTok', 2200], ['pinterest', 'Pinterest', 500], ['youtube_title', 'YouTube title', 100], ['youtube_desc', 'YouTube description', 5000]];
 
 /* ---------- helpers ---------- */
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -25,26 +35,35 @@ function wat() { return new Date(Date.now() + 3600e3); }                // Afric
 function today() { return wat().toISOString().slice(0, 10); }
 function nowHM() { return wat().toISOString().slice(11, 16); }
 function addDays(d, n) { var x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
-function niceDate(d) { var x = new Date(d + 'T12:00:00Z'); return x.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); }
-function rel(d) { var t = today(); return d === t ? 'Today' : d === addDays(t, 1) ? 'Tomorrow' : d === addDays(t, -1) ? 'Yesterday' : niceDate(d); }
+function niceDate(d) { if (!d) return 'No date'; var x = new Date(d + 'T12:00:00Z'); return x.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); }
+function rel(d) { if (!d) return 'Bank'; var t = today(); return d === t ? 'Today' : d === addDays(t, 1) ? 'Tomorrow' : d === addDays(t, -1) ? 'Yesterday' : niceDate(d); }
+function hm(p) { return String(p.post_time || '06:00').slice(0, 5); }
+function lagosDay(iso) { return new Date(new Date(iso).getTime() + 3600e3).toISOString().slice(0, 10); }
+function ago(iso) { if (!iso) return 'never'; var m = Math.round((Date.now() - new Date(iso)) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; }
 function toast(msg, ms) { var t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(function () { t.hidden = true; }, ms || 2600); }
 function postLink(p) { return p.link_url || ''; }   // only a link the post itself carries (e.g. from the sheet)
 function mediaSrc(u) { return !u ? '' : /supabase\.co\//.test(u) ? u : '/api/img?u=' + encodeURIComponent(u); }
+function publicMedia(u) { return !u ? '' : /supabase\.co\//.test(u) ? u : location.origin + '/api/img?u=' + encodeURIComponent(u); }
 function thumb(p) { return p.thumb_url || mediaSrc(p.media_url); }
+function clip(t, n) { return t.length > n ? t.slice(0, n - 1) + '…' : t; }
 
 function capFor(p, k) {
   var c = (p.captions || {})[k]; if (c) return c;
-  var verse = p.verse ? '“' + p.verse + '”\n— ' + p.reference + ' (KJV)' : '';
-  if (k === 'x') {
-    var lk = postLink(p), room = lk ? 256 : 280, t = p.caption + (p.reference ? ' (' + p.reference + ')' : '');
+  var verse = p.verse ? '“' + p.verse + '”\n— ' + p.reference + ' (KJV)' : '', lk = postLink(p);
+  if (k === 'x' || k === 'threads') {
+    var max = k === 'x' ? 280 : 500, room = lk ? max - 24 : max, t = p.caption + (p.reference ? ' (' + p.reference + ')' : '');
     if (t.length > room) t = t.slice(0, room - 1) + '…';
     (p.hashtags || '').split(/\s+/).filter(Boolean).forEach(function (tag) { if ((t + ' ' + tag).length <= room) t += ' ' + tag; });
     return lk ? t + '\n' + lk : t;
   }
   if (k === 'whatsapp') return ['*' + p.title + '*', p.caption, verse].filter(Boolean).join('\n\n');
   if (k === 'youtube_title') return (p.title + ' | ' + (p.reference || 'Daily Verse') + ' #shorts').slice(0, 100);
-  if (k === 'youtube_desc') return [p.caption, verse, postLink(p), (p.hashtags || '') + ' #shorts'].filter(Boolean).join('\n\n');
-  return [p.caption, verse, p.hashtags].filter(Boolean).join('\n\n');
+  if (k === 'youtube_desc') return [p.caption, verse, lk, (p.hashtags || '') + ' #shorts'].filter(Boolean).join('\n\n');
+  if (k === 'pinterest') return clip([p.title, p.caption, p.hashtags].filter(Boolean).join(' · '), 500);
+  if (k === 'tiktok') return clip([p.caption, p.reference, p.hashtags].filter(Boolean).join('\n\n'), 2200);
+  if (k === 'instagram') return clip([p.caption, verse, lk ? 'Link: ' + lk : '', p.hashtags].filter(Boolean).join('\n\n'), 2200);
+  if (k === 'linkedin') return clip([p.caption, verse, lk, p.hashtags].filter(Boolean).join('\n\n'), 3000);
+  return [p.caption, verse, lk, p.hashtags].filter(Boolean).join('\n\n');
 }
 
 async function api(path, opts) {
@@ -60,24 +79,44 @@ async function api(path, opts) {
 async function copy(text) { try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; } }
 
 /* ---------- data ---------- */
+function sortKey(p) { return (p.post_date || '9999') + ' ' + hm(p) + ' ' + String(1e6 + (p.position || 0)); }
 async function loadPosts() {
-  var r = await sb.from('sp_posts').select('*').order('post_date').order('position');
+  var r = await sb.from('sp_posts').select('*').order('post_date', { nullsFirst: false }).order('post_time').order('position');
   if (r.error) throw r.error;
-  S.posts = r.data || [];
+  S.posts = (r.data || []).sort(function (a, b) { return sortKey(a) < sortKey(b) ? -1 : sortKey(a) > sortKey(b) ? 1 : 0; });
 }
+async function loadPrefs() {
+  var r = await sb.from('sp_prefs').select('key,value'); if (r.error) return;
+  S.prefs = {}; (r.data || []).forEach(function (x) { S.prefs[x.key] = x.value; });
+}
+async function savePref(key, value) {
+  S.prefs[key] = value;
+  var r = await sb.from('sp_prefs').upsert({ key: key, value: value, updated_at: new Date().toISOString() });
+  if (r.error) toast('Could not save: ' + r.error.message);
+}
+function channels() { return S.prefs.channels || DEF_CHANNELS; }
+function slots() { return S.prefs.slots || {}; }
+function defTime() { return slots().default || '06:00'; }
+function sched() { return S.posts.filter(function (p) { return p.post_date && p.status !== 'draft'; }); }
+function drafts() { return S.posts.filter(function (p) { return p.status === 'draft'; }); }
+function onDay(d) { return sched().filter(function (p) { return p.post_date === d; }); }
 function focusPost() {
-  var t = today(), live = S.posts.filter(function (p) { return p.status !== 'skipped'; });
-  var td = live.filter(function (p) { return p.post_date === t; })[0];
-  if (td) return { p: td, label: 'Today' };
+  var t = today(), live = sched().filter(function (p) { return p.status !== 'skipped'; });
+  var td = live.filter(function (p) { return p.post_date === t; });
+  if (td.length) {
+    var sel = S.sel && td.filter(function (p) { return p.id === S.sel; })[0];
+    var open = td.filter(function (p) { return !Object.keys(p.posted || {}).length; })[0];
+    return { p: sel || open || td[td.length - 1], label: 'Today', day: td };
+  }
   var nx = live.filter(function (p) { return p.post_date > t; })[0];
-  if (nx) return { p: nx, label: rel(nx.post_date) };
+  if (nx) { var nd = live.filter(function (p) { return p.post_date === nx.post_date; }); var s2 = S.sel && nd.filter(function (p) { return p.id === S.sel; })[0]; return { p: s2 || nx, label: rel(nx.post_date), day: nd }; }
   var last = live.filter(function (p) { return p.post_date < t; }).pop();
-  return last ? { p: last, label: rel(last.post_date) } : null;
+  return last ? { p: last, label: rel(last.post_date), day: [last] } : null;
 }
 function manualKeys(posted) { return Object.keys(posted || {}); }
+function markDays() { var byDay = {}; S.posts.forEach(function (p) { Object.keys(p.posted || {}).forEach(function (k) { byDay[lagosDay(p.posted[k])] = true; }); }); return byDay; }
 function streak() {
-  var byDay = {}; S.posts.forEach(function (p) { if (manualKeys(p.posted).length) byDay[p.post_date] = true; });
-  var d = today(), n = 0; if (!byDay[d]) d = addDays(d, -1);
+  var byDay = markDays(), d = today(), n = 0; if (!byDay[d]) d = addDays(d, -1);
   while (byDay[d]) { n++; d = addDays(d, -1); }
   return n;
 }
@@ -130,141 +169,269 @@ function downloadUrl(u) { if (!u) return; var a = document.createElement('a'); a
 
 /* ---------- views ---------- */
 function setTab(t) { document.querySelectorAll('.tabs a').forEach(function (a) { a.classList.toggle('on', a.dataset.t === t); }); }
+function isAuto(k) { var c = (S.conn || {})[k], a = (S.conn && S.conn.auto) || {}; return !!(c && c.connected && a[k] !== false); }
+function intentUrl(p, k) {
+  var t = capFor(p, k);
+  if (k === 'x') return 'https://x.com/intent/post?text=' + encodeURIComponent(t);
+  if (k === 'threads') return 'https://www.threads.net/intent/post?text=' + encodeURIComponent(t);
+  if (k === 'pinterest') return 'https://www.pinterest.com/pin/create/button/?url=' + encodeURIComponent(postLink(p) || publicMedia(p.media_url) || location.origin) + (p.media_url ? '&media=' + encodeURIComponent(publicMedia(p.media_url)) : '') + '&description=' + encodeURIComponent(t);
+  return '';
+}
 
 function platCard(p, pl) {
-  var posted = (p.posted || {})[pl.k], conn = S.conn || {}, st, acts = '', mode = pl.mode;
-  if (pl.k === 'x' && conn.x && conn.x.connected) mode = 'auto';
-  if (pl.k === 'youtube' && conn.youtube && conn.youtube.connected) mode = 'auto+video';
-  var pill = mode === 'tap' ? '<span class="pill tap">1-tap</span>' : mode === 'intent' ? '<span class="pill tap">1-tap</span>' : mode.indexOf('auto') === 0 ? '<span class="pill auto">auto</span>' : '<span class="pill tap">video</span>';
+  var posted = (p.posted || {})[pl.k], st, acts = '', auto = pl.auto && isAuto(pl.k), slot = slots()[pl.k], at = slot || hm(p);
+  var pill = auto ? '<span class="pill auto">auto</span>' : pl.k === 'fb_page' ? '<span class="pill off">soon</span>' : pl.mode === 'video' || pl.mode === 'tvideo' ? '<span class="pill tap">video</span>' : '<span class="pill tap">1-tap</span>';
   if (posted) st = '✓ Posted ' + new Date(posted).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' });
-  if (pl.mode === 'tap') {
-    st = st || pl.hint;
+  var best = slot ? ' · best at ' + slot : '';
+  if (auto) {
+    st = st || (pl.k === 'youtube' && !p.video_url ? 'No video for this post' : 'Posts itself at ' + at);
+    acts = '<button class="btn sm ghost" data-now="' + pl.k + '">Post now</button>';
+  } else if (pl.mode === 'tap') {
+    st = st || pl.hint + best;
     acts = '<button class="btn sm" data-share="' + pl.k + '">Share</button>';
-  } else if (pl.k === 'x') {
-    st = st || (mode === 'auto' ? 'Posts itself at ' + p.post_time.slice(0, 5) : 'Opens X with the caption ready');
-    acts = '<a class="btn sm" data-x="1" target="_blank" rel="noopener" href="https://x.com/intent/post?text=' + encodeURIComponent(capFor(p, 'x')) + '">Post to X</a>';
+  } else if (pl.mode === 'intent') {
+    st = st || (pl.k === 'pinterest' ? 'Opens Pinterest with the picture ready' : 'Opens ' + pl.nm.replace(' (Twitter)', '') + ' with the caption ready') + best;
+    acts = '<a class="btn sm" data-intent="' + pl.k + '" target="_blank" rel="noopener" href="' + esc(intentUrl(p, pl.k)) + '">' + (pl.k === 'pinterest' ? 'Pin it' : 'Post') + '</a>';
+  } else if (pl.mode === 'tvideo') {
+    st = st || (p.video_url ? pl.hint : 'Share the picture → TikTok (photo post), then Paste') + best;
+    acts = '<button class="btn sm" data-tshare="1">' + (p.video_url ? (S.vfiles[p.id] ? 'Share video' : 'Get video') : 'Share') + '</button>';
   } else if (pl.k === 'youtube') {
     if (!p.video_url) { st = st || 'No video for this post yet'; }
     else {
-      st = st || (mode === 'auto+video' ? 'Uploads itself at ' + p.post_time.slice(0, 5) : 'Share the video to the YouTube app, or download it');
-      acts = '<button class="btn sm" data-vshare="1">' + (S.vfiles[p.id] ? 'Share video' : 'Get video') + '</button><button class="btn sm ghost" data-vdl="1">⬇</button>';
+      st = st || 'Share the video to the YouTube app, or download it' + best;
+      acts = '<button class="btn sm" data-vshare="1">' + (S.vfiles[p.id] ? 'Share video' : 'Get video') + '</button><button class="btn sm ghost" data-vdl="1" aria-label="Download video">⬇</button>';
     }
   } else if (pl.k === 'fb_page') {
-    var on = conn.fb_page && conn.fb_page.connected;
-    st = st || (on ? 'Posts itself at ' + p.post_time.slice(0, 5) : 'Not connected yet');
-    if (!on) { pill = '<span class="pill off">soon</span>'; acts = '<a class="btn sm ghost" href="#connect">Why?</a>'; }
+    st = st || 'Not connected yet';
+    acts = '<a class="btn sm ghost" href="#connect">How?</a>';
   }
   return '<div class="plat' + (posted ? ' done' : '') + '" data-k="' + pl.k + '"><div class="ic">' + pl.ic + '</div><div class="grow"><div class="nm">' + esc(pl.nm) + ' ' + pill + '</div><div class="st">' + esc(st) + '</div></div><div class="acts">' + acts +
     '<button class="chk" data-mark="' + pl.k + '" aria-label="Mark ' + esc(pl.nm) + ' posted">' + (posted ? '✓' : '') + '</button>' + '</div></div>';
 }
+function platsFor(p) { var ch = channels(); return PLAT.filter(function (pl) { return (p.platforms || []).indexOf(pl.k) >= 0 && ch.indexOf(pl.k) >= 0; }); }
 
 function renderToday() {
   setTab('today');
   var f = focusPost();
-  if (!f) { view.innerHTML = '<div class="card center"><h2>Your bank is empty</h2><p class="muted">Import your content bank to get started.</p><a class="btn" href="#import">Import posts</a></div>'; return; }
-  var p = f.p, plats = PLAT.filter(function (pl) { return (p.platforms || []).indexOf(pl.k) >= 0; });
-  var early = p.post_date > today();
+  if (!f) { view.innerHTML = '<div class="card center"><h2>Your bank is empty</h2><p class="muted">Connect your Google Sheet or import your content bank to get started.</p><a class="btn" href="#sheet">Add posts</a></div>'; return; }
+  var p = f.p, plats = platsFor(p);
+  var early = p.post_date > today() && !sched().some(function (x) { return x.post_date < today() && x.status !== 'skipped'; });
   var done = plats.filter(function (pl) { return (p.posted || {})[pl.k]; }).length;
+  var strip = f.day.length > 1 ? '<div class="daystrip">' + f.day.map(function (x) { var dn = Object.keys(x.posted || {}).length; return '<button class="chip' + (x.id === p.id ? ' on' : '') + '" data-sel="' + x.id + '"><b>' + esc(hm(x)) + '</b> ' + esc(clip(x.title || '', 18)) + (dn ? ' ✓' : '') + '</button>'; }).join('') + '</div>' : '';
   view.innerHTML =
-    (early ? '<div class="card small"><b>Your first verse goes out ' + esc(rel(p.post_date).toLowerCase()) + ' at ' + esc(p.post_time.slice(0, 5)) + '.</b> Everything below is ready. You can share early if you like.</div>' : '') +
-    '<div class="card hero"><div class="label"><span>' + esc(f.label) + ' · ' + esc(niceDate(p.post_date)) + ' · ' + esc(p.post_time.slice(0, 5)) + '</span><span>' + done + '/' + plats.length + ' done</span></div>' +
+    (early ? '<div class="card small"><b>Your first post goes out ' + esc(rel(p.post_date).toLowerCase()) + ' at ' + esc(hm(p)) + '.</b> Everything below is ready. You can share early if you like.</div>' : '') +
+    (f.day.length > 1 ? '<p class="small muted" style="margin:4px 2px">' + f.day.length + ' posts ' + esc(f.label.toLowerCase() === 'today' ? 'today' : 'on ' + niceDate(p.post_date)) + '. Tap one:</p>' : '') + strip +
+    '<div class="card hero"><div class="label"><span>' + esc(f.label) + ' · ' + esc(niceDate(p.post_date)) + ' · ' + esc(hm(p)) + '</span><span>' + done + '/' + plats.length + ' done</span></div>' +
     (p.media_url ? '<img id="heroimg" src="' + esc(mediaSrc(p.media_url)) + '" alt="' + esc(p.title) + '">' : '') +
     '<div class="body"><h2>' + esc(p.title) + '</h2>' + (p.reference ? '<div class="ref">' + esc(p.reference) + '</div>' : '') + '<p class="cap">' + esc(p.caption) + '</p><p class="muted small">' + esc(p.hashtags) + '</p>' +
     '<button class="btn big" id="shareAll">📤 Share picture + caption</button>' +
-    '<p class="small muted center" style="margin:8px 0 0">Copies the caption, then opens your phone\'s share menu with the picture. Pick Facebook, WhatsApp, anywhere.</p>' +
+    '<p class="small muted center" style="margin:8px 0 0">Copies the caption, then opens your phone\'s share menu with the picture. Pick Facebook, WhatsApp, Instagram, anywhere.</p>' +
+    (p.first_comment ? '<button class="btn sm ghost" id="fcBtn" style="width:100%;margin-top:8px">💬 Copy first comment</button>' : '') +
     '<div class="row" style="margin-top:10px"><button class="btn sm soft grow" id="aiBtn">✨ Rewrite for each platform</button><button class="btn sm ghost" id="editBtn">Edit</button></div></div></div>' +
     '<h3>Where it goes</h3><div class="plats">' + plats.map(function (pl) { return platCard(p, pl); }).join('') + '</div>' +
-    '<details class="card"><summary>How Sow works</summary><ol class="steps small"><li><b>Share picture + caption</b> copies the caption and opens the share menu with the picture attached.</li><li>Pick Facebook or WhatsApp. If the caption box is empty, long-press and <b>Paste</b>.</li><li>Tap <b>✓</b> on each place you posted. Your 🔥 streak grows each day.</li><li>Facebook Page, YouTube and X go automatic once connected.</li></ol></details>';
+    '<p class="small muted center">Choose which places show here in <a href="#connect">Connect</a>.</p>' +
+    '<details class="card"><summary>How Sow works</summary><ol class="steps small"><li><b>Share picture + caption</b> copies the caption and opens the share menu with the picture attached.</li><li>Pick Facebook, WhatsApp or Instagram. If the caption box is empty, long-press and <b>Paste</b>.</li><li>Tap <b>✓</b> on each place you posted. Your 🔥 streak grows each day.</li><li>Add rows to your Google Sheet: Sow picks them up by itself.</li><li>Facebook Page, Instagram, YouTube, X, Threads and LinkedIn go automatic once connected.</li></ol></details>';
+  view.querySelectorAll('[data-sel]').forEach(function (b) { b.onclick = function () { S.sel = b.dataset.sel; renderToday(); }; });
   view.querySelector('#shareAll').onclick = function () { shareFlow(p, 'facebook', null); };
   view.querySelector('#editBtn').onclick = function () { openEdit(p); };
   view.querySelector('#aiBtn').onclick = function () { openEdit(p, true); };
+  var fc = view.querySelector('#fcBtn'); if (fc) fc.onclick = async function () { toast((await copy(p.first_comment)) ? 'First comment copied. Paste it under your post.' : p.first_comment, 4000); };
   view.querySelectorAll('[data-share]').forEach(function (b) { b.onclick = function () { var pl = PLAT.filter(function (x) { return x.k === b.dataset.share; })[0]; shareFlow(p, pl.cap, pl.k); }; });
   view.querySelectorAll('[data-mark]').forEach(function (b) { b.onclick = async function () { var k = b.dataset.mark; await setPosted(p, k, !(p.posted || {})[k]); render(); }; });
-  var xb = view.querySelector('[data-x]'); if (xb) xb.addEventListener('click', function () { copy(capFor(p, 'x')); setTimeout(function () { if (!(p.posted || {}).x && confirm('Did it post on X? Mark it done?')) setPosted(p, 'x', true).then(render); }, 1500); });
+  view.querySelectorAll('[data-intent]').forEach(function (a) { a.addEventListener('click', function () { var k = a.dataset.intent; copy(capFor(p, k)); setTimeout(function () { if (!(p.posted || {})[k] && confirm('Did it post on ' + PNAME[k] + '? Mark it done?')) setPosted(p, k, true).then(render); }, 1500); }); });
+  view.querySelectorAll('[data-now]').forEach(function (b) { b.onclick = async function () {
+    var k = b.dataset.now; if (!confirm('Post this to ' + PNAME[k] + ' now?')) return; b.disabled = true; b.textContent = 'Posting…';
+    try { await api('/api/connect', { body: { action: 'post_now', platform: k, post_id: p.id } }); await loadPosts(); toast('✓ Posted to ' + PNAME[k]); render(); } catch (e) { toast(e.message, 5000); b.disabled = false; b.textContent = 'Post now'; }
+  }; });
   var vs = view.querySelector('[data-vshare]'); if (vs) vs.onclick = function () { shareFlow(p, 'youtube_desc', 'youtube', true); };
+  var ts = view.querySelector('[data-tshare]'); if (ts) ts.onclick = function () { shareFlow(p, 'tiktok', 'tiktok', !!p.video_url); };
   var vd = view.querySelector('[data-vdl]'); if (vd) vd.onclick = function () { copy(capFor(p, 'youtube_title') + '\n\n' + capFor(p, 'youtube_desc')); downloadUrl(p.video_url); toast('Video downloading. Title + description copied.'); };
   if (p.media_url) getFile(p).catch(function () {});   // warm the picture for an instant share sheet
 }
 
-function renderQueue() {
-  setTab('queue');
-  var t = today();
-  var past = S.posts.filter(function (p) { return p.post_date < t; }), up = S.posts.filter(function (p) { return p.post_date >= t; });
-  function item(p) {
-    var marks = manualKeys(p.posted).length;
-    return '<div class="q-item' + (p.status === 'skipped' ? ' skipped' : '') + (p.post_date === t ? ' today' : '') + '" data-id="' + p.id + '">' +
-      (thumb(p) ? '<img loading="lazy" src="' + esc(thumb(p)) + '" alt="">' : '<img alt="">') +
-      '<div class="grow"><div class="d">' + esc(rel(p.post_date)) + ' · ' + esc(p.post_time.slice(0, 5)) + (p.status === 'skipped' ? ' · skipped' : marks ? ' · ✓ ' + marks + ' posted' : '') + '</div><div class="t">' + esc(p.title || '(no title)') + '</div><div class="d">' + esc((p.caption || '').slice(0, 70)) + '</div></div>' +
-      '<div class="q-acts"><button class="icon-btn" data-up="' + p.id + '" aria-label="Move earlier">▲</button><button class="icon-btn" data-ed="' + p.id + '" aria-label="Edit">✎</button><button class="icon-btn" data-dn="' + p.id + '" aria-label="Move later">▼</button></div></div>';
-  }
-  view.innerHTML = '<div class="row"><h2 class="grow">Queue</h2><button class="btn sm" id="addBtn">+ Add post</button></div>' +
-    '<p class="small muted">' + up.filter(function (p) { return p.status === 'queued'; }).length + ' posts queued. Use ▲ ▼ to swap days, ✎ to edit or skip.</p>' +
-    '<div class="card">' + (up.length ? up.map(item).join('') : '<p class="muted">Nothing queued. Import more from your content bank.</p>') + '</div>' +
-    (past.length ? '<details class="card"><summary>Earlier (' + past.length + ')</summary>' + past.slice().reverse().map(item).join('') + '</details>' : '');
-  view.querySelector('#addBtn').onclick = function () {
-    var last = S.posts.length ? S.posts[S.posts.length - 1].post_date : today();
-    openEdit({ post_date: addDays(last > today() ? last : today(), 1), post_time: '06:00', title: '', caption: '', hashtags: '', platforms: PLAT.map(function (x) { return x.k; }), captions: {}, posted: {}, status: 'queued' });
+/* ---------- plan: list · calendar · drafts ---------- */
+function qItem(p) {
+  var marks = manualKeys(p.posted).length, t = today();
+  return '<div class="q-item' + (p.status === 'skipped' ? ' skipped' : '') + (p.post_date === t ? ' today' : '') + '" data-id="' + p.id + '">' +
+    (thumb(p) ? '<img loading="lazy" src="' + esc(thumb(p)) + '" alt="">' : '<div class="noimg">📝</div>') +
+    '<div class="grow"><div class="d">' + (p.status === 'draft' ? (p.post_date ? 'Draft · ' + esc(niceDate(p.post_date)) : 'Draft') : esc(rel(p.post_date)) + ' · ' + esc(hm(p))) + (p.status === 'skipped' ? ' · skipped' : marks ? ' · ✓ ' + marks + ' posted' : '') + (p.source === 'sheet' ? ' · <span title="From your Google Sheet">📊</span>' : '') + '</div><div class="t">' + esc(p.title || '(no title)') + '</div><div class="d">' + esc((p.caption || '').slice(0, 70)) + '</div></div>' +
+    '<div class="q-acts">' + (p.status === 'draft' ? '<button class="icon-btn" data-ed="' + p.id + '" aria-label="Edit">✎</button>' :
+    '<button class="icon-btn" data-up="' + p.id + '" aria-label="Move earlier">▲</button><button class="icon-btn" data-ed="' + p.id + '" aria-label="Edit">✎</button><button class="icon-btn" data-dn="' + p.id + '" aria-label="Move later">▼</button>') + '</div></div>';
+}
+function bindItems(root) {
+  root.querySelectorAll('[data-ed]').forEach(function (b) { b.onclick = function () { openEdit(byId(b.dataset.ed)); }; });
+  root.querySelectorAll('[data-up]').forEach(function (b) { b.onclick = function () { swap(b.dataset.up, -1); }; });
+  root.querySelectorAll('[data-dn]').forEach(function (b) { b.onclick = function () { swap(b.dataset.dn, 1); }; });
+}
+function nextFreeDay() { var d = today(), used = {}; sched().forEach(function (p) { used[p.post_date] = 1; }); d = addDays(d, 1); while (used[d]) d = addDays(d, 1); return d; }
+function blankPost(d) { return { post_date: d || nextFreeDay(), post_time: defTime(), title: '', caption: '', hashtags: '', platforms: ALLK.slice(), captions: {}, posted: {}, status: 'queued' }; }
+function renderPlan() {
+  setTab('plan');
+  var v = S.planView, t = today(), up = sched().filter(function (p) { return p.post_date >= t; }), past = sched().filter(function (p) { return p.post_date < t; }), dr = drafts();
+  var head = '<div class="row"><h2 class="grow">Plan</h2><button class="btn sm ghost" id="photoBtn" aria-label="New post from a photo">📷</button><button class="btn sm" id="addBtn">+ Add post</button></div>' +
+    '<input type="file" id="photoFile" accept="image/*" hidden>' +
+    '<div class="seg" role="tablist"><button data-v="list"' + (v === 'list' ? ' class="on"' : '') + '>☰ List</button><button data-v="cal"' + (v === 'cal' ? ' class="on"' : '') + '>📅 Calendar</button><button data-v="drafts"' + (v === 'drafts' ? ' class="on"' : '') + '>📝 Drafts' + (dr.length ? ' (' + dr.length + ')' : '') + '</button></div>';
+  var body = '';
+  if (v === 'list') {
+    var groups = [], last = null;
+    up.forEach(function (p) { if (p.post_date !== last) { groups.push('<div class="dayhead">' + esc(rel(p.post_date)) + (rel(p.post_date) !== niceDate(p.post_date) ? ' · ' + esc(niceDate(p.post_date)) : '') + '</div>'); last = p.post_date; } groups.push(qItem(p)); });
+    body = '<p class="small muted">' + up.filter(function (p) { return p.status === 'queued'; }).length + ' posts queued. ▲ ▼ move a post, ✎ edits, duplicates or skips it.</p>' +
+      '<div class="card">' + (up.length ? groups.join('') : '<p class="muted">Nothing queued. Add rows to your Google Sheet or import your content bank.</p>') + '</div>' +
+      (past.length ? '<details class="card"><summary>Earlier (' + past.length + ')</summary>' + past.slice().reverse().map(qItem).join('') + '</details>' : '');
+  } else if (v === 'cal') body = calendarHtml();
+  else body = draftsHtml(dr);
+  view.innerHTML = head + body;
+  view.querySelectorAll('.seg [data-v]').forEach(function (b) { b.onclick = function () { S.planView = b.dataset.v; renderPlan(); }; });
+  view.querySelector('#addBtn').onclick = function () { openEdit(blankPost(v === 'cal' && S.calDay ? S.calDay : null)); };
+  view.querySelector('#photoBtn').onclick = function () { view.querySelector('#photoFile').click(); };
+  view.querySelector('#photoFile').onchange = async function (e) {
+    var f = e.target.files[0]; if (!f) return; toast('Uploading picture…', 8000);
+    try { var url = await uploadImage(f); var np = blankPost(); np.media_url = url; toast('Picture uploaded ✓ Add a caption.'); openEdit(np); } catch (err) { toast('Upload failed: ' + err.message, 4000); }
   };
-  view.querySelectorAll('[data-ed]').forEach(function (b) { b.onclick = function () { openEdit(byId(b.dataset.ed)); }; });
-  view.querySelectorAll('[data-up]').forEach(function (b) { b.onclick = function () { swap(b.dataset.up, -1); }; });
-  view.querySelectorAll('[data-dn]').forEach(function (b) { b.onclick = function () { swap(b.dataset.dn, 1); }; });
+  bindItems(view);
+  if (v === 'cal') bindCalendar(); if (v === 'drafts') bindDrafts();
+}
+function calendarHtml() {
+  var t = today(), m = S.calMonth || t.slice(0, 7), y = +m.slice(0, 4), mo = +m.slice(5, 7);
+  var first = new Date(Date.UTC(y, mo - 1, 1)), days = new Date(Date.UTC(y, mo, 0)).getUTCDate(), lead = (first.getUTCDay() + 6) % 7;   // Monday first
+  var by = {}; sched().forEach(function (p) { (by[p.post_date] = by[p.post_date] || []).push(p); });
+  var cells = []; for (var i = 0; i < lead; i++) cells.push('<div class="cd empty"></div>');
+  for (var d = 1; d <= days; d++) {
+    var ds = m + '-' + String(d).padStart(2, '0'), ps = by[ds] || [], p0 = ps.filter(function (p) { return p.status !== 'skipped'; })[0] || ps[0];
+    var done = ps.length && ps.every(function (p) { return manualKeys(p.posted).length || p.status === 'skipped'; });
+    cells.push('<button class="cd' + (ds === t ? ' now' : '') + (ds === S.calDay ? ' sel' : '') + (ds < t ? ' past' : '') + '" data-day="' + ds + '"><span class="n">' + d + '</span>' +
+      (p0 && thumb(p0) ? '<img loading="lazy" src="' + esc(thumb(p0)) + '" alt="">' : p0 ? '<span class="dot">📝</span>' : '') + (ps.length > 1 ? '<span class="cnt">' + ps.length + '</span>' : '') + (done ? '<span class="ok">✓</span>' : '') + '</button>');
+  }
+  var title = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  var sel = S.calDay, list = sel ? (by[sel] || []) : [];
+  return '<div class="card cal"><div class="row"><button class="icon-btn" id="calPrev" aria-label="Previous month">‹</button><b class="grow center">' + esc(title) + '</b><button class="icon-btn" id="calNext" aria-label="Next month">›</button></div>' +
+    '<div class="cgrid wk">' + ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(function (x) { return '<div>' + x + '</div>'; }).join('') + '</div><div class="cgrid">' + cells.join('') + '</div></div>' +
+    (sel ? '<div class="card"><div class="row"><b class="grow">' + esc(rel(sel)) + (rel(sel) !== niceDate(sel) ? ' · ' + esc(niceDate(sel)) : '') + '</b><button class="btn sm" id="calAdd">+ Add</button></div>' + (list.length ? list.map(qItem).join('') : '<p class="small muted">Nothing on this day.</p>') + '</div>' : '<p class="small muted center">Tap a day to see or add posts.</p>');
+}
+function bindCalendar() {
+  var m = S.calMonth || today().slice(0, 7);
+  var mv = function (n) { var d = new Date(m + '-15T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n); S.calMonth = d.toISOString().slice(0, 7); S.calDay = null; renderPlan(); };
+  $('#calPrev').onclick = function () { mv(-1); }; $('#calNext').onclick = function () { mv(1); };
+  view.querySelectorAll('[data-day]').forEach(function (b) { b.onclick = function () { S.calDay = b.dataset.day; renderPlan(); }; });
+  var a = $('#calAdd'); if (a) a.onclick = function () { openEdit(blankPost(S.calDay)); };
+}
+function draftsHtml(dr) {
+  var undated = dr.filter(function (p) { return !p.post_date; }).length;
+  return '<div class="card"><h3>⚡ Fill the next days</h3><p class="small muted">Takes posts from your bank (drafts and sheet rows with no date) and puts one on each free day, at ' + esc(defTime()) + '.</p>' +
+    '<div class="row"><label class="grow" style="margin:0">Days to fill</label><input type="number" id="fillN" min="1" max="60" value="' + Math.min(7, Math.max(1, dr.length)) + '" style="width:90px"></div>' +
+    '<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink)"><input type="checkbox" id="fillAll" style="width:auto"> Include drafts that already have a date</label>' +
+    '<button class="btn" id="fillGo" style="width:100%;margin-top:8px"' + (dr.length ? '' : ' disabled') + '>Fill ' + (dr.length ? 'from ' + dr.length + ' in the bank' : '(bank is empty)') + '</button></div>' +
+    '<div class="card">' + (dr.length ? dr.map(qItem).join('') : '<p class="muted">No drafts. Tick “Save as draft” when you edit a post, or leave the Date empty in your Google Sheet, and they wait here.</p>') + '</div>' +
+    (undated ? '<p class="small muted center">' + undated + ' have no date yet.</p>' : '');
+}
+function bindDrafts() {
+  var b = $('#fillGo'); if (!b) return;
+  b.onclick = async function () {
+    var n = Math.max(1, Math.min(60, +$('#fillN').value || 7)), all = $('#fillAll').checked;
+    var pool = drafts().filter(function (p) { return all || !p.post_date; }); if (!pool.length) return toast('Nothing to fill with. Tick “Include drafts that already have a date”.', 4000);
+    var used = {}; sched().forEach(function (p) { if (p.status !== 'skipped') used[p.post_date] = 1; });
+    var d = today(), plan = [];
+    for (var i = 0; i < 366 && plan.length < Math.min(n, pool.length); i++) { d = addDays(d, 1); if (!used[d]) plan.push(d); }
+    if (!confirm('Schedule ' + plan.length + ' posts, one a day, ' + niceDate(plan[0]) + ' → ' + niceDate(plan[plan.length - 1]) + '?')) return;
+    b.disabled = true; b.textContent = 'Filling…';
+    for (var k = 0; k < plan.length; k++) {
+      var r = await sb.from('sp_posts').update({ post_date: plan[k], slug: plan[k], post_time: pool[k].post_time && pool[k].post_date ? pool[k].post_time : defTime(), status: 'queued' }).eq('id', pool[k].id);
+      if (r.error) { toast('Stopped: ' + r.error.message, 5000); break; }
+    }
+    await loadPosts(); S.planView = 'list'; renderPlan(); toast('✓ ' + plan.length + ' days filled');
+  };
 }
 function byId(id) { return S.posts.filter(function (p) { return p.id === id; })[0]; }
 async function swap(id, dir) {
-  var i = S.posts.findIndex(function (p) { return p.id === id; }), j = i + dir;
-  if (j < 0 || j >= S.posts.length) return;
-  var a = S.posts[i], b = S.posts[j];
-  var A = { post_date: b.post_date, post_time: b.post_time, position: b.position, slug: b.slug, link_url: b.link_url };
-  var B = { post_date: a.post_date, post_time: a.post_time, position: a.position, slug: a.slug, link_url: a.link_url };
-  if (A.post_date === B.post_date && A.position === B.position) { A.position = B.position + (dir > 0 ? 1 : -1); }
+  var list = sched(), i = list.findIndex(function (p) { return p.id === id; }), j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  var a = list[i], b = list[j];
+  var A = { post_date: b.post_date, post_time: b.post_time, position: b.position, slug: b.slug };
+  var B = { post_date: a.post_date, post_time: a.post_time, position: a.position, slug: a.slug };
+  if (A.post_date === B.post_date && hm(A) === hm(B) && A.position === B.position) { A.position = B.position + (dir > 0 ? 1 : -1); }
   var r1 = await sb.from('sp_posts').update(A).eq('id', a.id), r2 = await sb.from('sp_posts').update(B).eq('id', b.id);
   if (r1.error || r2.error) return toast('Could not move: ' + (r1.error || r2.error).message);
   await loadPosts(); render(); toast('Moved ✓');
 }
 
 /* ---------- edit sheet ---------- */
+function capLen(k, v) { return k === 'x' ? xLen(v) : v.length; }
+function tagCount(v) { return (v.match(/#[\p{L}\p{N}_]+/gu) || []).length; }
+function counterText(k, v, max) {
+  var n = capLen(k, v), over = n > max, extra = k === 'instagram' && tagCount(v) > 30 ? ' · ' + tagCount(v) + '/30 hashtags' : '';
+  return '<span class="' + (over || extra ? 'err' : '') + '">' + n + '/' + max + (over ? ' · too long' : '') + extra + '</span>';
+}
+function previewHtml(k, text, img) {
+  var nm = { facebook: 'Facebook', instagram: 'Instagram', whatsapp: 'WhatsApp', x: 'X', threads: 'Threads', linkedin: 'LinkedIn', tiktok: 'TikTok', pinterest: 'Pinterest', youtube_title: 'YouTube', youtube_desc: 'YouTube' }[k];
+  var fold = { instagram: 125, facebook: 480, linkedin: 210, tiktok: 100, youtube_desc: 160, pinterest: 100 }[k], body = esc(fold && text.length > fold ? text.slice(0, fold) : text);
+  return '<div class="pv pv-' + k + '"><div class="pvh"><span class="av">M</span><b>Olaoluwa Michael</b><span class="muted small">· ' + nm + '</span></div>' +
+    (k === 'instagram' && img ? '<img src="' + esc(img) + '" alt="">' : '') + '<div class="pvt">' + body + (fold && text.length > fold ? '<span class="muted">… more</span>' : '') + '</div>' +
+    (k !== 'instagram' && img && k !== 'youtube_title' ? '<img src="' + esc(img) + '" alt="">' : '') + '</div>';
+}
 function openEdit(p, aiFirst) {
-  var isNew = !p.id, m = $('#modal'), caps = p.captions || {};
-  m.innerHTML = '<div class="sheet"><div class="row"><h2 class="grow">' + (isNew ? 'New post' : 'Edit post') + '</h2><button class="btn sm ghost" id="mClose">Close</button></div>' +
-    '<div class="row"><div class="grow"><label>Date</label><input type="date" id="fDate" value="' + esc(p.post_date) + '"></div><div style="width:120px"><label>Time (WAT)</label><input type="time" id="fTime" value="' + esc((p.post_time || '06:00').slice(0, 5)) + '"></div></div>' +
+  var isNew = !p.id, m = $('#modal'), caps = p.captions || {}, sets = S.prefs.hashtag_sets || [];
+  var fromSheet = p.source === 'sheet';
+  m.innerHTML = '<div class="sheet"><div class="row"><h2 class="grow">' + (isNew ? (p._dup ? 'Copy of post' : 'New post') : 'Edit post') + '</h2><button class="btn sm ghost" id="mClose">Close</button></div>' +
+    (fromSheet ? '<p class="small muted" style="margin:0">📊 From your Google Sheet. Changes to the text made here are replaced the next time the sheet changes this row, so edit the sheet for lasting changes.</p>' : '') +
+    '<div class="row"><div class="grow"><label>Date</label><input type="date" id="fDate" value="' + esc(p.post_date || '') + '"></div><div style="width:120px"><label>Time (WAT)</label><input type="time" id="fTime" value="' + esc(hm(p)) + '"></div></div>' +
+    '<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink)"><input type="checkbox" id="fDraft" style="width:auto"' + (p.status === 'draft' ? ' checked' : '') + '> Save as draft (not posted until you schedule it)</label>' +
     '<label>Title</label><input id="fTitle" value="' + esc(p.title) + '">' +
     '<label>Caption</label><textarea id="fCap">' + esc(p.caption) + '</textarea>' +
     '<div class="row"><div class="grow"><label>Bible verse (optional)</label><textarea id="fVerse" style="min-height:60px">' + esc(p.verse || '') + '</textarea></div></div>' +
-    '<div class="row"><div class="grow"><label>Reference</label><input id="fRef" value="' + esc(p.reference || '') + '"></div><div class="grow"><label>Hashtags</label><input id="fTags" value="' + esc(p.hashtags || '') + '"></div></div>' +
-    '<label>Picture</label><div class="row">' + (p.media_url ? '<img src="' + esc(thumb(p)) + '" style="width:54px;height:96px;object-fit:cover;border-radius:8px">' : '') + '<input class="grow" id="fMedia" placeholder="Image link (Drive or web)" value="' + esc(p.media_url || '') + '"></div>' +
-    '<label class="btn sm ghost" style="display:inline-flex;margin-top:6px">📷 Upload picture<input type="file" id="fFile" accept="image/*" hidden></label>' +
-    '<label>Post to</label><div class="row wrap">' + PLAT.map(function (pl) { return '<label style="display:inline-flex;gap:6px;align-items:center;margin:2px 8px 2px 0;font-weight:500;color:var(--ink)"><input type="checkbox" style="width:auto" value="' + pl.k + '"' + ((p.platforms || []).indexOf(pl.k) >= 0 ? ' checked' : '') + '> ' + pl.nm + '</label>'; }).join('') + '</div>' +
-    '<div class="ai-box" id="aiBox"><div class="row"><b class="grow">✨ Captions per platform</b><button class="btn sm soft" id="aiGo">' + (Object.keys(caps).length ? 'Rewrite again' : 'Write them') + '</button></div><p class="small muted">AI writes a long Facebook post, a short X post, a YouTube title and description and a WhatsApp version. Edit anything.</p>' +
-    [['facebook', 'Facebook'], ['whatsapp', 'WhatsApp'], ['x', 'X (≤280)'], ['youtube_title', 'YouTube title'], ['youtube_desc', 'YouTube description']].map(function (c) { return '<label>' + c[1] + '</label><textarea data-cap="' + c[0] + '" style="min-height:' + (c[0] === 'youtube_title' ? 50 : 80) + 'px">' + esc(caps[c[0]] || '') + '</textarea>'; }).join('') + '<div class="small muted" id="xCount"></div></div>' +
-    '<div class="row" style="margin-top:14px"><button class="btn grow" id="mSave">Save</button>' + (isNew ? '' : '<button class="btn ghost" id="mSkip">' + (p.status === 'skipped' ? 'Unskip' : 'Skip') + '</button><button class="btn ghost" id="mDel" aria-label="Delete">🗑</button>') + '</div></div>';
+    '<label>Reference</label><input id="fRef" value="' + esc(p.reference || '') + '">' +
+    '<label>Hashtags</label><input id="fTags" value="' + esc(p.hashtags || '') + '">' +
+    '<div class="chips" id="tagSets">' + sets.map(function (s, i) { return '<button class="chip" data-set="' + i + '" title="' + esc(s.tags) + '">+ ' + esc(s.name) + '</button>'; }).join('') + '<button class="chip ghost" id="saveSet">💾 Save as set</button></div>' +
+    '<label>First comment (optional)</label><textarea id="fFirst" style="min-height:50px" placeholder="e.g. More verses every morning, follow for daily encouragement 🙏">' + esc(p.first_comment || '') + '</textarea>' +
+    '<p class="small muted" style="margin:2px 0 0">Posted by itself under your post on Facebook Page and Instagram. For 1-tap places, Today shows a Copy button.</p>' +
+    '<label>Picture</label><div class="row">' + (p.media_url ? '<img id="fThumb" src="' + esc(thumb(p)) + '" style="width:54px;height:96px;object-fit:cover;border-radius:8px">' : '') + '<input class="grow" id="fMedia" placeholder="Image link (Drive or web)" value="' + esc(p.media_url || '') + '"></div>' +
+    '<label class="btn sm ghost" style="display:inline-flex;margin-top:6px">📷 Upload picture from phone<input type="file" id="fFile" accept="image/*" hidden></label>' +
+    '<label>Video link (optional)</label><input id="fVideo" placeholder="MP4 link for YouTube, TikTok, Reels" value="' + esc(p.video_url || '') + '">' +
+    '<label>Post to</label><div class="row wrap">' + PLAT.map(function (pl) { return '<label style="display:inline-flex;gap:6px;align-items:center;margin:2px 8px 2px 0;font-weight:500;color:var(--ink)"><input type="checkbox" class="pl" style="width:auto" value="' + pl.k + '"' + ((p.platforms || []).indexOf(pl.k) >= 0 ? ' checked' : '') + '> ' + pl.nm + '</label>'; }).join('') + '</div>' +
+    '<div class="ai-box" id="aiBox"><div class="row"><b class="grow">✨ Captions per platform</b><button class="btn sm soft" id="aiGo">' + (Object.keys(caps).length ? 'Rewrite again' : 'Write them') + '</button></div><p class="small muted">AI writes a version for each place. Edit anything. Empty boxes use the main caption. Tap 👁 to preview.</p>' +
+    CAPS.map(function (c) { return '<div class="caprow"><div class="row"><label class="grow">' + c[1] + '</label><span class="small muted cnt" data-cnt="' + c[0] + '"></span><button class="icon-btn sm" data-pv="' + c[0] + '" aria-label="Preview ' + c[1] + '">👁</button></div><textarea data-cap="' + c[0] + '" placeholder="' + esc(clip(capFor(Object.assign({}, p, { captions: {} }), c[0]).replace(/\n+/g, ' '), 90)) + '" style="min-height:' + (c[0] === 'youtube_title' ? 50 : 80) + 'px">' + esc(caps[c[0]] || '') + '</textarea><div class="pvbox" data-pvb="' + c[0] + '" hidden></div></div>'; }).join('') + '</div>' +
+    '<div class="row" style="margin-top:14px"><button class="btn grow" id="mSave">Save</button>' + (isNew ? '' : '<button class="btn ghost" id="mDup" aria-label="Duplicate">⧉</button><button class="btn ghost" id="mSkip">' + (p.status === 'skipped' ? 'Unskip' : 'Skip') + '</button><button class="btn ghost" id="mDel" aria-label="Delete">🗑</button>') + '</div></div>';
   m.hidden = false;
-  var xc = function () { var v = m.querySelector('[data-cap="x"]').value; m.querySelector('#xCount').textContent = v ? 'X post: ' + xLen(v) + '/280' : ''; };
-  m.querySelector('[data-cap="x"]').oninput = xc; xc();
+  var cur = function () { return Object.assign({}, p, gather(), { captions: {} }); };
+  var count = function (k) { var t = m.querySelector('[data-cap="' + k + '"]'), max = CAPS.filter(function (c) { return c[0] === k; })[0][2], v = t.value || capFor(cur(), k); m.querySelector('[data-cnt="' + k + '"]').innerHTML = counterText(k, v, max) + (t.value ? '' : ' auto'); };
+  var countAll = function () { CAPS.forEach(function (c) { count(c[0]); }); };
+  m.querySelectorAll('[data-cap]').forEach(function (t) { t.oninput = function () { count(t.dataset.cap); var b = m.querySelector('[data-pvb="' + t.dataset.cap + '"]'); if (!b.hidden) b.innerHTML = previewHtml(t.dataset.cap, t.value || capFor(cur(), t.dataset.cap), mediaSrc(m.querySelector('#fMedia').value.trim())); }; });
+  ['#fCap', '#fTitle', '#fTags', '#fVerse', '#fRef'].forEach(function (s) { m.querySelector(s).addEventListener('input', countAll); });
+  m.querySelectorAll('[data-pv]').forEach(function (b) { b.onclick = function () { var k = b.dataset.pv, box = m.querySelector('[data-pvb="' + k + '"]'); box.hidden = !box.hidden; if (!box.hidden) box.innerHTML = previewHtml(k, m.querySelector('[data-cap="' + k + '"]').value || capFor(cur(), k), mediaSrc(normMedia(m.querySelector('#fMedia').value.trim()))); }; });
   m.querySelector('#mClose').onclick = closeModal;
   m.onclick = function (e) { if (e.target === m) closeModal(); };
+  m.querySelectorAll('[data-set]').forEach(function (b) { b.onclick = function () { var s = sets[+b.dataset.set], el = m.querySelector('#fTags'), have = el.value.split(/\s+/).filter(Boolean); s.tags.split(/\s+/).filter(Boolean).forEach(function (t) { if (have.indexOf(t) < 0) have.push(t); }); el.value = have.join(' '); countAll(); toast('Added ' + s.name); }; });
+  m.querySelector('#saveSet').onclick = async function () {
+    var tags = m.querySelector('#fTags').value.trim(); if (!tags) return toast('Type some hashtags first');
+    var name = prompt('Name this hashtag set', 'My set'); if (!name) return;
+    var list = (S.prefs.hashtag_sets || []).filter(function (x) { return x.name !== name; }).concat([{ name: name.slice(0, 30), tags: tags }]);
+    await savePref('hashtag_sets', list); toast('Saved “' + name + '”'); var keep = gather(); openEdit(Object.assign({}, p, keep, { id: p.id }));
+  };
   m.querySelector('#fFile').onchange = async function (e) {
     var f = e.target.files[0]; if (!f) return; toast('Uploading picture…', 8000);
     try { var url = await uploadImage(f); m.querySelector('#fMedia').value = url; toast('Picture uploaded ✓'); } catch (err) { toast('Upload failed: ' + err.message); }
   };
   function gather() {
-    var plats = Array.prototype.map.call(m.querySelectorAll('input[type=checkbox]:checked'), function (c) { return c.value; });
+    var plats = Array.prototype.map.call(m.querySelectorAll('input.pl:checked'), function (c) { return c.value; });
     var captions = {}; m.querySelectorAll('[data-cap]').forEach(function (t) { if (t.value.trim()) captions[t.dataset.cap] = t.value.trim(); });
-    var d = m.querySelector('#fDate').value || today(), media = m.querySelector('#fMedia').value.trim() || null;
-    var o = { post_date: d, post_time: m.querySelector('#fTime').value || '06:00', title: m.querySelector('#fTitle').value.trim(), caption: m.querySelector('#fCap').value.trim(),
+    var draft = m.querySelector('#fDraft').checked, d = m.querySelector('#fDate').value || (draft ? null : nextFreeDay()), media = m.querySelector('#fMedia').value.trim() || null;
+    var o = { post_date: d, post_time: m.querySelector('#fTime').value || defTime(), title: m.querySelector('#fTitle').value.trim(), caption: m.querySelector('#fCap').value.trim(),
       verse: m.querySelector('#fVerse').value.trim() || null, reference: m.querySelector('#fRef').value.trim() || null, hashtags: m.querySelector('#fTags').value.trim(),
-      media_url: normMedia(media), platforms: plats, captions: captions, slug: d, link_url: p.link_url || null };
+      first_comment: m.querySelector('#fFirst').value.trim() || null, video_url: m.querySelector('#fVideo').value.trim() || null,
+      media_url: normMedia(media), platforms: plats, captions: captions, slug: d, link_url: p.link_url || null,
+      status: draft ? 'draft' : (p.status === 'draft' || !p.status ? 'queued' : p.status) };
     if (media !== p.media_url) o.thumb_url = null;
     return o;
   }
+  countAll();
   m.querySelector('#aiGo').onclick = async function (e) {
     var b = e.target; b.disabled = true; b.textContent = 'Writing…';
     try {
       var o = gather(), r;
       if (p.id) { var base = Object.assign({}, o); delete base.captions; var u = await sb.from('sp_posts').update(base).eq('id', p.id); if (u.error) throw u.error; }
       r = await api('/api/rewrite', { body: p.id ? { post_id: p.id } : { post: Object.assign({}, p, o) } });
-      if (p.id) { var cur = byId(p.id); if (cur) cur.captions = Object.assign({}, cur.captions || {}, r.captions); }
+      if (p.id) { var cp = byId(p.id); if (cp) cp.captions = Object.assign({}, cp.captions || {}, r.captions); }
       Object.keys(r.captions).forEach(function (k) { var t = m.querySelector('[data-cap="' + k + '"]'); if (t) t.value = r.captions[k]; });
-      xc(); toast('✨ Written. Edit anything, then Save.');
+      countAll(); toast('✨ Written. Edit anything, then Save.');
     } catch (err) { toast(err.message, 4000); }
     b.disabled = false; b.textContent = 'Rewrite again';
   };
@@ -273,15 +440,19 @@ function openEdit(p, aiFirst) {
     if (!o.title && !o.caption) return toast('Add a title or caption');
     r = isNew ? await sb.from('sp_posts').insert(Object.assign(o, { source: 'manual' })) : await sb.from('sp_posts').update(o).eq('id', p.id);
     if (r.error) return toast('Could not save: ' + r.error.message);
-    S.files = {}; closeModal(); await loadPosts(); render(); toast('Saved ✓');
+    S.files = {}; closeModal(); await loadPosts(); render(); toast(o.status === 'draft' ? 'Saved as draft ✓' : 'Saved ✓');
   };
   if (!isNew) {
+    m.querySelector('#mDup').onclick = function () {
+      var o = gather(); var c = Object.assign({}, p, o, { id: undefined, posted: {}, remote: {}, metrics: {}, sheet_key: null, source: 'manual', _dup: true, post_date: o.status === 'draft' ? o.post_date : nextFreeDay() });
+      delete c.id; delete c.created_at; delete c.updated_at; c.slug = c.post_date; openEdit(c); toast('Copy ready. Pick a date and Save.');
+    };
     m.querySelector('#mSkip').onclick = async function () {
       var r = await sb.from('sp_posts').update({ status: p.status === 'skipped' ? 'queued' : 'skipped' }).eq('id', p.id);
       if (r.error) return toast(r.error.message); closeModal(); await loadPosts(); render(); toast(p.status === 'skipped' ? 'Back in the queue' : 'Skipped');
     };
     m.querySelector('#mDel').onclick = async function () {
-      if (!confirm('Delete this post from the bank?')) return;
+      if (!confirm('Delete this post from Sow?' + (fromSheet ? ' (It comes back if the row is still in your sheet.)' : ''))) return;
       var r = await sb.from('sp_posts').delete().eq('id', p.id); if (r.error) return toast(r.error.message);
       closeModal(); await loadPosts(); render(); toast('Deleted');
     };
@@ -310,31 +481,74 @@ var FIELDS = [
   ['post_date', 'Date', /^(date|day|post ?date|publish|schedule)/i], ['post_time', 'Time', /^(time|hour)/i], ['title', 'Title', /^(title|headline|topic|name)/i],
   ['caption', 'Caption', /^(caption|text|post|content|body|message|copy)/i], ['verse', 'Bible verse', /^(verse|scripture|bible)/i], ['reference', 'Reference', /^(ref|reference|book|chapter)/i],
   ['hashtags', 'Hashtags', /^(hash|tags?)/i], ['media_url', 'Image link', /^(image|media|picture|photo|pic|img)/i], ['video_url', 'Video link', /^(video|reel|short)/i], ['link_url', 'Link (optional)', /^(link|url|website)/i],
-  ['platforms', 'Platforms', /^(platform|channel|where|network)/i],
+  ['platforms', 'Platforms', /^(platform|channel|where|network)/i], ['first_comment', 'First comment', /^(first ?comment|comment)/i],
 ];
-var IMP = { rows: null, head: null, map: {} };
+var IMP = { rows: null, head: null, map: {}, url: null };
 function loadSheetJS() {
   if (window.XLSX) return Promise.resolve();
   return new Promise(function (ok, no) { var s = document.createElement('script'); s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.mini.min.js'; s.onload = ok; s.onerror = function () { no(new Error('Could not load the Excel reader. Check your data.')); }; document.head.appendChild(s); });
 }
 function renderImport() {
-  setTab('import');
-  view.innerHTML = '<h2>Import your content bank</h2><p class="small muted">Each row = one post. Excel (.xlsx), CSV or a Google Sheet. You choose which column is which.</p>' +
-    '<div class="card"><label class="btn" style="color:#fff;margin:0">📂 Choose Excel / CSV file<input type="file" id="iFile" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label>' +
-    '<label>Or paste a Google Sheets link</label><div class="row"><input id="iUrl" placeholder="https://docs.google.com/spreadsheets/d/…"><button class="btn sm" id="iLoad">Load</button></div>' +
-    '<p class="small muted">The sheet must be shared as “Anyone with the link → Viewer”.</p>' +
-    '<p class="small"><a href="/template/sow-content-bank-template.xlsx" download>⬇ Download the template (.xlsx)</a>' + (CFG.sheetCopy ? ' · <a href="' + CFG.sheetCopy + '" target="_blank" rel="noopener">Copy the Google Sheet template</a>' : '') + '</p></div>' +
+  setTab('sheet');
+  var sh = S.prefs.sheet;
+  view.innerHTML = '<h2>Your content sheet</h2>' + syncCardHtml(sh) +
+    '<details class="card"' + (sh ? '' : ' open') + '><summary>One-time import (Excel, CSV or a sheet)</summary><p class="small muted">Each row = one post. You choose which column is which.</p>' +
+    '<label class="btn" style="color:#fff;margin:0">📂 Choose Excel / CSV file<input type="file" id="iFile" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label>' +
+    '<label>Or load a Google Sheets link once</label><div class="row"><input id="iUrl" placeholder="https://docs.google.com/spreadsheets/d/…"><button class="btn sm" id="iLoad">Load</button></div>' +
+    '<p class="small"><a href="/template/sow-content-bank-template.xlsx" download>⬇ Download the template (.xlsx)</a>' + (CFG.sheetCopy ? ' · <a href="' + CFG.sheetCopy + '" target="_blank" rel="noopener">Copy the Google Sheet template</a>' : '') + '</p></details>' +
     '<div id="iMap"></div>';
+  bindSyncCard();
   $('#iFile').onchange = async function (e) {
     var f = e.target.files[0]; if (!f) return;
-    try { toast('Reading ' + f.name + '…'); await loadSheetJS(); var buf = await f.arrayBuffer(); parseWorkbook(XLSX.read(buf, { type: 'array', cellDates: true })); }
+    try { toast('Reading ' + f.name + '…'); IMP.url = null; await loadSheetJS(); var buf = await f.arrayBuffer(); parseWorkbook(XLSX.read(buf, { type: 'array', cellDates: true })); }
     catch (err) { toast(err.message, 4000); }
   };
   $('#iLoad').onclick = async function () {
     var u = $('#iUrl').value.trim(); if (!u) return;
-    try { toast('Loading sheet…'); await loadSheetJS(); var csv = await api('/api/sheet?url=' + encodeURIComponent(u)); parseWorkbook(XLSX.read(csv, { type: 'string', cellDates: true })); }
+    try { toast('Loading sheet…'); await loadSheetJS(); var csv = await api('/api/sheet?url=' + encodeURIComponent(u)); IMP.url = u; parseWorkbook(XLSX.read(csv, { type: 'string', raw: true })); }
     catch (err) { toast(err.message, 5000); }
   };
+}
+function syncCardHtml(sh) {
+  if (!sh) return '<div class="card"><h3>🔄 Live sync with Google Sheets</h3><p class="small muted">Paste your sheet link once. Sow reads it again by itself every 30 minutes and each time you open the app. You just add rows to your sheet.</p>' +
+    '<ol class="steps small"><li>In the sheet tap <b>Share</b> → General access → <b>Anyone with the link</b> → Viewer.</li><li>Copy the link and paste it here.</li></ol>' +
+    '<div class="row"><input id="sUrl" placeholder="https://docs.google.com/spreadsheets/d/…"><button class="btn sm" id="sGo">Connect</button></div>' +
+    '<p class="small muted">Columns Sow reads: Date, Time, Title, Caption, Bible verse, Reference, Hashtags, Image link, Video link, Platforms, Link, First comment, Status (draft), ID. Only Title or Caption is required. Dates like 7/10/2026 are day/month/year.</p></div>';
+  var r = sh.last_result || {}, cols = r.columns ? Object.keys(r.columns).length : 0;
+  return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">🔄 Live sync is on</h3><span class="pill auto">auto</span></div>' +
+    '<p class="small" style="margin:8px 0 4px"><a href="' + esc(sh.url) + '" target="_blank" rel="noopener">Open your sheet ↗</a></p>' +
+    '<p class="small muted" id="sLast">Last synced <b>' + esc(ago(sh.last_synced)) + '</b>' + (sh.last_synced ? ' (' + new Date(sh.last_synced).toLocaleString('en-GB', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ')' : '') + '. ' +
+    (r.total != null ? r.total + ' rows · ' + (r.added || 0) + ' new · ' + (r.updated || 0) + ' updated' + (r.removed ? ' · ' + r.removed + ' removed' : '') : '') + '</p>' +
+    (sh.last_error ? '<p class="small err">⚠️ ' + esc(sh.last_error) + '</p>' : '') +
+    '<button class="btn" id="sNow" style="width:100%">↻ Sync now</button>' +
+    '<label>Rows with no date</label><select id="sUnd"><option value="schedule"' + (sh.undated !== 'bank' ? ' selected' : '') + '>Put them on the next free days</option><option value="bank"' + (sh.undated === 'bank' ? ' selected' : '') + '>Keep them in my bank (Drafts → Fill)</option></select>' +
+    (cols ? '<details style="margin-top:10px"><summary class="small">Columns matched (' + cols + ')</summary><p class="small muted">' + Object.keys(r.columns).map(function (k) { return esc(r.columns[k]); }).join(' · ') + '</p></details>' : '') +
+    '<p class="small muted">Change a row in the sheet and Sow updates it. Delete a row and Sow removes it, unless it was already posted. Posted and past posts are never changed.</p>' +
+    '<button class="btn sm ghost" id="sOff">Stop syncing this sheet</button></div>';
+}
+function bindSyncCard() {
+  var go = $('#sGo'); if (go) go.onclick = function () { connectSheet($('#sUrl').value.trim(), {}); };
+  var now = $('#sNow'); if (now) now.onclick = async function () { now.disabled = true; now.textContent = 'Syncing…'; await syncNow(true); renderImport(); };
+  var und = $('#sUnd'); if (und) und.onchange = async function () { try { var r = await api('/api/sheet', { body: { action: 'settings', undated: und.value } }); S.prefs.sheet = r.sheet; toast('Saved ✓'); } catch (e) { toast(e.message, 4000); } };
+  var off = $('#sOff'); if (off) off.onclick = async function () { if (!confirm('Stop syncing? Posts already in Sow stay.')) return; await api('/api/sheet', { body: { action: 'disconnect' } }); S.prefs.sheet = null; renderImport(); toast('Sync stopped'); };
+}
+async function connectSheet(url, map) {
+  if (!url) return toast('Paste your Google Sheet link');
+  toast('Connecting your sheet…', 15000);
+  try {
+    var r = await api('/api/sheet', { body: { action: 'connect', url: url, map: map || {}, undated: 'schedule' } });
+    S.prefs.sheet = r.sheet; await loadPosts();
+    toast('✓ Sheet connected: ' + r.result.added + ' new, ' + r.result.updated + ' updated', 4500); location.hash = '#sheet'; renderImport();
+  } catch (e) { toast(e.message, 6000); }
+}
+async function syncNow(loud) {
+  try {
+    var r = await api('/api/sheet', { body: { action: 'sync' } }); S.prefs.sheet = r.sheet;
+    var x = r.result || {};
+    if (x.added || x.updated || x.removed) await loadPosts();
+    if (loud) toast(x.error ? '⚠️ ' + x.error : '✓ Synced: ' + (x.added || 0) + ' new, ' + (x.updated || 0) + ' updated' + (x.removed ? ', ' + x.removed + ' removed' : ''), 4500);
+    return x;
+  } catch (e) { if (loud) toast(e.message, 5000); }
 }
 function parseWorkbook(wb) {
   var ws = wb.Sheets[wb.SheetNames[0]];
@@ -350,7 +564,7 @@ function renderMapping() {
   $('#iMap').innerHTML = '<div class="card"><h3>1. Match your columns</h3><p class="small muted">' + IMP.rows.length + ' rows found.</p>' +
     '<table class="tbl">' + FIELDS.map(function (f) { return '<tr><th style="width:38%">' + f[1] + '</th><td><select data-f="' + f[0] + '">' + opts(IMP.map[f[0]]) + '</select></td></tr>'; }).join('') + '</table>' +
     '<label>Rows with no date start on</label><input type="date" id="iStart" value="' + addDays(lastDate(), 1) + '">' +
-    '<label>Default time (WAT)</label><input type="time" id="iTime" value="06:00"></div><div id="iPrev"></div>';
+    '<label>Default time (WAT)</label><input type="time" id="iTime" value="' + defTime() + '"></div><div id="iPrev"></div>';
   $('#iMap').querySelectorAll('select').forEach(function (s) { s.onchange = function () { if (s.value === '') delete IMP.map[s.dataset.f]; else IMP.map[s.dataset.f] = +s.value; renderPreview(); }; });
   $('#iStart').onchange = renderPreview; $('#iTime').onchange = renderPreview;
   renderPreview();
@@ -372,7 +586,8 @@ function cellTime(v, def) {
   return String(h).padStart(2, '0') + ':' + (m[2] || '00');
 }
 var PLAT_ALIAS = { facebook: 'facebook', fb: 'facebook', 'fb profile': 'facebook', profile: 'facebook', groups: 'fb_groups', 'fb groups': 'fb_groups', group: 'fb_groups', 'fb page': 'fb_page', page: 'fb_page',
-  whatsapp: 'whatsapp', status: 'whatsapp', 'wa status': 'whatsapp', channel: 'wa_channel', 'wa channel': 'wa_channel', 'whatsapp channel': 'wa_channel', x: 'x', twitter: 'x', youtube: 'youtube', yt: 'youtube', shorts: 'youtube' };
+  whatsapp: 'whatsapp', status: 'whatsapp', 'wa status': 'whatsapp', channel: 'wa_channel', 'wa channel': 'wa_channel', 'whatsapp channel': 'wa_channel', x: 'x', twitter: 'x', youtube: 'youtube', yt: 'youtube', shorts: 'youtube',
+  instagram: 'instagram', ig: 'instagram', insta: 'instagram', tiktok: 'tiktok', 'tik tok': 'tiktok', threads: 'threads', linkedin: 'linkedin', 'linked in': 'linkedin', pinterest: 'pinterest', pin: 'pinterest' };
 function buildRows() {
   var start = $('#iStart').value || addDays(lastDate(), 1), defT = $('#iTime').value || '06:00', next = start, out = [];
   var g = function (r, f) { return IMP.map[f] === undefined ? '' : r[IMP.map[f]]; };
@@ -386,7 +601,7 @@ function buildRows() {
     var tags = String(g(r, 'hashtags') || '').trim(); if (tags && tags.indexOf('#') < 0) tags = tags.split(/[\s,]+/).filter(Boolean).map(function (t) { return '#' + t; }).join(' ');
     out.push({ post_date: d, post_time: cellTime(g(r, 'post_time'), defT), title: title || cap.slice(0, 40), caption: cap, verse: String(g(r, 'verse') || '').trim() || null,
       reference: String(g(r, 'reference') || '').trim() || null, hashtags: tags, media_url: normMedia(String(g(r, 'media_url') || '').trim()), video_url: String(g(r, 'video_url') || '').trim() || null,
-      platforms: pl.length ? pl : PLAT.map(function (x) { return x.k; }), source: 'import', slug: d, link_url: String(g(r, 'link_url') || '').trim() || null });
+      platforms: pl.length ? pl : ALLK.slice(), source: 'import', slug: d, link_url: String(g(r, 'link_url') || '').trim() || null, first_comment: String(g(r, 'first_comment') || '').trim() || null });
   });
   return out;
 }
@@ -394,40 +609,136 @@ function renderPreview() {
   var rows = buildRows(), el = $('#iPrev');
   el.innerHTML = '<div class="card"><h3>2. Preview</h3><p class="small muted">' + rows.length + ' posts will be added' + (rows.length > 6 ? ', first 6 shown' : '') + '.</p><div class="prev">' +
     rows.slice(0, 6).map(function (p) { return '<div class="pc">' + (p.media_url ? '<img loading="lazy" src="' + esc(mediaSrc(p.media_url)) + '" alt="">' : '') + '<b>' + esc(niceDate(p.post_date)) + ' · ' + esc(p.post_time) + '</b><br>' + esc(p.title) + '<div class="muted">' + esc(p.caption.slice(0, 80)) + '</div><div class="muted">' + p.platforms.length + ' platforms</div></div>'; }).join('') +
-    '</div><button class="btn big" id="iGo" style="margin-top:12px"' + (rows.length ? '' : ' disabled') + '>3. Import ' + rows.length + ' posts</button></div>';
+    '</div>' + (IMP.url ? '<button class="btn big leaf" id="iSync" style="margin-top:12px"' + (rows.length ? '' : ' disabled') + '>🔄 Import and keep this sheet in sync</button><p class="small muted center">Recommended: new rows you add later appear by themselves.</p>' : '') + '<button class="btn ' + (IMP.url ? 'ghost' : 'big') + '" id="iGo" style="margin-top:12px;width:100%"' + (rows.length ? '' : ' disabled') + '>3. Import ' + rows.length + ' posts once</button></div>';
+  var sy = $('#iSync'); if (sy) sy.onclick = function () { var map = {}; FIELDS.forEach(function (f) { map[f[0]] = IMP.map[f[0]] === undefined ? '' : IMP.head[IMP.map[f[0]]]; }); connectSheet(IMP.url, map); };
   var b = $('#iGo'); if (b) b.onclick = async function () {
     b.disabled = true; b.textContent = 'Importing…';
     var r = await sb.from('sp_posts').insert(rows);
     if (r.error) { b.disabled = false; b.textContent = 'Try again'; return toast('Import failed: ' + r.error.message, 5000); }
-    await loadPosts(); toast('✓ Imported ' + rows.length + ' posts'); location.hash = '#queue';
+    await loadPosts(); toast('✓ Imported ' + rows.length + ' posts'); location.hash = '#plan';
   };
 }
 
+/* ---------- stats ---------- */
+function weekStart(d) { var x = new Date(d + 'T12:00:00Z'), k = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - k); return x.toISOString().slice(0, 10); }
+function renderStats() {
+  setTab('stats');
+  var t = today(), marks = [];
+  S.posts.forEach(function (p) { Object.keys(p.posted || {}).forEach(function (k) { marks.push({ k: k, d: lagosDay(p.posted[k]), p: p }); }); });
+  var wk0 = weekStart(t), weeks = []; for (var i = 7; i >= 0; i--) weeks.push(addDays(wk0, -7 * i));
+  var perWeek = weeks.map(function (w) { return marks.filter(function (m) { return m.d >= w && m.d < addDays(w, 7); }).length; });
+  var maxW = Math.max.apply(null, perWeek.concat([1]));
+  var thisWeek = marks.filter(function (m) { return m.d >= wk0; }), byPlat = {};
+  thisWeek.forEach(function (m) { byPlat[m.k] = (byPlat[m.k] || 0) + 1; });
+  var platRows = Object.keys(byPlat).sort(function (a, b) { return byPlat[b] - byPlat[a]; }), maxP = Math.max.apply(null, platRows.map(function (k) { return byPlat[k]; }).concat([1]));
+  var wd = [0, 0, 0, 0, 0, 0, 0], names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  var daysWith = {}; marks.forEach(function (m) { daysWith[m.d] = 1; });
+  Object.keys(daysWith).forEach(function (d) { wd[(new Date(d + 'T12:00:00Z').getUTCDay() + 6) % 7]++; });
+  // engagement from connected platforms (filled by the server)
+  var eng = { likes: 0, comments: 0, reach: 0 }, top = [], since = addDays(t, -30), anyMetric = false;
+  S.posts.forEach(function (p) { if (!p.post_date || p.post_date < since) return; var sc = 0; Object.keys(p.metrics || {}).forEach(function (k) { var m = p.metrics[k]; anyMetric = true; eng.likes += m.likes || 0; eng.comments += m.comments || 0; eng.reach += m.reach || 0; sc += (m.likes || 0) + 3 * (m.comments || 0); }); if (sc) top.push({ p: p, sc: sc }); });
+  top.sort(function (a, b) { return b.sc - a.sc; });
+  var c = S.conn || {}, apis = ['fb_page', 'instagram', 'youtube', 'threads'].filter(function (k) { return c[k] && c[k].connected; });
+  var bestDay = wd.indexOf(Math.max.apply(null, wd)), queued7 = sched().filter(function (p) { return p.post_date > t && p.post_date <= addDays(t, 7) && p.status === 'queued'; }).length;
+  view.innerHTML = '<h2>Stats</h2>' +
+    '<div class="kpis"><div class="kpi"><b>🔥 ' + streak() + '</b><span>day streak</span></div><div class="kpi"><b>' + thisWeek.length + '</b><span>posts this week</span></div><div class="kpi"><b>' + queued7 + '</b><span>queued next 7 days</span></div></div>' +
+    '<div class="card"><h3>Posts per week</h3><p class="small muted">Each ✓ you tick (or each auto-post) counts once.</p><div class="bars">' + perWeek.map(function (n, i) { return '<div class="bar"><i style="height:' + Math.round(100 * n / maxW) + '%"></i><b>' + n + '</b><span>' + esc(new Date(weeks[i] + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })) + '</span></div>'; }).join('') + '</div></div>' +
+    '<div class="card"><h3>This week by platform</h3>' + (platRows.length ? platRows.map(function (k) { return '<div class="hbar"><span>' + esc((PLAT.filter(function (x) { return x.k === k; })[0] || { ic: '' }).ic + ' ' + (PNAME[k] || k)) + '</span><div><i style="width:' + Math.round(100 * byPlat[k] / maxP) + '%"></i></div><b>' + byPlat[k] + '</b></div>'; }).join('') : '<p class="small muted">No ✓ marks yet this week. Tick ✓ on Today after you post.</p>') + '</div>' +
+    '<div class="card"><h3>Your best posting days</h3><p class="small muted">' + (Object.keys(daysWith).length ? 'Days you posted most, from your own ✓ marks. ' + (wd[bestDay] ? 'Best so far: <b>' + names[bestDay] + '</b>.' : '') : 'Shows up after your first few days of ✓ marks.') + '</p><div class="bars wd">' + wd.map(function (n, i) { var mx = Math.max.apply(null, wd.concat([1])); return '<div class="bar' + (n && i === bestDay ? ' best' : '') + '"><i style="height:' + Math.round(100 * n / mx) + '%"></i><b>' + n + '</b><span>' + names[i] + '</span></div>'; }).join('') + '</div></div>' +
+    '<div class="card"><div class="row"><h3 class="grow">Likes, comments, reach</h3>' + (apis.length ? '<button class="btn sm ghost" id="stRef">↻</button>' : '') + '</div>' +
+    (apis.length ? (anyMetric ? '<div class="kpis sm"><div class="kpi"><b>❤️ ' + eng.likes + '</b><span>likes</span></div><div class="kpi"><b>💬 ' + eng.comments + '</b><span>comments</span></div><div class="kpi"><b>👀 ' + eng.reach + '</b><span>reach</span></div></div><p class="small muted">Last 30 days, from ' + apis.map(function (k) { return PNAME[k]; }).join(', ') + '.</p>' +
+      (top.length ? '<b class="small">Top posts</b>' + top.slice(0, 3).map(function (x) { return '<div class="small">• ' + esc(x.p.title) + ' <span class="muted">(' + esc(niceDate(x.p.post_date)) + ')</span></div>'; }).join('') : '') : '<p class="small muted">Connected: ' + apis.map(function (k) { return PNAME[k]; }).join(', ') + '. Numbers appear after Sow posts there by itself (it checks every 6 hours).</p>')
+      : '<p class="small muted">Sow can only read numbers from places it posts to by itself. Connect your Facebook Page, Instagram, YouTube or Threads in <a href="#connect">Connect</a> to see likes, comments and reach here. Facebook profile, groups and WhatsApp share no numbers with any app.</p>') + '</div>' +
+    '<p class="small muted center">Your WhatsApp bot can fetch this weekly summary too.</p>';
+  var rb = $('#stRef'); if (rb) rb.onclick = async function () { rb.disabled = true; try { var r = await api('/api/stats', { body: { action: 'refresh' } }); await loadPosts(); renderStats(); toast('Updated ' + r.refreshed + ' numbers' + (r.errors && r.errors.length ? ' (' + r.errors[0] + ')' : ''), 4000); } catch (e) { toast(e.message, 4000); rb.disabled = false; } };
+}
+
 /* ---------- connect ---------- */
+function steps(list) { return '<details><summary class="small">Steps</summary><ol class="steps small">' + list.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol></details>'; }
+function autoSwitch(k) {
+  var c = (S.conn || {})[k]; if (!c || !c.connected) return '';
+  var on = ((S.conn.auto || {})[k]) !== false;
+  return '<label class="switch"><input type="checkbox" data-auto="' + k + '"' + (on ? ' checked' : '') + '> Post by itself on time</label> <button class="btn sm ghost" data-disc="' + k + '">Disconnect</button>';
+}
+function connPill(k, extra) {
+  var c = (S.conn || {})[k] || {};
+  if (c.connected) return ((S.conn.auto || {})[k]) !== false ? '<span class="pill auto">auto · on</span>' : '<span class="pill tap">connected · paused</span>';
+  if (c.expired) return '<span class="pill off">login expired</span>';
+  return extra || '<span class="pill off">off</span>';
+}
 async function renderConnect() {
   setTab('connect');
   view.innerHTML = '<h2>Connect</h2><div class="loading">Checking…</div>';
   try { S.conn = await api('/api/connect'); } catch (e) { S.conn = S.conn || {}; }
-  var c = S.conn, q = (location.hash.split('?')[1] || '');
-  var ytOn = c.youtube && c.youtube.connected, ytCfg = c.youtube && c.youtube.configured, xOn = c.x && c.x.connected, fbOn = c.fb_page && c.fb_page.connected;
-  view.innerHTML = '<h2>Connect</h2><p class="small muted"><b>Auto</b> = posts by itself on time. <b>1-tap</b> = Sow gets it ready, you tap Share once. Facebook does not allow any app to post to a personal profile, groups or WhatsApp Status, so those stay 1-tap. That keeps your 248K account safe.</p>' +
-    (/youtube=connected/.test(q) ? '<div class="card">✅ YouTube connected.</div>' : '') + (/youtube_error=/.test(q) ? '<div class="card err">YouTube: ' + esc(decodeURIComponent(q.split('youtube_error=')[1] || '')) + '</div>' : '') +
+  var c = S.conn, q = (location.hash.split('?')[1] || ''), ch = channels(), sl = slots();
+  var msg = ''; ['youtube', 'linkedin', 'threads'].forEach(function (k) { if (q.indexOf(k + '=connected') >= 0) msg += '<div class="card">✅ ' + PNAME[k] + ' connected.</div>'; var m = q.match(new RegExp(k + '_error=([^&]*)')); if (m) msg += '<div class="card err">' + PNAME[k] + ': ' + esc(decodeURIComponent(m[1])) + '</div>'; });
+  var fb = c.fb_page || {}, ig = c.instagram || {}, yt = c.youtube || {}, x = c.x || {}, th = c.threads || {}, li = c.linkedin || {};
+  view.innerHTML = '<h2>Connect</h2>' + msg +
+    '<p class="small muted"><b>Auto</b> = posts by itself on time. <b>1-tap</b> = Sow gets it ready, you tap Share once. Facebook allows no app to post to a personal profile, groups or WhatsApp Status, so those stay 1-tap. That keeps your 248K account safe.</p>' +
+    // Meta: Page + Instagram
+    '<div class="card"><div class="row"><span style="font-size:22px">🏳️</span><b class="grow">Facebook Page + Instagram</b>' + connPill('fb_page', '<span class="pill off">not connected</span>') + '</div>' +
+    '<p class="small muted" style="margin:8px 0">' + (fb.connected ? 'Page: <b>' + esc(fb.name || fb.page_id) + '</b>' + (ig.connected ? ' · Instagram: <b>@' + esc(ig.username || '') + '</b>' : ' · no Instagram linked to this Page yet') + '. Posts the picture + caption (and your first comment) at the post time.' :
+      'Your Page and your Instagram professional account can post by themselves through Facebook\'s official API. No password, no robot.') + '</p>' +
+    (fb.connected ? autoSwitch('fb_page') + (ig.connected ? '<div style="margin-top:6px"><b class="small">Instagram</b> ' + connPill('instagram') + ' ' + autoSwitch('instagram') + '</div>' : '') :
+      '<button class="btn sm" id="metaScan">' + (c.meta && c.meta.token ? 'Find my Page' : 'Connect with a Meta token') + '</button><div id="metaOut"></div>') +
+    steps(['Make a Facebook <b>Page</b> if you don\'t have one: facebook.com/pages/create.', 'Instagram app → Profile → ☰ → <b>Account type and tools</b> → <b>Switch to professional account</b> (Creator).', 'Link them: your Page → Settings → <b>Linked accounts</b> → Instagram → Connect.',
+      'On a laptop open <b>business.facebook.com/settings</b> → Accounts → <b>Pages</b> → Add → Add a Page → your Page. Then Accounts → <b>Instagram accounts</b> → Add → log in.', 'Still in settings: Users → <b>System users</b> → <b>Michael Ai</b> → <b>Assign assets</b> → Pages → your Page → turn on <b>Full control</b> → Save. Do the same under Instagram accounts.', 'Come back here and tap <b>Find my Page</b>, then pick it. Auto-posting starts only after you pick it, and you can pause it any time.']) + '</div>' +
+    // YouTube
+    '<div class="card"><div class="row"><span style="font-size:22px">▶️</span><b class="grow">YouTube Shorts</b>' + connPill('youtube', yt.configured ? '<span class="pill tap">ready to connect</span>' : '<span class="pill off">needs setup</span>') + '</div>' +
+    '<p class="small muted" style="margin:8px 0">' + (yt.connected ? 'Each post\'s short video uploads by itself. Until Google reviews the app, uploads stay private and you tap Public in YouTube Studio.' : 'Every verse already has a 12-second Short. Today: tap Share video → YouTube.') + '</p>' +
+    (yt.connected ? autoSwitch('youtube') : '<button class="btn sm" id="ytConn"' + (yt.configured ? '' : ' disabled') + '>Connect YouTube</button>') +
+    (yt.connected ? '' : steps(['console.cloud.google.com → your project → APIs → enable <b>YouTube Data API v3</b>.', 'OAuth consent screen → add scopes <b>youtube.upload</b> and <b>youtube.readonly</b> → <b>Publish app</b>.', 'Credentials → your OAuth client → Authorized redirect URIs → add <b>https://sow-ng.vercel.app/api/yt-callback</b>.', 'Send Tab the Client ID and Client secret. Then tap Connect YouTube here.'])) + '</div>' +
+    // X
+    '<div class="card"><div class="row"><span style="font-size:22px">𝕏</span><b class="grow">X (Twitter)</b>' + connPill('x', '<span class="pill tap">1-tap</span>') + '</div>' +
+    '<p class="small muted" style="margin:8px 0">' + (x.connected ? 'Posts the caption by itself.' : 'Post opens X with the caption ready. Auto-posting needs a free X developer account.') + '</p>' + (x.connected ? autoSwitch('x') :
+      steps(['developer.x.com → sign in → <b>Free</b> plan → create a Project and App.', 'App settings → User authentication → <b>Read and write</b> → save.', 'Keys and tokens → copy <b>API Key and Secret</b>, then generate <b>Access Token and Secret</b>.', 'Send all four to Tab. X\'s free plan allows about 500 posts a month and no stats.'])) + '</div>' +
+    // Threads
+    '<div class="card"><div class="row"><span style="font-size:22px">🧵</span><b class="grow">Threads</b>' + connPill('threads', th.configured ? '<span class="pill tap">ready to connect</span>' : '<span class="pill tap">1-tap</span>') + '</div>' +
+    '<p class="small muted" style="margin:8px 0">' + (th.connected ? 'Connected as <b>@' + esc(th.username || '') + '</b>. Posts picture + text by itself. Sow keeps the login fresh.' : 'Post opens Threads with the caption ready. Auto-posting uses the official Threads API.') + '</p>' +
+    (th.connected ? autoSwitch('threads') : '<button class="btn sm" id="thConn"' + (th.configured ? '' : ' disabled') + '>Connect Threads</button>' +
+      steps(['developers.facebook.com → My Apps → <b>Create app</b> → use case <b>Access the Threads API</b> → name it Sow.', 'Use cases → Threads API → Customize → add <b>threads_basic</b>, <b>threads_content_publish</b>, <b>threads_manage_insights</b>.', 'Settings → Redirect callback URLs → <b>https://sow-ng.vercel.app/api/oauth</b> (use it for uninstall and delete too).', 'App roles → Roles → <b>Add Threads tester</b> → your Threads username. Accept it in Threads: Settings → Account → Website permissions → Invites.', 'Send Tab the <b>Threads app ID</b> and <b>Threads app secret</b>. Then tap Connect Threads.'])) + '</div>' +
+    // LinkedIn
+    '<div class="card"><div class="row"><span style="font-size:22px">💼</span><b class="grow">LinkedIn</b>' + connPill('linkedin', li.configured ? '<span class="pill tap">ready to connect</span>' : '<span class="pill tap">1-tap</span>') + '</div>' +
+    '<p class="small muted" style="margin:8px 0">' + (li.connected ? 'Connected as <b>' + esc(li.name || '') + '</b> until ' + esc(new Date(li.expires).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) + ' (LinkedIn asks again every 60 days).' : li.expired ? 'Your LinkedIn login expired (every 60 days). Tap Connect LinkedIn again.' : 'Share opens LinkedIn with the picture. Auto-posting uses LinkedIn\'s free “Share on LinkedIn”.') + '</p>' +
+    (li.connected ? autoSwitch('linkedin') : '<button class="btn sm" id="liConn"' + (li.configured ? '' : ' disabled') + '>Connect LinkedIn</button>' +
+      steps(['linkedin.com/developers/apps → <b>Create app</b> (name Sow). It asks for a LinkedIn Page: make a free one for Blossom if needed.', 'Products tab → add <b>Share on LinkedIn</b> and <b>Sign In with LinkedIn using OpenID Connect</b> (both free, instant).', 'Auth tab → Authorized redirect URLs → add <b>https://sow-ng.vercel.app/api/oauth</b>.', 'Send Tab the <b>Client ID</b> and <b>Client Secret</b>. Then tap Connect LinkedIn.'])) + '</div>' +
+    card('🎵', 'TikTok', '<span class="pill tap">1-tap</span>', 'TikTok lets no free app post by itself (it needs a paid audit). On Today tap <b>Share video</b> → TikTok. The caption is copied: paste it.', '') +
+    card('📌', 'Pinterest', '<span class="pill tap">1-tap</span>', '<b>Pin it</b> opens Pinterest with the picture and caption ready.', '') +
     card('📘', 'Facebook profile, groups', '<span class="pill tap">1-tap</span>', 'Share → Facebook. No robot logins, so no ban risk.', '') +
     card('🟢', 'WhatsApp Status, Channel', '<span class="pill tap">1-tap</span>', 'Share → WhatsApp → My status or your Channel.', '') +
-    card('🏳️', 'Facebook Page', fbOn ? '<span class="pill auto">auto · on</span>' : '<span class="pill off">coming soon</span>',
-      fbOn ? 'Connected. Posts the picture + caption at the post time.' : 'Your Page can post by itself (picture + caption). It needs one Meta permission screen (pages_manage_posts). Tab will switch it on with you.',
-      '<button class="btn sm" ' + (fbOn ? '' : 'disabled') + ' id="fbConn">' + (fbOn ? 'Connected ✓' : 'Connect Facebook Page') + '</button>') +
-    card('▶️', 'YouTube Shorts', ytOn ? '<span class="pill auto">auto · on</span>' : ytCfg ? '<span class="pill tap">ready to connect</span>' : '<span class="pill off">needs setup</span>',
-      ytOn ? 'Connected. Each day\'s short video uploads by itself. Until Google reviews the app, uploads stay private and you tap Public in YouTube Studio.' :
-      'Every verse already has a 12-second Short. Today: tap Share video → YouTube. For auto upload, add your Google app keys (Tab will help), then tap Connect.',
-      '<button class="btn sm" id="ytConn" ' + (ytCfg && !ytOn ? '' : 'disabled') + '>' + (ytOn ? 'Connected ✓' : 'Connect YouTube') + '</button>') +
-    card('𝕏', 'X (Twitter)', xOn ? '<span class="pill auto">auto · on</span>' : '<span class="pill tap">1-tap</span>',
-      xOn ? 'Connected. Posts the caption by itself.' : 'Post to X opens X with the caption ready. Auto posting needs a free X developer account (Tab will help).', '') +
-    card('✨', 'AI captions', c.ai && c.ai.connected ? '<span class="pill auto">on</span>' : '<span class="pill off">off</span>', 'Rewrites each post for Facebook, X, YouTube and WhatsApp, on your free Google AI key.', '') +
-    card('💬', 'Your WhatsApp bot', '<span class="pill tap">next</span>', 'Soon: text your Michael AI bot “today\'s post” and it sends the picture and caption back.', '') +
+    card('✨', 'AI captions', c.ai && c.ai.connected ? '<span class="pill auto">on</span>' : '<span class="pill off">off</span>', 'Writes a version for Facebook, Instagram, X, Threads, LinkedIn, TikTok, YouTube and WhatsApp, on your free Google AI key.', '') +
+    // channels
+    '<div class="card"><h3>Your places</h3><p class="small muted">Which places show on Today and get posted.</p><div class="row wrap">' + PLAT.map(function (pl) { return '<label class="tog"><input type="checkbox" data-ch="' + pl.k + '"' + (ch.indexOf(pl.k) >= 0 ? ' checked' : '') + '> ' + pl.ic + ' ' + esc(pl.nm) + '</label>'; }).join('') + '</div></div>' +
+    // time slots
+    '<div class="card"><h3>Time slots</h3><p class="small muted">Leave a place empty to use each post\'s own time. A time here moves that place to it every day, like Buffer\'s posting schedule. All times are Lagos time.</p>' +
+    '<div class="slot"><span>⏰ New posts start at</span><input type="time" data-slot="default" value="' + esc(sl.default || '06:00') + '"></div>' +
+    PLAT.filter(function (pl) { return ch.indexOf(pl.k) >= 0; }).map(function (pl) { return '<div class="slot"><span>' + pl.ic + ' ' + esc(pl.nm) + (pl.auto ? '' : ' <i class="muted small">(reminder)</i>') + '</span><input type="time" data-slot="' + pl.k + '" value="' + esc(sl[pl.k] || '') + '"></div>'; }).join('') +
+    '<button class="btn sm" id="slotSave" style="margin-top:8px">Save time slots</button></div>' +
     '<div class="card small"><button class="btn sm ghost" id="signOut">Sign out of Sow on this phone</button></div>';
-  var yb = $('#ytConn'); if (yb && ytCfg && !ytOn) yb.onclick = async function () { try { var r = await api('/api/connect', { body: { action: 'youtube_link' } }); location.href = r.url; } catch (e) { toast(e.message, 4000); } };
+  var yb = $('#ytConn'); if (yb && yt.configured) yb.onclick = function () { oauthGo('youtube_link'); };
+  var tb = $('#thConn'); if (tb && th.configured) tb.onclick = function () { oauthGo('threads_link'); };
+  var lb = $('#liConn'); if (lb && li.configured) lb.onclick = function () { oauthGo('linkedin_link'); };
+  var ms = $('#metaScan'); if (ms) ms.onclick = metaFlow;
+  view.querySelectorAll('[data-auto]').forEach(function (cb) { cb.onchange = async function () { try { var r = await api('/api/connect', { body: { action: 'auto', platform: cb.dataset.auto, on: cb.checked } }); S.conn.auto = r.auto; toast(PNAME[cb.dataset.auto] + (cb.checked ? ': auto-posting on' : ': paused')); renderConnect(); } catch (e) { toast(e.message, 4000); } }; });
+  view.querySelectorAll('[data-disc]').forEach(function (b) { b.onclick = async function () { var k = b.dataset.disc; if (!confirm('Disconnect ' + PNAME[k] + '?')) return; try { await api('/api/connect', { body: { action: 'disconnect', platform: k } }); if (k === 'fb_page') await api('/api/connect', { body: { action: 'disconnect', platform: 'instagram' } }); renderConnect(); } catch (e) { toast(e.message, 4000); } }; });
+  view.querySelectorAll('[data-ch]').forEach(function (cb) { cb.onchange = async function () { var list = Array.prototype.filter.call(view.querySelectorAll('[data-ch]'), function (x) { return x.checked; }).map(function (x) { return x.dataset.ch; }); await savePref('channels', list); toast('Saved ✓'); }; });
+  $('#slotSave').onclick = async function () { var o = {}; view.querySelectorAll('[data-slot]').forEach(function (i) { if (i.value) o[i.dataset.slot] = i.value; }); await savePref('slots', o); toast('Time slots saved ✓'); };
   $('#signOut').onclick = async function () { if (!confirm('Sign out? You will need the passcode again.')) return; await sb.auth.signOut(); location.reload(); };
+}
+async function oauthGo(action) { try { var r = await api('/api/connect', { body: { action: action } }); location.href = r.url; } catch (e) { toast(e.message, 4000); } }
+async function metaFlow() {
+  var out = $('#metaOut'); out.innerHTML = '<p class="small muted">Looking for your Pages…</p>';
+  try {
+    var r = await api('/api/connect', { body: { action: 'meta_scan' } });
+    if (!r.token) { out.innerHTML = '<p class="small muted">Paste a Meta access token that can manage your Page (from Tab or Graph API Explorer).</p><div class="row"><input id="metaTok" placeholder="EAA…"><button class="btn sm" id="metaSave">Check</button></div>'; $('#metaSave').onclick = async function () { try { var x = await api('/api/connect', { body: { action: 'meta_token', token: $('#metaTok').value.trim() } }); showPages(x.pages); } catch (e) { toast(e.message, 5000); } }; return; }
+    showPages(r.pages);
+  } catch (e) { out.innerHTML = '<p class="small err">' + esc(e.message) + '</p>'; }
+}
+function showPages(pages) {
+  var out = $('#metaOut');
+  if (!pages || !pages.length) { out.innerHTML = '<p class="small err">No Facebook Page is shared with Sow yet. Do the steps below (step 5 is the one that shares it), then tap Find my Page again.</p>'; return; }
+  out.innerHTML = '<p class="small"><b>Pick your Page:</b></p>' + pages.map(function (p) { return '<button class="btn sm ghost" style="width:100%;margin:4px 0" data-page="' + esc(p.id) + '">' + esc(p.name) + (p.ig ? ' · 📸 @' + esc(p.ig.username || '') : ' · no Instagram linked') + '</button>'; }).join('');
+  out.querySelectorAll('[data-page]').forEach(function (b) { b.onclick = async function () { if (!confirm('Connect ' + b.textContent + '? Sow will post there by itself at each post\'s time.')) return; try { var r = await api('/api/connect', { body: { action: 'meta_pick', page_id: b.dataset.page } }); toast('✓ Connected ' + r.page + (r.instagram ? ' + @' + r.instagram : ''), 4000); renderConnect(); } catch (e) { toast(e.message, 5000); } }; });
 }
 function card(ic, t, pill, txt, act) { return '<div class="card"><div class="row"><span style="font-size:22px">' + ic + '</span><b class="grow">' + esc(t) + '</b>' + pill + '</div><p class="small muted" style="margin:8px 0">' + txt + '</p>' + act + '</div>'; }
 
@@ -451,10 +762,9 @@ function renderSignin(msg) {
 /* ---------- router ---------- */
 function render() {
   var h = (location.hash || '#today').slice(1).split('?')[0];
-  closeModalIfNav();
-  if (h === 'queue') renderQueue(); else if (h === 'import') renderImport(); else if (h === 'connect') renderConnect(); else renderToday();
+  if (h === 'queue') h = 'plan'; if (h === 'import') h = 'sheet';
+  if (h === 'plan') renderPlan(); else if (h === 'sheet') renderImport(); else if (h === 'connect') renderConnect(); else if (h === 'stats') renderStats(); else renderToday();
 }
-function closeModalIfNav() {}
 window.addEventListener('hashchange', function () { closeModal(); render(); window.scrollTo(0, 0); });
 
 async function boot() {
@@ -463,8 +773,11 @@ async function boot() {
     if (!s) return renderSignin();
     var own = await sb.rpc('sp_is_owner'); if (own.error || !own.data) return renderSignin(own.error ? '' : '');
     $('#tabs').hidden = false; document.body.classList.remove('signin-mode');
-    await loadPosts(); showStreak(); render();
-    api('/api/connect').then(function (c) { S.conn = c; if ((location.hash || '#today').indexOf('#today') === 0 || !location.hash) render(); }).catch(function () {});
+    await Promise.all([loadPosts(), loadPrefs()]); showStreak(); render();
+    api('/api/connect').then(function (c) { S.conn = c; var h = location.hash || '#today'; if (h.indexOf('#today') === 0 || h.indexOf('#stats') === 0) render(); }).catch(function () {});
+    // Live sheet sync on open, when the last sync is older than 10 minutes.
+    var sh = S.prefs.sheet;
+    if (sh && sh.id && (!sh.last_synced || Date.now() - new Date(sh.last_synced) > 10 * 60e3)) syncNow(false).then(function (x) { if (x && (x.added || x.updated || x.removed)) { toast('📊 Sheet: ' + (x.added || 0) + ' new, ' + (x.updated || 0) + ' updated'); if (!$('#modal').innerHTML) render(); } });
   } catch (e) { view.innerHTML = '<div class="card err">Could not load: ' + esc(e.message || e) + '<br><button class="btn sm" onclick="location.reload()">Try again</button></div>'; }
 }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});

@@ -1,15 +1,45 @@
-// GET /api/sheet?url=<Google Sheets link>  (owner only) -> CSV text of that sheet tab.
-// The sheet must be shared "Anyone with the link can view" (or published).
-import { json, requireOwner } from './_lib.js';
+// Google Sheet: one-time import + LIVE SYNC (owner only).
+//   GET  /api/sheet?url=<Google Sheets link>          -> CSV text of that tab (for the one-time import screen)
+//   GET  /api/sheet?status=1                          -> live-sync settings + last result
+//   POST /api/sheet {action:'connect', url, map?, undated?:'schedule'|'bank'}  -> save the sheet, sync now
+//   POST /api/sheet {action:'sync'}                   -> sync now
+//   POST /api/sheet {action:'disconnect'}             -> stop syncing (posts already in Sow stay)
+// The cron (every 30 min) also syncs; the app syncs when opened if the last sync is over 10 min old.
+// The sheet must be shared "Anyone with the link can view".
+import { json, readBody, requireOwner, getPref, setPref } from './_lib.js';
+import { parseSheetUrl, fetchCsv, runSync } from './_sheet.js';
+
 export default async function handler(req, res) {
   const user = await requireOwner(req, res); if (!user) return;
-  const url = String((req.query || {}).url || '');
-  const m = url.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})/);
-  if (!m) return json(res, 400, { error: 'That does not look like a Google Sheets link' });
-  const gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv${gid ? '&gid=' + gid : ''}`;
-  const r = await fetch(csvUrl, { redirect: 'follow' });
-  const t = await r.text();
-  if (!r.ok || /<html/i.test(t.slice(0, 200))) return json(res, 403, { error: 'Google would not share it. In the sheet tap Share → General access → "Anyone with the link" → Viewer, then try again.' });
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Cache-Control', 'no-store'); res.end(t);
+  const q = req.query || {};
+  try {
+    if (req.method === 'GET' && q.status) return json(res, 200, { sheet: await getPref('sheet', null) });
+    if (req.method === 'GET') {
+      const sh = parseSheetUrl(q.url);
+      if (!sh) return json(res, 400, { error: 'That does not look like a Google Sheets link' });
+      let t; try { t = await fetchCsv(sh); } catch (e) { return json(res, 403, { error: e.message }); }
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Cache-Control', 'no-store'); return res.end(t);
+    }
+    const b = await readBody(req);
+    if (b.action === 'connect') {
+      const sh = parseSheetUrl(b.url);
+      if (!sh) return json(res, 400, { error: 'That does not look like a Google Sheets link' });
+      try { await fetchCsv(sh); } catch (e) { return json(res, 403, { error: e.message }); }
+      const map = {}; for (const [k, v] of Object.entries(b.map || {})) if (typeof v === 'string' && v.length < 80) map[k] = v;
+      await setPref('sheet', { url: String(b.url).slice(0, 300), id: sh.id, gid: sh.gid, map, undated: b.undated === 'bank' ? 'bank' : 'schedule', connected_at: new Date().toISOString() });
+      const result = await runSync({ force: true });
+      return json(res, result.error ? 422 : 200, { ok: !result.error, result, sheet: await getPref('sheet', null), error: result.error });
+    }
+    if (b.action === 'sync') {
+      const result = await runSync({ force: true });
+      return json(res, 200, { ok: !result.error, result, sheet: await getPref('sheet', null) });
+    }
+    if (b.action === 'settings') {
+      const cfg = await getPref('sheet', null); if (!cfg) return json(res, 404, { error: 'no sheet' });
+      if (b.undated) cfg.undated = b.undated === 'bank' ? 'bank' : 'schedule';
+      await setPref('sheet', cfg); return json(res, 200, { ok: true, sheet: cfg });
+    }
+    if (b.action === 'disconnect') { await setPref('sheet', null); return json(res, 200, { ok: true }); }
+    return json(res, 400, { error: 'unknown action' });
+  } catch (e) { return json(res, 500, { error: String(e.message || e) }); }
 }

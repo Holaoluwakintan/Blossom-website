@@ -46,12 +46,17 @@ Return JSON with exactly these keys:
 "whatsapp": for WhatsApp Status/Channel: bold title with *asterisks*, 1-2 short lines, the verse and reference. Under 60 words.
 "x": one post under ${link ? 230 : 270} characters (do not include any link): punchy line + reference + 1-2 hashtags.
 "youtube_title": under 90 characters, ends with " #shorts".
-"youtube_desc": 2 short paragraphs + the verse${link ? ' + "' + link + '"' : ' (no links)'} + 3-5 hashtags including #shorts.`;
+"youtube_desc": 2 short paragraphs + the verse${link ? ' + "' + link + '"' : ' (no links)'} + 3-5 hashtags including #shorts.
+"instagram": Instagram caption: hook line, 2 short paragraphs, the verse and reference, a call to save/share, then 5-10 relevant hashtags on their own line. Under 1500 characters. No links.
+"threads": one Threads post under 450 characters, conversational, the reference, at most 1 hashtag.
+"linkedin": LinkedIn post 80-150 words: a reflective, professional-but-warm angle (purpose, leadership, work, faith), the verse with reference, a question at the end, 3 hashtags.
+"tiktok": TikTok caption under 300 characters: short hook + reference + 3-5 hashtags including #fyp and #christiantiktok.`;
   try {
     const { model, out } = await gemini(prompt);
     const captions = {};
-    for (const k of ['facebook', 'whatsapp', 'x', 'youtube_title', 'youtube_desc']) if (typeof out[k] === 'string') captions[k] = out[k].trim();
+    for (const k of ['facebook', 'whatsapp', 'x', 'youtube_title', 'youtube_desc', 'instagram', 'threads', 'linkedin', 'tiktok']) if (typeof out[k] === 'string') captions[k] = out[k].trim();
     if (captions.x) { captions.x = captions.x.replace(/https?:\/\/\S+/g, '').trim(); const max = link ? 255 : 280; if (captions.x.length > max) captions.x = captions.x.slice(0, max - 1) + '…'; if (link) captions.x += '\n' + link; }
+    if (captions.threads && captions.threads.length > 500) captions.threads = captions.threads.slice(0, 499) + '…';
     if (post.id) await db('sp_posts?id=eq.' + post.id, { method: 'PATCH', body: { captions: Object.assign({}, post.captions || {}, captions) } });
     return json(res, 200, { ok: true, model, captions });
   } catch (e) {

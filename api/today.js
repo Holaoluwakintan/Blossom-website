@@ -1,6 +1,8 @@
 // GET /api/today  (for the Michael AI WhatsApp bot)
 //   auth: header "x-sow-key: <SOW_API_KEY>" (or ?key=)
 //   ?which=today (default) | next | date=YYYY-MM-DD
+//   today/date answers carry `posts` (every post that day, by time) besides `post` (the first). Drafts are never returned.
+//   Weekly analytics for the bot: GET /api/stats?summary=week (same key).
 // POST /api/today?action=mark  {post_id, platform}  -> marks a platform posted (same key)
 import { json, readBody, db, safeEq, watDate, watTime, captionFor, markPosted, APP } from './_lib.js';
 
@@ -10,7 +12,8 @@ function shape(p, label) {
     label, id: p.id, date: p.post_date, time: p.post_time?.slice(0, 5), title: p.title, verse: p.verse, reference: p.reference,
     caption: p.caption, hashtags: p.hashtags, image_url: p.media_url, video_url: p.video_url,
     link: p.link_url || null, status: p.status, posted: p.posted || {},
-    text: { whatsapp: captionFor(p, 'whatsapp'), facebook: captionFor(p, 'facebook'), x: captionFor(p, 'x') },
+    text: { whatsapp: captionFor(p, 'whatsapp'), facebook: captionFor(p, 'facebook'), x: captionFor(p, 'x'), instagram: captionFor(p, 'instagram') },
+    first_comment: p.first_comment || null,
     app_url: APP + '/#today',
   };
 }
@@ -29,15 +32,15 @@ export default async function handler(req, res) {
   }
   const today = watDate();
   if (q.date) {
-    const rows = await db('sp_posts?select=*&post_date=eq.' + encodeURIComponent(q.date) + '&order=position');
-    return json(res, 200, { today, post: shape(rows[0], 'date') });
+    const rows = await db('sp_posts?select=*&status=neq.draft&post_date=eq.' + encodeURIComponent(q.date) + '&order=post_time,position');
+    return json(res, 200, { today, post: shape(rows[0], 'date'), posts: rows.map((p) => shape(p, 'date')) });
   }
   if (q.which === 'next') {
-    const rows = await db(`sp_posts?select=*&status=eq.queued&or=(post_date.gt.${today},and(post_date.eq.${today},post_time.gt.${watTime()}))&order=post_date,position&limit=1`);
+    const rows = await db(`sp_posts?select=*&status=eq.queued&or=(post_date.gt.${today},and(post_date.eq.${today},post_time.gt.${watTime()}))&order=post_date,post_time,position&limit=1`);
     return json(res, 200, { today, post: shape(rows[0], 'next') });
   }
-  const rows = await db('sp_posts?select=*&status=neq.skipped&post_date=eq.' + today + '&order=position&limit=1');
-  if (rows[0]) return json(res, 200, { today, post: shape(rows[0], 'today') });
-  const nxt = await db('sp_posts?select=*&status=neq.skipped&post_date=gt.' + today + '&order=post_date,position&limit=1');
+  const rows = await db('sp_posts?select=*&status=in.(queued,posted)&post_date=eq.' + today + '&order=post_time,position');
+  if (rows[0]) return json(res, 200, { today, post: shape(rows[0], 'today'), posts: rows.map((p) => shape(p, 'today')) });
+  const nxt = await db('sp_posts?select=*&status=in.(queued,posted)&post_date=gt.' + today + '&order=post_date,post_time,position&limit=1');
   return json(res, 200, { today, post: null, next: shape(nxt[0], 'next') });
 }

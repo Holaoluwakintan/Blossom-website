@@ -39,9 +39,18 @@ Deploy: Vercel REST upload of this folder (framework none, output `public`).
 - **YouTube:** in Google Cloud (project of OAuth client 177805466721-…): enable *YouTube Data API v3*; OAuth consent screen → add scope `youtube.upload`, publish the app "In production" (otherwise tokens die after 7 days); add redirect URI `https://sow-ng.vercel.app/api/yt-callback`; put GOOGLE_CLIENT_ID/SECRET in Vercel env; then Connect YouTube in the app. Until Google audits the app, API uploads are forced private.
 - **X:** free developer account at developer.x.com → app with Read and Write → API key/secret + access token/secret (generated after setting Read and Write) → Vercel env.
 
+## v2 (Oct 6, 2026): toward Buffer/Metricool
+- **Google Sheet live sync** (`api/_sheet.js`, `api/sheet.js`): paste the sheet link once (Sheet tab). Sow reads the CSV export (sheet shared "anyone with the link") every 30 min from the cron and whenever the app opens (if >10 min old), plus a Sync now button. Rows are matched by an `ID` column, else date+title (undated rows: title; their date is assigned once and kept). New rows are added, changed rows updated (AI captions reset when the text changes), deleted rows removed unless already posted or in the past. Rows with no date go on the next free days or into the bank (setting). Columns: Date, Time, Title, Caption, Bible verse, Reference, Hashtags, Image link, Video link, Platforms, Link, First comment, Status (draft/skip), ID. Dates d/m/y unless the column proves m/d/y.
+- **Scheduling**: per-post time, several posts a day (Today shows a strip), per-platform time slots (Connect → Time slots; a slot replaces the post time for that platform), Plan tab with List / Calendar (month) / Drafts, ▲▼ reorder, duplicate, drafts, **Fill the next N free days** from the bank.
+- **Platforms**: Instagram (Graph content publishing, image or Reel + first comment), Threads (Threads API, OAuth at `/api/oauth`, token auto-refresh), LinkedIn (Share on LinkedIn, w_member_social, 60-day login), TikTok and Pinterest 1-tap. Facebook Page + Instagram connect via "Find my Page" (`META_TOKEN` env = the WhatsApp bot's system-user token, or a pasted token) once the Page is assigned to the system user in Business Settings. Per-platform auto on/off switch (`sp_prefs.auto`).
+- **Analytics** (`api/_stats.js`, `api/stats.js`, Stats tab): posts per week, per platform, streak, best weekdays from ✓ marks; likes/comments/reach pulled every 6 h for FB Page, Instagram, YouTube (needs youtube.readonly on reconnect) and Threads. X free plan and LinkedIn member stats: not available.
+- **Bot weekly summary**: `GET https://sow-ng.vercel.app/api/stats?summary=week` with header `x-sow-key: <SOW_API_KEY>` (or `?days=N`, 1-90) → `{from, to, marks, prev_marks, streak, platforms[], engagement{likes,comments,reach,shares}, top_post, best_days[], upcoming_7d, text}`; `text` is a ready WhatsApp message. `/api/today` also returns `posts` (all posts that day) and `first_comment`; drafts are never returned.
+- **Polish**: hashtag sets (save/reuse), first comment, 10 per-platform caption boxes with live counters (X counts links as 23) and previews, photo upload from the phone (Plan → 📷 or in the editor), AI captions for Instagram/Threads/LinkedIn/TikTok too.
+- Env to add when he connects: THREADS_APP_ID/THREADS_APP_SECRET, LINKEDIN_CLIENT_ID/LINKEDIN_CLIENT_SECRET (optional LINKEDIN_VERSION), GOOGLE_CLIENT_ID/SECRET (YouTube), X_* (X). Redirect URIs: `/api/oauth` (Threads, LinkedIn), `/api/yt-callback` (YouTube).
+- Tests: `test/e2e.mjs` (35 checks, Browserbase phone 360×800@2x, screenshots `v2-*.png`).
+
 ## Next
 - WhatsApp bot: call `GET https://sow-ng.vercel.app/api/today` (`x-sow-key`) for "today's post" / `?which=next`.
-- Instagram (business account linked to the Page) via the same Graph token.
 - Music bed for Shorts.
 
 by Olaoluwa Michael
