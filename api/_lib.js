@@ -129,5 +129,5 @@ export async function saveRemote(post, platform, id) {
   await db('sp_posts?id=eq.' + post.id, { method: 'PATCH', body: { remote } });
   post.remote = remote;
 }
-// Effective auto-post time for one platform: the platform's time slot if set, else the post's own time.
-export function effTime(post, platform, slots) { return ((slots || {})[platform] || (post.post_time || '06:00')).slice(0, 5); }
+// Effective auto-post time for one platform: the platform's time slot if set, else the post's own time. Clips keep their mood-slot time.
+export function effTime(post, platform, slots) { if (post.source === 'clip') return (post.post_time || '12:00').slice(0, 5); return ((slots || {})[platform] || (post.post_time || '06:00')).slice(0, 5); }

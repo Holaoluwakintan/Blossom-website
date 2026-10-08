@@ -54,3 +54,10 @@ Deploy: Vercel REST upload of this folder (framework none, output `public`).
 - Music bed for Shorts.
 
 by Olaoluwa Michael
+
+## v7 clip bank + v8 Blossom lane (Oct 8, 2026)
+- v7: Telegram clip bank (api/_clips.js, api/clips.js, api/tg.js); clips in sp_prefs 'clip:<msg_id>', settings 'clip_settings'.
+- v8: 🌸 Blossom lane (api/_blossom.js, api/blossom.js, #blossom tab). Posts in sp_prefs 'blossom:<id>', settings 'blossom_settings',
+  Blossom Page token in sp_secrets 'blossom_page_token'. Cron (api/cron.js) calls blossomDaily() after clips, guarded.
+  Auto-posts to the Blossom Facebook Page (multi-photo feed post) and its linked Instagram (carousel) when AUTO is on.
+  Bank import: tools/sow_blossom_import.py <manifest.json>. Deployed to Vercel project sow-ng (team michael-380d).
